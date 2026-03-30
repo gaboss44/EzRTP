@@ -3,7 +3,7 @@
 [IMG]https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/downloads.png[/IMG]
 [IMG]https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/server-software.png[/IMG]
 [SIZE=3]Production-ready random teleport plugin for modern Minecraft servers[/SIZE]
-[SIZE=2]Latest snapshot: EzRTP 2.0.0 • Java 17+ • Bukkit API baseline 1.13+ • Bukkit/Paper/Spigot/Purpur support[/SIZE][/CENTER]
+[SIZE=2]Latest release: See the GitHub project for current releases and documentation: https://github.com/ez-plugins/EzRTP • Java 17+ • Bukkit API baseline 1.13+ • Bukkit/Paper/Spigot/Purpur support[/SIZE][/CENTER]
 
 [SIZE=4][B]✨ Why Choose EzRTP?[/B][/SIZE]
 [LIST]
@@ -20,13 +20,22 @@
 
 [SIZE=4][B]🚀 Quick Start Guide[/B][/SIZE]
 [LIST=1]
-[*][B]Download[/B] EzRTP.jar from [URL='https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/']SpigotMC[/URL]
+[ * ][B]Download[/B] EzRTP.jar from [URL='https://modrinth.com/plugin/ezplugins-ezrtp']Modrinth[/URL], [URL='https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/']SpigotMC[/URL], [URL='https://hangar.papermc.io/EzPlugins/EzRTP']Hangar[/URL] or the project's [URL='https://github.com/ez-plugins/EzRTP/releases']GitHub Releases[/URL]
 [*][B]Install[/B] by dropping into your [icode]plugins/[/icode] directory
 [*][B]Restart[/B] server to generate configuration files
 [*][B]Configure[/B] [icode]config.yml[/icode] with world settings and preferences
 [*][B]Customize[/B] messages in [icode]messages/{language}.yml[/icode] (for example [icode]messages/en.yml[/icode]) using MiniMessage
 [*][B]Enable[/B] GUI in [icode]gui.yml[/icode] for visual world selection
 [*][B]Test[/B] with [icode]/rtp[/icode] command
+[/LIST]
+
+[SIZE=3][B]Expansions / Modules[/B]
+
+[LIST]
+[*]EzRTP ships as a core runtime plus optional platform modules and integrations. For production servers:
+[*]Install `EzRTP.jar` (core) plus at most one platform module that matches your server (for example `ezrtp-paper-<version>.jar` for Paper, or `ezrtp-purpur-<version>.jar` for Purpur).
+[*]Do NOT install multiple EzRTP runtime modules simultaneously — this can cause duplicate behavior. Remove legacy or extra module jars if you see duplicate messages or teleports.
+[*]Platform modules and other expansion jars are available from the project's GitHub Releases and the platform package pages listed above. See the module installation notes on GitHub: [URL='https://github.com/ez-plugins/EzRTP/blob/main/docs/overview-installation.md']https://github.com/ez-plugins/EzRTP/blob/main/docs/overview-installation.md[/URL]
 [/LIST]
 
 [SIZE=4][B]📋 Commands & Permissions[/B][/SIZE]
@@ -48,6 +57,23 @@
 [*][icode]ezrtp.bypass.limit[/icode] - Unlimited daily/weekly usage
 [*][icode]ezrtp.gui.*[/icode] - Access specific GUI world options
 [/LIST]
+
+[SIZE=3][B]Permissions Reference[/B][/SIZE]
+[LIST]
+[*][icode]ezrtp.use[/icode] - Use `/rtp` (default: all players)
+[*][icode]ezrtp.reload[/icode] - Reload configuration (default: ops)
+[*][icode]ezrtp.stats[/icode] - View RTP statistics (default: ops)
+[*][icode]ezrtp.heatmap[/icode] - Generate heatmaps (default: ops)
+[*][icode]ezrtp.forcertp[/icode] - Force RTP for a player (default: ops)
+[*][icode]ezrtp.heatmap.fake[/icode] - Simulate teleports (default: ops)
+[*][icode]ezrtp.queue.bypass[/icode] - Skip teleport queue (default: false)
+[*][icode]ezrtp.bypass.cooldown[/icode] - Bypass cooldowns (default: false)
+[*][icode]ezrtp.bypass.limit[/icode] - Bypass usage limits (default: false)
+[*][icode]ezrtp.gui.*[/icode] - GUI option access (configure in `gui.yml`)
+[*][icode]ezrtp.admin[/icode] - Admin GUI/cache visibility and advanced actions (default: ops)
+[/LIST]
+
+[SIZE=2]Tip: Add bypass nodes to `rtp-limits.bypass-permissions` in `config.yml` to grant global bypass behavior.[/SIZE]
 
 [SIZE=4][B]🎮 Feature Showcase[/B][/SIZE]
 

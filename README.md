@@ -16,6 +16,7 @@ Inspired by the structure and professionalism of your EzEconomy project, this RE
 - Modrinth: https://modrinth.com/plugin/ezplugins-ezrtp
 - SpigotMC: https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/
 - Hangar: https://hangar.papermc.io/EzPlugins/EzRTP
+ - GitHub (releases & docs): https://github.com/ez-plugins/EzRTP
 
 ---
 
@@ -117,6 +118,22 @@ Inspired by the structure and professionalism of your EzEconomy project, this RE
 - `ezrtp.heatmap` - Access `/rtp heatmap`.
 - `ezrtp.heatmap.fake` - Access `/rtp fake`.
 - `ezrtp.queue.bypass` - Bypass queue restrictions.
+
+### Permissions Reference
+
+- `ezrtp.use`: Execute `/rtp` (default: all players)
+- `ezrtp.reload`: Reload configuration (default: ops)
+- `ezrtp.stats`: View RTP statistics and metrics (default: ops)
+- `ezrtp.heatmap`: Generate heatmaps (default: ops)
+- `ezrtp.forcertp`: Force RTP for a player (default: ops)
+- `ezrtp.heatmap.fake`: Simulate teleports for testing (default: ops)
+- `ezrtp.queue.bypass`: Bypass teleport queue (default: false)
+- `ezrtp.bypass.cooldown`: Bypass cooldowns (default: false)
+- `ezrtp.bypass.limit`: Bypass daily/weekly limits (default: false)
+- `ezrtp.gui.*`: Per-option GUI access (configure in `gui.yml`)
+- `ezrtp.admin`: Administrative UI/cache visibility and advanced actions (default: ops)
+
+Tip: Add bypass nodes to `rtp-limits.bypass-permissions` in `limits.yml` (or `config.yml` in some deployments) to grant global bypass behavior.
 
 ### Configuration-defined/bypass examples
 

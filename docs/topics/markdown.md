@@ -1,4 +1,4 @@
-# EzRTP - Advanced Random Teleport Plugin
+## Advanced Random Teleport Plugin
 
 ![Minecraft Versions](https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/minecraft-versions.png)
 ![Downloads](https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/downloads.png)
@@ -6,9 +6,14 @@
 
 **Production-ready random teleport plugin for modern Minecraft servers**
 
-**Latest snapshot:** EzRTP **2.0.0** (multi-module build), Java **17+**, Bukkit API baseline **1.13+**, actively packaged for Bukkit/Paper/Spigot/Purpur.
+**Latest release:** See the GitHub project for the current release and up-to-date documentation: https://github.com/ez-plugins/EzRTP
+Java **17+**, Bukkit API baseline **1.13+**, actively packaged for Bukkit/Paper/Spigot/Purpur.
 
-[📥 Modrinth](https://modrinth.com/plugin/ezplugins-ezrtp) • [📥 SpigotMC](https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/) • [📥 Hangar](https://hangar.papermc.io/EzPlugins/EzRTP) • [💬 Discord Support](https://discord.gg/yWP95XfmBS) • [🐛 Report Issues](https://discord.gg/yWP95XfmBS)
+[📥 Modrinth](https://modrinth.com/plugin/ezplugins-ezrtp) • [📥 SpigotMC](https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/) • [📥 Hangar](https://hangar.papermc.io/EzPlugins/EzRTP) • [📕 GitHub (latest releases & docs)](https://github.com/ez-plugins/EzRTP) • [💬 Discord Support](https://discord.gg/yWP95XfmBS) • [🐛 Report Issues](https://discord.gg/yWP95XfmBS)
+
+
+[![ez rtp plugin documentation button](https://i.ibb.co/dskCvgLP/documentation-button-1.png)](https://github.com/ez-plugins/EzRTP/blob/main/README.md)
+[![ez rtp plugin support button](https://i.ibb.co/Wpy2w1cH/support-button-1.png)](https://discord.gg/yWP95XfmBS)
 
 ---
 
@@ -49,13 +54,19 @@
 
 ### Installation Steps
 
-1. **Download** `EzRTP.jar` from [Modrinth](https://modrinth.com/plugin/ezplugins-ezrtp)
+1. **Download** `EzRTP.jar` from [Modrinth](https://modrinth.com/plugin/ezplugins-ezrtp), [SpigotMC](https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/), [Hangar](https://hangar.papermc.io/EzPlugins/EzRTP) or the project's **GitHub Releases** (https://github.com/ez-plugins/EzRTP/releases)
 2. **Install** by dropping into your `plugins/` directory
 3. **Restart** your server to generate configuration files
 4. **Configure** `config.yml` with your world settings, teleport parameters, and preferences
 5. **Customize** messages in `messages/{language}.yml` (for example `messages/en.yml`) using MiniMessage formatting
 6. **Enable** GUI in `gui.yml` for visual world selection
 7. **Test** with `/rtp` command
+
+### Expansions / Modules
+
+EzRTP ships as a core runtime plus optional platform modules and integrations. For production servers:
+
+Platform modules and other expansion jars (GUI/analytics helpers) are available from the project's GitHub Releases and the platform package pages listed above. See the module installation notes on GitHub: https://github.com/ez-plugins/EzRTP/blob/main/docs/overview-installation.md
 
 ### Basic Configuration
 
@@ -90,6 +101,21 @@ cost: 0.0  # Free teleports
 - `ezrtp.bypass.cooldown` - Ignore cooldowns
 - `ezrtp.bypass.limit` - Unlimited daily/weekly usage
 - `ezrtp.gui.*` - Access specific GUI world options
+
+**Permissions Reference:**
+- `ezrtp.use`: Execute `/rtp` (default: all players)
+- `ezrtp.reload`: Reload configuration (default: ops)
+- `ezrtp.stats`: View RTP statistics and metrics (default: ops)
+- `ezrtp.heatmap`: Generate heatmaps (default: ops)
+- `ezrtp.forcertp`: Force RTP for a player (default: ops)
+- `ezrtp.heatmap.fake`: Simulate teleports for testing (default: ops)
+- `ezrtp.queue.bypass`: Bypass teleport queue (default: false)
+- `ezrtp.bypass.cooldown`: Bypass cooldowns (default: false)
+- `ezrtp.bypass.limit`: Bypass daily/weekly limits (default: false)
+- `ezrtp.gui.*`: Per-option GUI access (use `gui.yml` to configure)
+- `ezrtp.admin`: Administrative UI/cache visibility and advanced actions (default: ops)
+
+Tip: Add bypass nodes to the `rtp-limits.bypass-permissions` list in `config.yml` to grant global bypass behavior.
 
 ---
 
