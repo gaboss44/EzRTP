@@ -1,0 +1,355 @@
+package com.skyblockexp.ezrtp.bootstrap;
+
+import com.skyblockexp.ezrtp.EzRtpPlugin;
+import com.skyblockexp.ezrtp.bootstrap.component.ConfigurationService;
+import com.skyblockexp.ezrtp.bootstrap.component.EconomyCoordinator;
+import com.skyblockexp.ezrtp.bootstrap.component.ListenerRegistrar;
+import com.skyblockexp.ezrtp.bootstrap.component.NetworkCoordinator;
+import com.skyblockexp.ezrtp.bootstrap.component.PlatformAdapterRegistrar;
+import com.skyblockexp.ezrtp.bootstrap.component.UsageResetScheduler;
+import com.skyblockexp.ezrtp.command.RandomTeleportCommand;
+import com.skyblockexp.ezrtp.command.ForceRtpCommand;
+import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
+import com.skyblockexp.ezrtp.config.ForceRtpConfiguration;
+import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
+import com.skyblockexp.ezrtp.economy.EconomyService;
+import com.skyblockexp.ezrtp.gui.RandomTeleportGuiManager;
+import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.metrics.EzRtpMetricsRegistrar;
+import com.skyblockexp.ezrtp.platform.ChunkLoadStrategyRegistry;
+import com.skyblockexp.ezrtp.platform.PlatformGuiBridgeRegistry;
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
+import com.skyblockexp.ezrtp.protection.ProtectionRegistry;
+import com.skyblockexp.ezrtp.storage.MySqlRtpUsageStorage;
+import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
+import com.skyblockexp.ezrtp.storage.YamlRtpUsageStorage;
+import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
+import com.skyblockexp.ezrtp.teleport.heatmap.HeatmapSimulationStore;
+import com.skyblockexp.ezrtp.update.SpigotUpdateChecker;
+import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.Plugin;
+import org.popcraft.chunky.api.ChunkyAPI;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * Coordinates EzRTP plugin bootstrap, configuration reloads, and lifecycle tasks
+ * so {@link EzRtpPlugin} can remain focused on the Bukkit entry points.
+ */
+public final class EzRtpPluginBootstrap {
+
+    private static final int SPIGOT_RESOURCE_ID = 129828;
+    private static final String CORE_PLUGIN_NAME = "EzRTP";
+    private static final List<String> RUNTIME_MODULE_PLUGIN_NAMES = List.of(
+            "EzRTPPaperModule",
+            "EzRTPPurpurModule",
+            "EzRTPPaper",
+            "EzRTP-Paper",
+            "EzRTPPaperRuntimeModule"
+    );
+
+    private final EzRtpPlugin plugin;
+
+    private final ConfigurationService configurationService;
+    private final EconomyCoordinator economyCoordinator;
+    private final NetworkCoordinator networkCoordinator;
+    private final ListenerRegistrar listenerRegistrar;
+    private EzRtpConfiguration configuration;
+    private ForceRtpConfiguration forceRtpConfiguration;
+    private RandomTeleportService teleportService;
+    private EconomyService economyService = EconomyService.disabled();
+    private RtpUsageStorage usageStorage;
+    private ProtectionRegistry protectionRegistry;
+    private MessageProvider messageProvider;
+    private ChunkyAPI chunkyAPI;
+    private EzRtpMetricsRegistrar metricsRegistrar;
+    private UsageResetScheduler usageResetScheduler;
+    private final HeatmapSimulationStore heatmapSimulationStore = new HeatmapSimulationStore();
+    private com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator;
+
+    public EzRtpPluginBootstrap(EzRtpPlugin plugin) {
+        this.plugin = plugin;
+        this.configurationService = new ConfigurationService(plugin);
+        this.economyCoordinator = new EconomyCoordinator(plugin);
+        this.networkCoordinator = new NetworkCoordinator(plugin);
+        this.listenerRegistrar = new ListenerRegistrar(plugin);
+        this.chunkyWarmupCoordinator = new com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator();
+    }
+
+    public void enable() {
+        plugin.saveDefaultConfig();
+        configurationService.ensureAdditionalConfigFiles();
+
+        RuntimeArtifactStatus runtimeArtifactStatus = inspectRuntimeArtifacts();
+        if (!runtimeArtifactStatus.unsupportedModules().isEmpty()) {
+            String unsupported = String.join(", ", runtimeArtifactStatus.unsupportedModules());
+            plugin.getLogger().severe("Unsupported EzRTP runtime module combination detected: " + unsupported + ".");
+            plugin.getLogger().severe("Likely symptoms include duplicate chat messages and duplicate/random double teleports.");
+            plugin.getLogger().severe("Remove unsupported EzRTP runtime module jar(s) and keep only 'EzRTP.jar' and optionally one supported module plugin such as 'EzRTPPaperModule'.");
+            plugin.getServer().getPluginManager().disablePlugin(plugin);
+            return;
+        }
+
+        logRuntimeArtifactSummary(runtimeArtifactStatus);
+        PlatformAdapterRegistrar.registerKnownProviders(plugin.getLogger(), !runtimeArtifactStatus.hasSupportedRuntimeModule());
+        ChunkLoadStrategyRegistry.loadAndRegister(plugin, plugin.getLogger());
+        PlatformRuntimeRegistry.loadAndRegister(plugin, plugin.getLogger());
+        PlatformGuiBridgeRegistry.loadAndRegister(plugin, plugin.getLogger());
+        com.skyblockexp.ezrtp.platform.PlatformMessageServiceRegistry.loadAndRegister(plugin, plugin.getLogger());
+        com.skyblockexp.ezrtp.platform.PlatformSenderBridgeRegistry.loadAndRegister(plugin, plugin.getLogger());
+        logSelectedPlatformAdapters();
+        economyService = economyCoordinator.initializeEconomy();
+        reloadPluginConfiguration();
+        usageStorage = createUsageStorage();
+        usageResetScheduler = new UsageResetScheduler(plugin, usageStorage);
+        usageResetScheduler.schedule();
+        registerListeners();
+        registerCommand();
+        initializeMetrics();
+        new SpigotUpdateChecker(plugin, SPIGOT_RESOURCE_ID).checkForUpdates();
+        plugin.getLogger().info("EzRTP plugin enabled.");
+    }
+
+    private void logRuntimeArtifactSummary(RuntimeArtifactStatus status) {
+        String installed = status.installedArtifacts().isEmpty() ? "<none>" : String.join(", ", status.installedArtifacts());
+        if (status.hasSupportedRuntimeModule()) {
+            plugin.getLogger().info("Detected EzRTP artifacts: " + installed + ".");
+            plugin.getLogger().info("Supported combination: EzRTP + one runtime module (for example EzRTPPaperModule).");
+            plugin.getLogger().info("If you observe duplicate messages or duplicate teleports, remove extra/legacy EzRTP module jars so only one runtime module remains.");
+        } else {
+            plugin.getLogger().warning("Detected EzRTP artifacts: " + installed + ".");
+            plugin.getLogger().warning("Running EzRTP without a runtime module is supported with safe fallbacks, but advanced Paper-specific adapters may be unavailable.");
+            plugin.getLogger().warning("If you observe duplicate messages or duplicate teleports, verify there is only one EzRTP core jar and no legacy EzRTP runtime module jars.");
+        }
+    }
+
+    private RuntimeArtifactStatus inspectRuntimeArtifacts() {
+        Map<String, Plugin> byName = new LinkedHashMap<>();
+        for (Plugin installedPlugin : plugin.getServer().getPluginManager().getPlugins()) {
+            String pluginName = installedPlugin.getName();
+            if (pluginName == null || pluginName.isBlank()) {
+                continue;
+            }
+            byName.put(pluginName, installedPlugin);
+        }
+
+        List<String> installedArtifacts = new ArrayList<>();
+        if (byName.containsKey(CORE_PLUGIN_NAME)) {
+            installedArtifacts.add(CORE_PLUGIN_NAME);
+        }
+
+        List<String> supportedRuntimeModules = new ArrayList<>();
+        List<String> unsupportedModules = new ArrayList<>();
+        for (String runtimeModuleName : RUNTIME_MODULE_PLUGIN_NAMES) {
+            if (!byName.containsKey(runtimeModuleName)) {
+                continue;
+            }
+            installedArtifacts.add(runtimeModuleName);
+            if ("EzRTPPaperModule".equals(runtimeModuleName)
+                    || "EzRTPPurpurModule".equals(runtimeModuleName)) {
+                supportedRuntimeModules.add(runtimeModuleName);
+            } else {
+                unsupportedModules.add(runtimeModuleName);
+            }
+        }
+        return new RuntimeArtifactStatus(installedArtifacts, supportedRuntimeModules, unsupportedModules);
+    }
+
+    private record RuntimeArtifactStatus(
+            List<String> installedArtifacts,
+            List<String> supportedRuntimeModules,
+            List<String> unsupportedModules) {
+        private boolean hasSupportedRuntimeModule() {
+            return !supportedRuntimeModules.isEmpty();
+        }
+    }
+
+    public void disable() {
+        plugin.getServer().getScheduler().cancelTasks(plugin);
+        if (teleportService != null) {
+            teleportService.shutdown();
+        }
+        networkCoordinator.shutdown();
+        plugin.getLogger().info("EzRTP plugin disabled.");
+        com.skyblockexp.ezrtp.platform.PlatformSenderBridgeRegistry.closeAndUnregister();
+        com.skyblockexp.ezrtp.platform.PlatformMessageServiceRegistry.closeAndUnregister();
+        ChunkLoadStrategyRegistry.unregister();
+        PlatformRuntimeRegistry.unregister();
+        PlatformGuiBridgeRegistry.unregister();
+    }
+
+    public void reloadPluginConfiguration() {
+        configuration = configurationService.reloadConfiguration();
+        forceRtpConfiguration = configurationService.reloadForceRtpConfiguration();
+        
+        // Load Chunky API only if Chunky integration is enabled in config
+        RandomTeleportSettings defaultSettings = configuration.getDefaultSettings();
+        boolean chunkyIntegrationEnabled = defaultSettings.getChunkyIntegrationSettings().isEnabled();
+        
+        if (chunkyIntegrationEnabled && chunkyAPI == null) {
+            try {
+                Class<?> chunkyApiClass = Class.forName("org.popcraft.chunky.api.ChunkyAPI");
+                chunkyAPI = org.bukkit.Bukkit.getServicesManager().load(chunkyApiClass.asSubclass(ChunkyAPI.class));
+                if (chunkyAPI != null) {
+                    chunkyAPI.onGenerationComplete(event -> plugin.getLogger().info("Chunky pregeneration completed"));
+                    chunkyAPI.onGenerationProgress(event -> {
+                        // Logging progress without accessing event methods to avoid API compatibility issues
+                    });
+                    // Wire coordinator to Chunky listeners
+                    if (chunkyWarmupCoordinator != null) {
+                        chunkyWarmupCoordinator.registerWithChunky(chunkyAPI, plugin);
+                    }
+                }
+            } catch (ClassNotFoundException e) {
+                plugin.getLogger().info("Chunky plugin not found - Chunky integration disabled.");
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to initialize Chunky integration: " + e.getMessage());
+            }
+        } else if (!chunkyIntegrationEnabled && chunkyAPI != null) {
+            // Unregister Chunky listeners if integration is disabled
+            plugin.getLogger().info("Chunky integration disabled in configuration.");
+            chunkyAPI = null;
+        }
+        messageProvider = configurationService.getMessageProvider();
+        // Initialize text rendering settings (force legacy conversion for older clients)
+        boolean forceLegacy = configurationService.getEffectiveBaseConfiguration().getBoolean("messages.force-legacy-colors", false);
+        com.skyblockexp.ezrtp.util.MessageUtil.setForceLegacyColors(forceLegacy);
+        // Platform message service should handle Audience initialization; registry registration
+        // is attempted during enable() when a platform service is available.
+
+        // Configure memory safety for Chunky integration
+        if (chunkyWarmupCoordinator != null) {
+            var chunkySettings = defaultSettings.getChunkyIntegrationSettings();
+            chunkyWarmupCoordinator.configureMemorySafety(
+                chunkySettings.isMemorySafetyEnabled(),
+                chunkySettings.getMinFreeMemoryMb(),
+                chunkySettings.getMaxCoordinatorEntries(),
+                chunkySettings.getLowMemoryRetentionMinutes()
+            );
+
+            // Log memory safety status
+            if (chunkySettings.isMemorySafetyEnabled()) {
+                Runtime runtime = Runtime.getRuntime();
+                long freeMemoryMb = (runtime.freeMemory() + (runtime.maxMemory() - runtime.totalMemory())) / (1024L * 1024L);
+                long maxMemoryMb = runtime.maxMemory() / (1024L * 1024L);
+                plugin.getLogger().info(String.format("[EzRTP] Chunky memory safety enabled: %dMB free / %dMB max, threshold: %dMB",
+                    freeMemoryMb, maxMemoryMb, chunkySettings.getMinFreeMemoryMb()));
+            }
+        }
+
+        if (protectionRegistry == null) {
+            protectionRegistry = new ProtectionRegistry(plugin);
+        }
+        protectionRegistry.warnMissingProviders(defaultSettings.getProtectionSettings());
+        if (teleportService == null) {
+            teleportService = new RandomTeleportService(plugin, defaultSettings,
+                configuration.getQueueSettings(), economyService,
+                (player, settings) -> configuration.resolveTeleportCost(player, settings),
+                protectionRegistry, messageProvider, ChunkLoadStrategyRegistry.get(), PlatformRuntimeRegistry.get(), chunkyAPI, chunkyWarmupCoordinator);
+        } else {
+            teleportService.reload(defaultSettings, configuration.getQueueSettings());
+            teleportService.setEconomyService(economyService);
+            teleportService.setCostResolver((player, settings) -> configuration.resolveTeleportCost(player, settings));
+            teleportService.setProtectionRegistry(protectionRegistry);
+        }
+        networkCoordinator.reload(configuration);
+        RandomTeleportGuiManager guiManager = listenerRegistrar.getGuiManager();
+        if (guiManager != null) {
+            guiManager.closeAll();
+        }
+        configurationService.validateEconomyConfiguration(configuration, economyService);
+    }
+
+    public MessageProvider getMessageProvider() {
+        return messageProvider;
+    }
+
+    public RandomTeleportService getTeleportService() {
+        return teleportService;
+    }
+
+    public EzRtpConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public ForceRtpConfiguration getForceRtpConfiguration() {
+        return forceRtpConfiguration;
+    }
+
+    public RtpUsageStorage getUsageStorage() {
+        return usageStorage;
+    }
+
+    private void initializeMetrics() {
+        metricsRegistrar = new EzRtpMetricsRegistrar(plugin, this::getTeleportService);
+        metricsRegistrar.register();
+    }
+
+    private void logSelectedPlatformAdapters() {
+        var runtime = PlatformRuntimeRegistry.get();
+        var scheduler = runtime.scheduler();
+        var strategy = ChunkLoadStrategyRegistry.get();
+        var guiBridge = PlatformGuiBridgeRegistry.get();
+        var messageService = com.skyblockexp.ezrtp.platform.PlatformMessageServiceRegistry.get();
+        var senderBridge = com.skyblockexp.ezrtp.platform.PlatformSenderBridgeRegistry.get();
+
+        plugin.getLogger().info("Platform runtime: " + runtime.getClass().getName());
+        plugin.getLogger().info("Platform scheduler: " + scheduler.getClass().getName());
+        plugin.getLogger().info("Chunk load strategy: " + strategy.getClass().getName());
+        plugin.getLogger().info("GUI bridge: " + guiBridge.getClass().getName());
+        plugin.getLogger().info("Message service: " + (messageService != null ? messageService.getClass().getName() : "<none>"));
+        plugin.getLogger().info("Sender bridge: " + (senderBridge != null ? senderBridge.getClass().getName() : "<none>"));
+    }
+
+    private RtpUsageStorage createUsageStorage() {
+        ConfigurationSection effectiveBase = configurationService.getEffectiveBaseConfiguration();
+        String storageType = effectiveBase.getString("rtp-limits.storage", "yaml");
+        if (storageType.equalsIgnoreCase("mysql")) {
+            String url = effectiveBase.getString("rtp-limits.mysql.url", "jdbc:mysql://localhost:3306/mc");
+            String user = effectiveBase.getString("rtp-limits.mysql.user", "root");
+            String pass = effectiveBase.getString("rtp-limits.mysql.password", "");
+            return new MySqlRtpUsageStorage(url, user, pass);
+        }
+        return new YamlRtpUsageStorage(new File(plugin.getDataFolder(), "rtp-usage.yml"));
+    }
+
+
+    private void registerCommand() {
+        RandomTeleportGuiManager guiManager = listenerRegistrar.getGuiManager();
+        RandomTeleportCommand command = new RandomTeleportCommand(plugin, this::getTeleportService,
+            this::getConfiguration, this::getProtectionRegistry, guiManager, usageStorage, heatmapSimulationStore, chunkyAPI, chunkyWarmupCoordinator);
+        PluginCommand pluginCommand = Objects.requireNonNull(plugin.getCommand("rtp"), "rtp command not defined in plugin.yml");
+        pluginCommand.setExecutor(command);
+        pluginCommand.setTabCompleter(command);
+
+        // Register force-rtp command
+        ForceRtpCommand forceRtpCommand = new ForceRtpCommand(plugin, this::getTeleportService,
+                this::getConfiguration, this::getForceRtpConfiguration);
+        PluginCommand forceRtpPluginCommand = Objects.requireNonNull(plugin.getCommand("forcertp"), "forcertp command not defined in plugin.yml");
+        forceRtpPluginCommand.setExecutor(forceRtpCommand);
+        forceRtpPluginCommand.setTabCompleter(forceRtpCommand);
+    }
+
+    private void registerListeners() {
+        listenerRegistrar.register(this::getTeleportService,
+                this::getConfiguration,
+                networkCoordinator::getNetworkService,
+                this::getMessageProvider,
+                usageStorage);
+    }
+
+    public ChunkyAPI getChunkyAPI() {
+        return chunkyAPI;
+    }
+
+    public ProtectionRegistry getProtectionRegistry() {
+        return protectionRegistry;
+    }
+
+}

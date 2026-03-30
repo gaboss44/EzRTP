@@ -1,0 +1,346 @@
+package com.skyblockexp.ezrtp.teleport;
+
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
+import org.popcraft.chunky.api.ChunkyAPI;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+
+/**
+ * Coordinates between Chunky pregeneration and EzRTP biome cache warmup.
+ *
+ * This class tracks chunks that Chunky has been instructed to generate or has already generated,
+ * allowing RTP precaching to prioritize warming up locations in those chunks for faster and more
+ * efficient teleportation. It prevents redundant chunk loads by marking regions as planned or generated,
+ * and provides metrics for monitoring the coordination effectiveness.
+ *
+ * Key features:
+ * - Tracks generated/planned chunks per world using efficient long keys.
+ * - Automatically expires old entries to prevent memory leaks.
+ * - Integrates with Chunky API for event listening and task coordination.
+ * - Provides metrics for chunks marked, expired, processed in warmup, and duplicate skips.
+ */
+public final class ChunkyWarmupCoordinator {
+
+    /**
+     * Map of world names to maps of chunk keys (long) to timestamps (long).
+     * The chunk key combines chunk X and Z coordinates into a single long for efficient storage and lookup.
+     * The timestamp indicates when the chunk was marked as generated or planned.
+     */
+    private final ConcurrentMap<String, ConcurrentMap<Long, Long>> generatedChunks = new ConcurrentHashMap<>();
+
+    // Metrics counters for monitoring coordination effectiveness
+    private final AtomicLong chunksMarked = new AtomicLong(); // Total chunks marked as planned/generated
+    private final AtomicLong chunksExpired = new AtomicLong(); // Total chunks removed due to expiration
+    private final AtomicLong chunksWarmupProcessed = new AtomicLong(); // Chunks successfully used in warmup
+    private final AtomicLong duplicateSkips = new AtomicLong(); // Times redundant loads were avoided
+
+    /**
+     * How long to retain chunk entries in milliseconds before considering them expired.
+     * Default is 1 hour to balance memory usage with the likelihood of needing the data.
+     */
+    private volatile long retentionMillis = 1000L * 60L * 60L; // 1 hour default
+
+    /**
+     * Memory safety settings
+     */
+    private volatile boolean memorySafetyEnabled = true;
+    private volatile long minFreeMemoryMb = 512L;
+    private volatile int maxCoordinatorEntries = 10000;
+    private volatile long lowMemoryRetentionMillis = 1000L * 60L * 15L; // 15 minutes default
+
+    /**
+     * Scheduled task for periodic cleanup of expired entries.
+     * Runs asynchronously to avoid blocking the main thread.
+     */
+    private volatile BukkitTask cleanupTask;
+
+    public ChunkyWarmupCoordinator() {
+        // Constructor is empty as initialization is handled in registerWithChunky
+    }
+
+    /**
+     * Registers this coordinator with the Chunky API to listen for generation events.
+     * Also schedules a periodic cleanup task to remove expired chunk entries.
+     *
+     * @param chunkyAPI The Chunky API instance to register listeners with
+     * @param plugin The plugin instance for logging and scheduling tasks
+     */
+    public void registerWithChunky(ChunkyAPI chunkyAPI, JavaPlugin plugin) {
+        if (chunkyAPI == null) return;
+
+        // Register listeners for Chunky generation events
+        try {
+            chunkyAPI.onGenerationComplete(event -> {
+                // Note: Chunky events don't currently expose per-chunk details in a stable API,
+                // so we treat completion as a general hint that planned regions are likely ready.
+                // Future Chunky versions may provide more granular events.
+                plugin.getLogger().info("[EzRTP] Chunky generation completed");
+            });
+            chunkyAPI.onGenerationProgress(event -> {
+                // Progress events are logged but not used for chunk marking due to API limitations.
+                // This could be enhanced if Chunky provides per-chunk progress details.
+            });
+        } catch (Throwable t) {
+            plugin.getLogger().warning("[EzRTP] Failed to register Chunky listeners: " + t.getMessage());
+        }
+
+        // Schedule periodic cleanup to prevent memory buildup from old entries
+        try {
+            if (cleanupTask != null && !cleanupTask.isCancelled()) {
+                cleanupTask.cancel();
+            }
+            // Run cleanup every minute (20 ticks * 60 seconds) asynchronously
+            cleanupTask = plugin.getServer().getScheduler().runTaskTimerAsynchronously(
+                plugin, this::purgeOldEntries, 20L * 60L, 20L * 60L);
+        } catch (Throwable t) {
+            plugin.getLogger().warning("[EzRTP] Failed to schedule ChunkyWarmupCoordinator cleanup: " + t.getMessage());
+        }
+    }
+
+    /**
+     * Marks a specific chunk as generated.
+     * This is called when we know a chunk has been fully generated by Chunky.
+     *
+     * @param worldName The name of the world
+     * @param chunkX The X coordinate of the chunk
+     * @param chunkZ The Z coordinate of the chunk
+     */
+    public void markChunkGenerated(String worldName, int chunkX, int chunkZ) {
+        long key = toKey(chunkX, chunkZ);
+        generatedChunks.computeIfAbsent(worldName, w -> new ConcurrentHashMap<>())
+                       .put(key, System.currentTimeMillis());
+        chunksMarked.incrementAndGet();
+    }
+
+    /**
+     * Marks a region of chunks as planned for generation.
+     * This creates a square area centered at the given chunk coordinates with the specified radius.
+     * Used when Chunky tasks are started to indicate which chunks are expected to be generated.
+     *
+     * @param worldName The name of the world
+     * @param centerChunkX The X coordinate of the center chunk
+     * @param centerChunkZ The Z coordinate of the center chunk
+     * @param radiusChunks The radius in chunks (0 means just the center chunk)
+     */
+    public void markRegionPlanned(String worldName, int centerChunkX, int centerChunkZ, int radiusChunks) {
+        // Skip if memory safety is enabled and we're low on memory
+        if (memorySafetyEnabled && !hasSufficientMemory()) {
+            return;
+        }
+
+        ConcurrentMap<Long, Long> worldChunks = generatedChunks.computeIfAbsent(worldName, w -> new ConcurrentHashMap<>());
+        int r = Math.max(0, radiusChunks);
+        long timestamp = System.currentTimeMillis();
+
+        // Check if adding this region would exceed max entries
+        int regionSize = (2 * r + 1) * (2 * r + 1);
+        if (wouldExceedMaxEntries() && regionSize > 0) {
+            // Remove oldest entries to make room (simple FIFO eviction)
+            evictOldEntries(regionSize);
+        }
+
+        // Loop over all chunks in the square region (inclusive of boundaries)
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dz = -r; dz <= r; dz++) {
+                long key = toKey(centerChunkX + dx, centerChunkZ + dz);
+                worldChunks.put(key, timestamp);
+            }
+        }
+
+        // Update metrics: total chunks marked is the area of the square
+        chunksMarked.addAndGet((2L * r + 1L) * (2L * r + 1L));
+    }
+
+    /**
+     * Checks if a specific chunk has been marked as planned or generated.
+     *
+     * @param worldName The name of the world
+     * @param chunkX The X coordinate of the chunk
+     * @param chunkZ The Z coordinate of the chunk
+     * @return true if the chunk is marked, false otherwise
+     */
+    public boolean isChunkPlannedOrGenerated(String worldName, int chunkX, int chunkZ) {
+        ConcurrentMap<Long, Long> worldChunks = generatedChunks.get(worldName);
+        if (worldChunks == null) return false;
+        return worldChunks.containsKey(toKey(chunkX, chunkZ));
+    }
+
+    /**
+     * Returns the set of chunk keys for a given world.
+     * Used by the warmup process to prioritize chunks in generated regions.
+     *
+     * @param worldName The name of the world
+     * @return A set of chunk keys (long values) for the world
+     */
+    public Set<Long> getChunksForWorld(String worldName) {
+        Map<Long, Long> worldChunks = generatedChunks.getOrDefault(worldName, new ConcurrentHashMap<>());
+        return worldChunks.keySet();
+    }
+
+    /**
+     * Records that a chunk was successfully processed during warmup.
+     * Used for metrics tracking.
+     */
+    public void recordWarmupProcessed() {
+        chunksWarmupProcessed.incrementAndGet();
+    }
+
+    /**
+     * Records that a duplicate chunk load was skipped.
+     * Used for metrics tracking.
+     */
+    public void recordDuplicateSkip() {
+        duplicateSkips.incrementAndGet();
+    }
+
+    // Getter methods for metrics
+    public long getChunksMarked() { return chunksMarked.get(); }
+    public long getChunksExpired() { return chunksExpired.get(); }
+    public long getChunksWarmupProcessed() { return chunksWarmupProcessed.get(); }
+    public long getDuplicateSkips() { return duplicateSkips.get(); }
+
+    /**
+     * Sets the retention time for chunk entries.
+     * Entries older than this will be removed during cleanup.
+     *
+     * @param retentionMillis The retention time in milliseconds
+     */
+    public void setRetentionMillis(long retentionMillis) {
+        this.retentionMillis = retentionMillis;
+    }
+
+    /**
+     * Configures memory safety settings for low-RAM server protection.
+     *
+     * @param memorySafetyEnabled Whether memory safety features are enabled
+     * @param minFreeMemoryMb Minimum free memory required in MB
+     * @param maxCoordinatorEntries Maximum entries to retain (0 = unlimited)
+     * @param lowMemoryRetentionMinutes Retention time in minutes when memory is low
+     */
+    public void configureMemorySafety(boolean memorySafetyEnabled, long minFreeMemoryMb,
+                                    int maxCoordinatorEntries, long lowMemoryRetentionMinutes) {
+        this.memorySafetyEnabled = memorySafetyEnabled;
+        this.minFreeMemoryMb = minFreeMemoryMb;
+        this.maxCoordinatorEntries = maxCoordinatorEntries;
+        this.lowMemoryRetentionMillis = lowMemoryRetentionMinutes * 60L * 1000L;
+    }
+
+    /**
+     * Checks if the server has sufficient memory for Chunky integration features.
+     * Returns false if memory safety is enabled and free memory is below the threshold.
+     *
+     * @return true if memory is sufficient or safety is disabled, false otherwise
+     */
+    public boolean hasSufficientMemory() {
+        if (!memorySafetyEnabled) {
+            return true;
+        }
+        Runtime runtime = Runtime.getRuntime();
+        long freeMemoryMb = (runtime.freeMemory() + (runtime.maxMemory() - runtime.totalMemory())) / (1024L * 1024L);
+        return freeMemoryMb >= minFreeMemoryMb;
+    }
+
+    /**
+     * Gets the current retention time, adjusted for memory conditions.
+     * Uses shorter retention on low memory to reduce memory footprint.
+     *
+     * @return retention time in milliseconds
+     */
+    private long getEffectiveRetentionMillis() {
+        if (memorySafetyEnabled && !hasSufficientMemory()) {
+            return Math.min(retentionMillis, lowMemoryRetentionMillis);
+        }
+        return retentionMillis;
+    }
+
+    /**
+     * Checks if adding more entries would exceed the maximum allowed.
+     * Only enforced when memory safety is enabled and maxCoordinatorEntries > 0.
+     *
+     * @return true if limit would be exceeded, false otherwise
+     */
+    private boolean wouldExceedMaxEntries() {
+        if (!memorySafetyEnabled || maxCoordinatorEntries <= 0) {
+            return false;
+        }
+        int totalEntries = generatedChunks.values().stream()
+            .mapToInt(Map::size)
+            .sum();
+        return totalEntries >= maxCoordinatorEntries;
+    }
+
+    /**
+     * Evicts oldest entries to make room for new ones when approaching the maximum limit.
+     * Uses a simple FIFO strategy to remove the oldest entries across all worlds.
+     *
+     * @param entriesNeeded Number of entries that need to be freed
+     */
+    private void evictOldEntries(int entriesNeeded) {
+        if (entriesNeeded <= 0) return;
+
+        // Collect all entries with their timestamps for sorting
+        java.util.List<java.util.Map.Entry<String, java.util.Map.Entry<Long, Long>>> allEntries = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<String, ConcurrentMap<Long, Long>> worldEntry : generatedChunks.entrySet()) {
+            String worldName = worldEntry.getKey();
+            for (java.util.Map.Entry<Long, Long> chunkEntry : worldEntry.getValue().entrySet()) {
+                allEntries.add(new java.util.AbstractMap.SimpleEntry<>(worldName,
+                    new java.util.AbstractMap.SimpleEntry<>(chunkEntry.getKey(), chunkEntry.getValue())));
+            }
+        }
+
+        // Sort by timestamp (oldest first)
+        allEntries.sort(java.util.Comparator.comparing(e -> e.getValue().getValue()));
+
+        // Remove oldest entries until we have enough space
+        int removed = 0;
+        for (java.util.Map.Entry<String, java.util.Map.Entry<Long, Long>> entry : allEntries) {
+            if (removed >= entriesNeeded) break;
+            String worldName = entry.getKey();
+            Long chunkKey = entry.getValue().getKey();
+            ConcurrentMap<Long, Long> worldChunks = generatedChunks.get(worldName);
+            if (worldChunks != null && worldChunks.remove(chunkKey) != null) {
+                removed++;
+                chunksExpired.incrementAndGet();
+            }
+        }
+    }
+
+    /**
+     * Removes expired chunk entries from all worlds.
+     * Called periodically by the scheduled cleanup task.
+     * This runs asynchronously to avoid blocking the main thread.
+     */
+    private void purgeOldEntries() {
+        long now = System.currentTimeMillis();
+        long effectiveRetention = getEffectiveRetentionMillis();
+        for (Map.Entry<String, ConcurrentMap<Long, Long>> worldEntry : generatedChunks.entrySet()) {
+            ConcurrentMap<Long, Long> worldChunks = worldEntry.getValue();
+            // Iterate over a copy to avoid ConcurrentModificationException
+            for (Map.Entry<Long, Long> chunkEntry : worldChunks.entrySet()) {
+                if (now - chunkEntry.getValue() > effectiveRetention) {
+                    worldChunks.remove(chunkEntry.getKey());
+                    chunksExpired.incrementAndGet();
+                }
+            }
+        }
+    }
+
+    /**
+     * Converts chunk coordinates to a compact long key for efficient storage and lookup.
+     * Uses bit manipulation: packs chunkX into the high 32 bits and chunkZ into the low 32 bits.
+     * This allows for fast hashing and comparison while uniquely identifying each chunk.
+     *
+     * @param chunkX The X coordinate of the chunk
+     * @param chunkZ The Z coordinate of the chunk
+     * @return A long key representing the chunk coordinates
+     */
+    private static long toKey(int chunkX, int chunkZ) {
+        // Shift chunkX left by 32 bits to occupy the high bits, then OR with chunkZ (masked to 32 bits)
+        return (((long) chunkX) << 32) | (chunkZ & 0xffffffffL);
+    }
+}

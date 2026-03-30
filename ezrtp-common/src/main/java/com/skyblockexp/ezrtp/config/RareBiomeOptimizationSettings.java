@@ -1,0 +1,168 @@
+package com.skyblockexp.ezrtp.config;
+
+import org.bukkit.block.Biome;
+import org.bukkit.configuration.ConfigurationSection;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Configuration settings for rare biome optimization features.
+ * Includes settings for hotspot tracking, weighted searches, and chunk load management.
+ */
+public final class RareBiomeOptimizationSettings {
+    private static final RareBiomeOptimizationSettings DISABLED_INSTANCE =
+        new RareBiomeOptimizationSettings(false, Collections.emptySet(), true,
+            true, false, 48, 8, true, 2, 3L, true);
+    
+    private final boolean enabled;
+    private final Set<Biome> rareBiomes;
+    private final boolean useWeightedSearch;
+    private final boolean enableHotspotTracking;
+    private final boolean enableBackgroundScanning;
+    private final int maxHotspotsPerBiome;
+    private final int hotspotScanIntervalMinutes;
+    private final boolean useChunkLoadQueue;
+    private final int maxChunksPerTick;
+    private final long chunkProcessingIntervalTicks;
+    private final boolean autoEnableForFilters;
+    
+    public RareBiomeOptimizationSettings(boolean enabled, Set<Biome> rareBiomes,
+                                        boolean useWeightedSearch, boolean enableHotspotTracking,
+                                        boolean enableBackgroundScanning, int maxHotspotsPerBiome,
+                                        int hotspotScanIntervalMinutes, boolean useChunkLoadQueue,
+                                        int maxChunksPerTick, long chunkProcessingIntervalTicks,
+                                        boolean autoEnableForFilters) {
+        this.enabled = enabled;
+        this.rareBiomes = rareBiomes != null ? new HashSet<>(rareBiomes) : Collections.emptySet();
+        this.useWeightedSearch = useWeightedSearch;
+        this.enableHotspotTracking = enableHotspotTracking;
+        this.enableBackgroundScanning = enableBackgroundScanning;
+        this.maxHotspotsPerBiome = Math.max(1, maxHotspotsPerBiome);
+        this.hotspotScanIntervalMinutes = Math.max(1, hotspotScanIntervalMinutes);
+        this.useChunkLoadQueue = useChunkLoadQueue;
+        this.maxChunksPerTick = Math.max(1, maxChunksPerTick);
+        this.chunkProcessingIntervalTicks = Math.max(1L, chunkProcessingIntervalTicks);
+        this.autoEnableForFilters = autoEnableForFilters;
+    }
+    
+    public boolean isEnabled() {
+        return enabled;
+    }
+    
+    public Set<Biome> getRareBiomes() {
+        return Collections.unmodifiableSet(rareBiomes);
+    }
+    
+    public boolean useWeightedSearch() {
+        return useWeightedSearch;
+    }
+    
+    public boolean isHotspotTrackingEnabled() {
+        return enableHotspotTracking;
+    }
+    
+    public boolean isBackgroundScanningEnabled() {
+        return enableBackgroundScanning;
+    }
+    
+    public int getMaxHotspotsPerBiome() {
+        return maxHotspotsPerBiome;
+    }
+    
+    public int getHotspotScanIntervalMinutes() {
+        return hotspotScanIntervalMinutes;
+    }
+    
+    public boolean useChunkLoadQueue() {
+        return useChunkLoadQueue;
+    }
+    
+    public int getMaxChunksPerTick() {
+        return maxChunksPerTick;
+    }
+
+    public long getChunkProcessingIntervalTicks() {
+        return chunkProcessingIntervalTicks;
+    }
+
+    public boolean isAutoEnableForFilters() {
+        return autoEnableForFilters;
+    }
+    
+    public static RareBiomeOptimizationSettings disabled() {
+        return DISABLED_INSTANCE;
+    }
+    
+    public static RareBiomeOptimizationSettings fromConfiguration(ConfigurationSection section) {
+        if (section == null) {
+            return disabled();
+        }
+        
+        boolean enabled = section.getBoolean("enabled", false);
+        
+        // Parse rare biomes list
+        Set<Biome> rareBiomes = new HashSet<>();
+        List<String> biomeNames = section.getStringList("rare-biomes");
+        if (biomeNames.isEmpty()) {
+            // Use defaults if not specified
+            rareBiomes = getDefaultRareBiomes();
+        } else {
+            for (String biomeName : biomeNames) {
+                try {
+                    rareBiomes.add(Biome.valueOf(biomeName.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Skip invalid biome names
+                }
+            }
+        }
+        
+        boolean useWeightedSearch = section.getBoolean("use-weighted-search", true);
+        boolean enableHotspotTracking = section.getBoolean("enable-hotspot-tracking", true);
+        boolean enableBackgroundScanning = section.getBoolean("enable-background-scanning", false);
+        int maxHotspotsPerBiome = section.getInt("max-hotspots-per-biome", 48);
+        int hotspotScanIntervalMinutes = section.getInt("hotspot-scan-interval-minutes", 8);
+        boolean useChunkLoadQueue = section.getBoolean("use-chunk-load-queue", true);
+        int maxChunksPerTick = section.getInt("max-chunks-per-tick", 2);
+        long chunkProcessingIntervalTicks = section.getLong("chunk-load-interval-ticks", 3L);
+        boolean autoEnableForFilters = section.getBoolean("auto-enable-for-filters", true);
+        
+        return new RareBiomeOptimizationSettings(enabled, rareBiomes, useWeightedSearch,
+            enableHotspotTracking, enableBackgroundScanning, maxHotspotsPerBiome,
+            hotspotScanIntervalMinutes, useChunkLoadQueue, maxChunksPerTick,
+            chunkProcessingIntervalTicks, autoEnableForFilters);
+    }
+    
+    /**
+     * Returns the default set of rare biomes.
+     */
+    private static Set<Biome> getDefaultRareBiomes() {
+        Set<Biome> rare = new HashSet<>();
+        String[] defaultRareBiomes = {
+            "MUSHROOM_FIELDS",
+            "JUNGLE",
+            "BAMBOO_JUNGLE",
+            "BADLANDS",
+            "ERODED_BADLANDS",
+            "WOODED_BADLANDS",
+            "ICE_SPIKES",
+            "SUNFLOWER_PLAINS",
+            "FLOWER_FOREST",
+            "MODIFIED_JUNGLE",
+            "MODIFIED_JUNGLE_EDGE",
+            "DEEP_DARK"
+        };
+        
+        for (String biomeName : defaultRareBiomes) {
+            try {
+                rare.add(Biome.valueOf(biomeName));
+            } catch (IllegalArgumentException e) {
+                // Some biomes might not exist in all versions
+            }
+        }
+        
+        return rare;
+    }
+}

@@ -1,0 +1,53 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+
+# Maven
+**/target/
+/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Gradle
+.gradle
+build/
+
+# IntelliJ
+*.iml
+.idea/
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+.recommenders
+
+# VS Code
+.vscode/
+
+# Generated sources
+/generated-sources/
+/generated-test-sources/
+
+# Maven wrapper
+/.mvn/wrapper/maven-wrapper.jar
+
+# OS files
+.DS_Store
+
+# Temp files
+*.tmp
+*.swp
+*~

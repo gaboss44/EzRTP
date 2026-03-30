@@ -1,0 +1,167 @@
+package com.skyblockexp.ezrtp.teleport;
+
+import com.skyblockexp.ezrtp.config.CountdownBossBarSettings;
+import com.skyblockexp.ezrtp.config.CountdownParticleSettings;
+import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
+import com.skyblockexp.ezrtp.message.MessageKey;
+import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.util.MessageUtil;
+
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import com.skyblockexp.ezrtp.util.compat.BossBarCompat;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitScheduler;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Consumer;
+
+/**
+ * Manages countdown sequences, boss bars, and particle effects during teleportation.
+ */
+public final class CountdownManager {
+
+    private final org.bukkit.plugin.java.JavaPlugin plugin;
+    private final BukkitScheduler scheduler;
+    private final MessageProvider messageProvider;
+    private final Map<UUID, BossBarCompat.Wrapper> countdownBossBars = new HashMap<>();
+
+    public CountdownManager(org.bukkit.plugin.java.JavaPlugin plugin, MessageProvider messageProvider) {
+        this.plugin = plugin;
+        this.scheduler = plugin.getServer().getScheduler();
+        this.messageProvider = messageProvider;
+    }
+
+    /**
+     * Starts a countdown for the player before teleportation.
+     */
+    public void startCountdown(Player player, RandomTeleportSettings teleportSettings,
+                              TeleportReason reason, Consumer<Boolean> callback,
+                              Runnable onComplete) {
+        int countdown = teleportSettings.getCountdownSeconds();
+        if (countdown <= 0) {
+            onComplete.run();
+            return;
+        }
+
+        // Show countdown start message
+        if (teleportSettings.isCountdownChatMessagesEnabled()) {
+            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.COUNTDOWN_START,
+                Map.of("seconds", String.valueOf(countdown)), player));
+        }
+
+        runCountdown(player, teleportSettings, callback, countdown, countdown, onComplete);
+    }
+
+    private void runCountdown(Player player, RandomTeleportSettings teleportSettings,
+                             Consumer<Boolean> callback, int seconds, int totalSeconds,
+                             Runnable onComplete) {
+        if (seconds <= 0) {
+            clearCountdownBossBar(player.getUniqueId());
+            onComplete.run();
+            return;
+        }
+
+        if (!player.isOnline()) {
+            clearCountdownBossBar(player.getUniqueId());
+            if (callback != null) callback.accept(false);
+            return;
+        }
+
+        // Show countdown tick message
+        if (teleportSettings.isCountdownChatMessagesEnabled()) {
+            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.COUNTDOWN_TICK,
+                Map.of("seconds", String.valueOf(seconds)), player));
+        }
+
+        // Update boss bar and particles
+        updateCountdownBossBar(player, teleportSettings, seconds, totalSeconds);
+        playCountdownParticles(player, teleportSettings.getCountdownParticleSettings());
+
+        // Schedule next tick
+        scheduler.runTaskLater(plugin, () ->
+            runCountdown(player, teleportSettings, callback, seconds - 1, totalSeconds, onComplete), 20L);
+    }
+
+    private void updateCountdownBossBar(Player player, RandomTeleportSettings teleportSettings,
+                                        int seconds, int totalSeconds) {
+        CountdownBossBarSettings bossBarSettings = teleportSettings.getCountdownBossBarSettings();
+        if (bossBarSettings == null || !bossBarSettings.isEnabled()) {
+            clearCountdownBossBar(player.getUniqueId());
+            return;
+        }
+
+        BossBarCompat.Wrapper bossBar = countdownBossBars.get(player.getUniqueId());
+        if (bossBar == null || !bossBar.isSupported()) {
+            bossBar = BossBarCompat.create("Teleporting...", bossBarSettings.getColor(), bossBarSettings.getStyle());
+            countdownBossBars.put(player.getUniqueId(), bossBar);
+        } else {
+            bossBar.setColor(bossBarSettings.getColor());
+            bossBar.setStyle(bossBarSettings.getStyle());
+        }
+
+        bossBar.setTitle(bossBarSettings.titleComponent(seconds));
+        double progress = totalSeconds > 0 ? (double) seconds / (double) totalSeconds : 1.0D;
+        bossBar.setProgress(Math.max(0.0D, Math.min(1.0D, progress)));
+
+        if (!bossBar.getPlayers().contains(player)) {
+            bossBar.addPlayer(player);
+        }
+
+        bossBar.setVisible(true);
+    }
+
+    private void clearCountdownBossBar(UUID playerId) {
+        BossBarCompat.Wrapper bossBar = countdownBossBars.remove(playerId);
+        if (bossBar != null) {
+            bossBar.removeAll();
+        }
+    }
+
+    private void playCountdownParticles(Player player, CountdownParticleSettings settings) {
+        if (settings == null || !settings.isEnabled()) {
+            return;
+        }
+
+        Location baseLocation = player.getLocation().clone().add(0.0D, settings.getHeightOffset(), 0.0D);
+        org.bukkit.World world = baseLocation.getWorld();
+        if (world == null) {
+            return;
+        }
+
+        int points = Math.max(1, settings.getPoints());
+        double radius = settings.getRadius();
+        for (int i = 0; i < points; i++) {
+            double angle = (Math.PI * 2D * i) / points;
+            double x = Math.cos(angle) * radius;
+            double z = Math.sin(angle) * radius;
+                Location particleLocation = baseLocation.clone().add(x, 0.0D, z);
+                com.skyblockexp.ezrtp.util.compat.ParticleCompat.spawnParticle(world, settings.getParticle(), particleLocation, 1,
+                    0.0D, 0.0D, 0.0D, settings.getExtra(), null, settings.isForce());
+        }
+
+        Particle secondary = settings.getSecondaryParticle();
+        if (secondary != null && settings.getSecondaryCount() > 0) {
+                com.skyblockexp.ezrtp.util.compat.ParticleCompat.spawnParticle(world, secondary, baseLocation,
+                    settings.getSecondaryCount(),
+                    settings.getSecondaryOffset(), settings.getSecondaryOffset(), settings.getSecondaryOffset(),
+                    settings.getExtra(), null, settings.isForce());
+        }
+    }
+
+    /**
+     * Shuts down the countdown manager and cleans up resources.
+     */
+    public void shutdown() {
+        countdownBossBars.values().forEach(wrapper -> wrapper.removeAll());
+        countdownBossBars.clear();
+    }
+
+    private static String legacy(net.kyori.adventure.text.Component component) {
+        return MessageUtil.serializeComponent(component);
+    }
+}

@@ -1,0 +1,91 @@
+name: Search Pattern Benchmarks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/search-pattern-benchmarks.yml'
+      - 'ezrtp-common/src/main/java/com/skyblockexp/ezrtp/config/SearchPattern.java'
+      - 'ezrtp-common/src/main/java/com/skyblockexp/ezrtp/teleport/search/**'
+      - 'ezrtp-common/src/test/java/com/skyblockexp/ezrtp/tools/SearchPatternBenchmarkRunner.java'
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  benchmark:
+    name: ${{ matrix.software }} / ${{ matrix.pattern }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        software: [bukkit, paper, spigot, purpur]
+        pattern: [random, circle, triangle, diamond, square]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compile benchmark classpath
+        run: mvn -B -ntp -pl ezrtp-${{ matrix.software }},ezrtp-common -am -DskipTests -Dspotless.check.skip=true test-compile
+
+      - name: Run search-pattern benchmark
+        run: |
+          mkdir -p benchmark-results
+          mvn -B -ntp -pl ezrtp-common -DskipTests -Dspotless.check.skip=true \
+            org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+            -Dexec.classpathScope=test \
+            -Dexec.mainClass=com.skyblockexp.ezrtp.tools.SearchPatternBenchmarkRunner \
+            -Dexec.args="${{ matrix.software }} ${{ matrix.pattern }} 250000 2000000" \
+            | tee benchmark-results/${{ matrix.software }}-${{ matrix.pattern }}.log
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-${{ matrix.software }}-${{ matrix.pattern }}
+          path: benchmark-results/${{ matrix.software }}-${{ matrix.pattern }}.log
+
+  summarize:
+    name: Summarize benchmark report
+    runs-on: ubuntu-latest
+    needs: benchmark
+
+    steps:
+      - name: Download benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: benchmark-artifacts
+
+      - name: Build markdown summary
+        run: |
+          {
+            echo "# Search Pattern Benchmark Summary"
+            echo
+            echo "| Server software | Pattern | Avg ns/op | Ops/sec |"
+            echo "|---|---:|---:|---:|"
+            find benchmark-artifacts -name '*.log' | sort | while read -r log_file; do
+              data_line="$(grep -E 'software=.*pattern=.*avg_ns=.*ops_per_sec=' "$log_file" | tail -n 1 || true)"
+              if [ -z "$data_line" ]; then
+                continue
+              fi
+              software="$(echo "$data_line" | sed -n 's/.*software=\([^ ]*\).*/\1/p')"
+              pattern="$(echo "$data_line" | sed -n 's/.*pattern=\([^ ]*\).*/\1/p')"
+              avg_ns="$(echo "$data_line" | sed -n 's/.*avg_ns=\([^ ]*\).*/\1/p')"
+              ops_per_sec="$(echo "$data_line" | sed -n 's/.*ops_per_sec=\([^ ]*\).*/\1/p')"
+              echo "| ${software} | ${pattern} | ${avg_ns} | ${ops_per_sec} |"
+            done
+          } > benchmark-summary.md
+
+          cat benchmark-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-summary
+          path: benchmark-summary.md

@@ -1,0 +1,174 @@
+# Example GUI Configuration with PlaceholderAPI Support
+# This file demonstrates how to use PlaceholderAPI placeholders in EzRTP GUI items
+
+# Note: This feature requires PlaceholderAPI to be installed on your server.
+# If PlaceholderAPI is not installed, placeholders will be displayed as-is (graceful fallback).
+
+enabled: true
+title: "<dark_aqua><bold>Random Teleport</bold></dark_aqua>"
+rows: 5
+no-permission-message: "<red>You do not have permission to travel there.</red>"
+
+filler:
+  enabled: true
+  material: BLACK_STAINED_GLASS_PANE
+  name: "<dark_gray> </dark_gray>"
+
+worlds:
+  # Example 1: Basic player name placeholder
+  overworld:
+    slot: 22
+    icon:
+      material: GRASS_BLOCK
+      name: "<green><bold>%player_name%'s Adventure</bold></green>"
+      lore:
+        - "<gray>Welcome to the Overworld, %player_name%!</gray>"
+        - "<gray>Click to begin your adventure.</gray>"
+    settings:
+      world: world
+
+  # Example 2: Player statistics placeholders
+  nether:
+    slot: 20
+    permission: "ezrtp.gui.nether"
+    icon:
+      material: NETHERRACK
+      name: "<red><bold>Nether Realm</bold></red>"
+      lore:
+        - "<gray>Player: %player_name%</gray>"
+        - "<gray>Level: %player_level%</gray>"
+        - "<gray>Health: %player_health%/%player_max_health%</gray>"
+        - " "
+        - "<yellow>⚠ Danger Zone</yellow>"
+        - "<dark_gray>Click to enter the Nether.</dark_gray>"
+    settings:
+      world: world_nether
+
+  # Example 3: Custom PAPI expansions (requires respective expansions installed)
+  end:
+    slot: 24
+    permission: "ezrtp.gui.end"
+    icon:
+      material: END_STONE
+      name: "<light_purple><bold>The End</bold></light_purple>"
+      lore:
+        - "<gray>Player: %player_name%</gray>"
+        - "<gray>Deaths: %statistic_deaths%</gray>"
+        - "<gray>Play Time: %statistic_time_played%</gray>"
+        - " "
+        - "<aqua>Teleport to distant End islands</aqua>"
+        - "<dark_gray>Requires End access.</dark_gray>"
+    settings:
+      world: world_the_end
+
+  # Example 4: Economy and permission placeholders (requires Vault/economy plugin)
+  vip_world:
+    slot: 13
+    permission: "ezrtp.gui.vip"
+    icon:
+      material: DIAMOND_BLOCK
+      name: "<gold><bold>VIP World</bold></gold>"
+      lore:
+        - "<gray>Player: %player_name%</gray>"
+        - "<gray>Balance: $%vault_eco_balance_formatted%</gray>"
+        - "<gray>Rank: %vault_rank%</gray>"
+        - " "
+        - "<gold>⭐ VIP Exclusive Area</gold>"
+        - "<dark_gray>Click to teleport.</dark_gray>"
+    settings:
+      world: world_vip
+
+  # Example 5: Location-based placeholders
+  spawn_area:
+    slot: 10
+    icon:
+      material: COMPASS
+      name: "<green><bold>Spawn Area</bold></green>"
+      lore:
+        - "<gray>Current Location:</gray>"
+        - "<gray>  World: %player_world%</gray>"
+        - "<gray>  X: %player_x%</gray>"
+        - "<gray>  Y: %player_y%</gray>"
+        - "<gray>  Z: %player_z%</gray>"
+        - " "
+        - "<dark_gray>Return to spawn area.</dark_gray>"
+    settings:
+      world: world
+      center-x: 0
+      center-z: 0
+      radius: 1000
+
+  # Example 6: Conditional formatting with placeholders
+  mining_world:
+    slot: 16
+    icon:
+      material: IRON_PICKAXE
+      name: "<blue><bold>Mining World</bold></blue>"
+      lore:
+        - "<gray>Player: %player_name%</gray>"
+        - "<gray>Mining Level: %mcmmo_level_mining%</gray>"
+        - "<gray>Power Level: %mcmmo_power_level%</gray>"
+        - " "
+        - "<yellow>Rich in ores and minerals!</yellow>"
+        - "<dark_gray>Perfect for gathering resources.</dark_gray>"
+    settings:
+      world: world_mining
+
+  # Example 7: Time-based placeholders
+  farmland:
+    slot: 12
+    icon:
+      material: WHEAT
+      name: "<yellow><bold>Farmland</bold></yellow>"
+      lore:
+        - "<gray>Server Time: %server_time_HH:mm:ss%</gray>"
+        - "<gray>Online Players: %server_online%/%server_max_players%</gray>"
+        - "<gray>Your Playtime: %statistic_time_played%</gray>"
+        - " "
+        - "<green>Peaceful farming area</green>"
+        - "<dark_gray>Ideal for building and farming.</dark_gray>"
+    settings:
+      world: world
+      biomes:
+        include:
+          - PLAINS
+          - SUNFLOWER_PLAINS
+
+# Common PlaceholderAPI Placeholders:
+# 
+# Player Info:
+#   %player_name% - Player's name
+#   %player_displayname% - Player's display name
+#   %player_uuid% - Player's UUID
+#   %player_health% - Current health
+#   %player_max_health% - Maximum health
+#   %player_level% - Experience level
+#   %player_exp% - Current experience
+#   %player_food_level% - Food level
+#   %player_world% - Current world name
+#   %player_x%, %player_y%, %player_z% - Current coordinates
+#
+# Server Info:
+#   %server_name% - Server name
+#   %server_online% - Online players count
+#   %server_max_players% - Max players
+#   %server_tps% - Server TPS
+#   %server_time_HH:mm:ss% - Formatted server time
+#
+# Statistics (requires Statistics expansion):
+#   %statistic_deaths% - Death count
+#   %statistic_time_played% - Time played
+#   %statistic_mob_kills% - Mob kills
+#   %statistic_player_kills% - Player kills
+#
+# Economy (requires Vault):
+#   %vault_eco_balance% - Player balance
+#   %vault_eco_balance_formatted% - Formatted balance
+#   %vault_rank% - Player rank
+#
+# McMMO (requires McMMO):
+#   %mcmmo_level_<skill>% - Skill level (e.g., %mcmmo_level_mining%)
+#   %mcmmo_power_level% - Total power level
+#
+# For a complete list of available placeholders, visit:
+# https://github.com/PlaceholderAPI/PlaceholderAPI/wiki/Placeholders

@@ -1,0 +1,43 @@
+name: EzRTP
+main: com.skyblockexp.ezrtp.EzRtpPlugin
+version: ${project.version}
+description: Random teleport command and join handler for survival networks.
+api-version: '1.13'
+softdepend:
+  - Vault
+  - EzEconomy
+  - WorldGuard
+  - GriefPrevention
+  - PlaceholderAPI
+  - Chunky
+commands:
+  rtp:
+    description: Teleport to a random safe location in the configured world.
+    usage: /<command>
+    permission: ezrtp.use
+  forcertp:
+    description: Force teleport a player to a random safe location, bypassing restrictions.
+    usage: /<command> <player> [world]
+    permission: ezrtp.forcertp
+permissions:
+  ezrtp.use:
+    description: Allows use of the /rtp command.
+    default: true
+  ezrtp.reload:
+    description: Allows reloading the EzRTP configuration.
+    default: op
+  ezrtp.stats:
+    description: Allows viewing RTP statistics.
+    default: op
+  ezrtp.heatmap:
+    description: Allows viewing the RTP heatmap visualization.
+    default: op
+  ezrtp.heatmap.fake:
+    description: Allows injecting simulated RTP locations via /rtp fake.
+    default: op
+  ezrtp.queue.bypass:
+    description: Allows bypassing the random teleport queue.
+    default: op
+  ezrtp.forcertp:
+    description: Allows forcing random teleport on other players.
+    default: op
