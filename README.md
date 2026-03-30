@@ -7,13 +7,12 @@
 EzRTP is a production-focused random teleport plugin for Minecraft networks.
 It is designed for **safety-first teleportation**, **cross-platform compatibility**, and **configuration-driven control** for server owners.
 
-Inspired by the structure and professionalism of your EzEconomy project, this README is designed to make EzRTP ready for open-source presentation.
-
----
-
-## Download & Project Pages
+## Download EzRTP on Modrinth
 
 - Modrinth: https://modrinth.com/plugin/ezplugins-ezrtp
+
+## Other resource pages
+
 - SpigotMC: https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/
 - Hangar: https://hangar.papermc.io/EzPlugins/EzRTP
 
