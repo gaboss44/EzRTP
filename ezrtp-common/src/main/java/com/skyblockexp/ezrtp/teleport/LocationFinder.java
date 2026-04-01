@@ -110,7 +110,7 @@ public final class LocationFinder {
             // Try fallback cache
             if (currentSettings.isEnableFallbackToCache() && biomeCache.isEnabled()) {
                 cacheChecked = true;
-                Location cachedLocation = biomeCache.getRandomCachedLocation(world);
+                Location cachedLocation = getFallbackCachedLocation(world, currentSettings, false);
                 if (cachedLocation != null) {
                     return CompletableFuture.completedFuture(new SearchResult(Optional.of(cachedLocation), false, true, true, true, false, SearchLimitType.NONE));
                 }
@@ -219,7 +219,7 @@ public final class LocationFinder {
 
             if (currentSettings.isEnableFallbackToCache() && biomeCache.isEnabled()) {
                 boolean attemptedCacheLookup = true;
-                Location cachedLocation = biomeCache.getRandomCachedLocation(world);
+                Location cachedLocation = getFallbackCachedLocation(world, currentSettings, false);
                 if (cachedLocation != null) {
                     return CompletableFuture.completedFuture(new SearchResult(Optional.of(cachedLocation), false, true, true, true, false, SearchLimitType.NONE));
                 }
@@ -603,6 +603,27 @@ public final class LocationFinder {
         return settings.getMaximumRadius();
     }
 
+    private Location getFallbackCachedLocation(World world, RandomTeleportSettings settings, boolean requireSafety) {
+        if (biomeCache == null || !biomeCache.isEnabled() || world == null) {
+            return null;
+        }
+        int attempts = 8;
+        for (int i = 0; i < attempts; i++) {
+            Location cachedLocation = biomeCache.getRandomCachedLocation(world);
+            if (cachedLocation == null) {
+                return null;
+            }
+            if (requireSafety && !validator.isSafe(cachedLocation, settings)) {
+                continue;
+            }
+            if (validator.isProtectedByClaims(cachedLocation, settings)) {
+                continue;
+            }
+            return cachedLocation;
+        }
+        return null;
+    }
+
     public CompletableFuture<Location> generateSafeLocationForChunk(World world, int chunkX, int chunkZ, RandomTeleportSettings currentSettings) {
         if (world == null || currentSettings == null) return CompletableFuture.completedFuture(null);
 
@@ -668,7 +689,7 @@ public final class LocationFinder {
         if (mode == BiomeSearchSettings.FailoverMode.CACHE && biomeCache.isEnabled()) {
             cacheFailoverAttempted = true;
             cacheChecked = true;
-            Location cachedLocation = biomeCache.getRandomCachedLocation(world);
+            Location cachedLocation = getFallbackCachedLocation(world, currentSettings, false);
             if (cachedLocation != null) {
                 cacheFailoverProducedLocation = true;
                 logLimitDebug(world, currentSettings, context, limitType, elapsedMillis, effectiveAttemptLimit,
