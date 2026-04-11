@@ -2,7 +2,7 @@ package com.skyblockexp.ezrtp.teleport;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.popcraft.chunky.api.ChunkyAPI;
+// ChunkyAPI is optional; accept a runtime reference without compile-time dependency
 
 import java.util.Map;
 import java.util.Set;
@@ -70,24 +70,10 @@ public final class ChunkyWarmupCoordinator {
      * @param chunkyAPI The Chunky API instance to register listeners with
      * @param plugin The plugin instance for logging and scheduling tasks
      */
-    public void registerWithChunky(ChunkyAPI chunkyAPI, JavaPlugin plugin) {
-        if (chunkyAPI == null) return;
-
-        // Register listeners for Chunky generation events
-        try {
-            chunkyAPI.onGenerationComplete(event -> {
-                // Note: Chunky events don't currently expose per-chunk details in a stable API,
-                // so we treat completion as a general hint that planned regions are likely ready.
-                // Future Chunky versions may provide more granular events.
-                plugin.getLogger().info("[EzRTP] Chunky generation completed");
-            });
-            chunkyAPI.onGenerationProgress(event -> {
-                // Progress events are logged but not used for chunk marking due to API limitations.
-                // This could be enhanced if Chunky provides per-chunk progress details.
-            });
-        } catch (Throwable t) {
-            plugin.getLogger().warning("[EzRTP] Failed to register Chunky listeners: " + t.getMessage());
-        }
+    public void registerWithChunky(ChunkyProvider chunkyProvider, JavaPlugin plugin) {
+        if (chunkyProvider == null) return;
+        // Let provider register listeners if it wants to
+        chunkyProvider.registerListeners(plugin);
 
         // Schedule periodic cleanup to prevent memory buildup from old entries
         try {

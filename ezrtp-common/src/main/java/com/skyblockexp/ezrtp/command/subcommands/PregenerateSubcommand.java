@@ -7,8 +7,10 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 import com.skyblockexp.ezrtp.util.MessageUtil;
-import org.popcraft.chunky.api.ChunkyAPI;
+// ChunkyAPI is optional at runtime; accept as Object to avoid compile-time dependency
 import com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator;
+import com.skyblockexp.ezrtp.teleport.ChunkyProvider;
+import com.skyblockexp.ezrtp.teleport.ChunkyAdapter;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,10 +23,10 @@ import java.util.stream.Collectors;
 public class PregenerateSubcommand extends Subcommand {
 
     private final EzRtpPlugin plugin;
-    private final ChunkyAPI chunkyAPI;
+    private final ChunkyProvider chunkyAPI;
     private final ChunkyWarmupCoordinator chunkyWarmupCoordinator;
 
-    public PregenerateSubcommand(EzRtpPlugin plugin, ChunkyAPI chunkyAPI, ChunkyWarmupCoordinator chunkyWarmupCoordinator) {
+    public PregenerateSubcommand(EzRtpPlugin plugin, ChunkyProvider chunkyAPI, ChunkyWarmupCoordinator chunkyWarmupCoordinator) {
         super("pregenerate", "ezrtp.pregenerate");
         this.plugin = plugin;
         this.chunkyAPI = chunkyAPI;
@@ -68,10 +70,12 @@ public class PregenerateSubcommand extends Subcommand {
             return true;
         }
 
-        if (chunkyAPI.isRunning(worldName)) {
-            MessageUtil.send(sender, "<red>Pregeneration is already running for world '" + worldName + "'.</red>");
-            return true;
-        }
+        try {
+            if (ChunkyAdapter.isRunning(chunkyAPI, worldName)) {
+                MessageUtil.send(sender, "<red>Pregeneration is already running for world '" + worldName + "'.</red>");
+                return true;
+            }
+        } catch (Throwable ignored) {}
 
         // Use default shape and pattern from config, or defaults
         String shape = "circle";
@@ -90,7 +94,7 @@ public class PregenerateSubcommand extends Subcommand {
             double centerX = Math.cos(angle) * distance;
             double centerZ = Math.sin(angle) * distance;
 
-            boolean started = chunkyAPI.startTask(worldName, shape, centerX, centerZ, smallRadius, smallRadius, pattern);
+            boolean started = ChunkyAdapter.startTask(chunkyAPI, worldName, shape, centerX, centerZ, smallRadius, smallRadius, pattern);
             if (started) {
                 anyStarted = true;
                 if (chunkyWarmupCoordinator != null) {

@@ -27,7 +27,7 @@ import org.bukkit.block.BlockFace;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import org.popcraft.chunky.api.ChunkyAPI;
+// ChunkyAPI is optional at runtime; use Object and ChunkyAdapter for runtime calls
 
 /**
  * Handles the asynchronous finding of safe teleport locations.
@@ -47,7 +47,7 @@ public final class LocationFinder {
     private final LocationValidator validator;
     private final SearchFilterChain searchFilterChain;
     private volatile BiomeSearchStrategy searchStrategy;
-    private final org.popcraft.chunky.api.ChunkyAPI chunkyAPI;
+    private final ChunkyProvider chunkyAPI;
     private final com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator;
     private final PlatformWorldAccess platformWorldAccess;
     private final DebugFileLogger debugFileLogger;
@@ -60,7 +60,7 @@ public final class LocationFinder {
                           LocationValidator validator,
                           BiomeSearchStrategy searchStrategy,
                           PlatformRuntime platformRuntime,
-                          ChunkyAPI chunkyAPI,
+                          ChunkyProvider chunkyAPI,
                           com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator) {
         this.plugin = plugin;
         this.scheduler = platformRuntime != null ? platformRuntime.scheduler() : null;
@@ -377,11 +377,14 @@ public final class LocationFinder {
                 if (chunkyWarmupCoordinator != null) {
                     alreadyPlanned = chunkyWarmupCoordinator.isChunkPlannedOrGenerated(worldName, centerChunkX, centerChunkZ);
                 }
-                if (!alreadyPlanned && !chunkyAPI.isRunning(worldName)) {
-                    boolean started = chunkyAPI.startTask(worldName, currentSettings.getChunkyIntegrationSettings().getShape(), centerX, centerZ, max, max, currentSettings.getChunkyIntegrationSettings().getPattern());
-                    if (started && chunkyWarmupCoordinator != null) {
-                        chunkyWarmupCoordinator.markRegionPlanned(worldName, centerChunkX, centerChunkZ, radiusChunks);
+                try {
+                    if (!alreadyPlanned && !chunkyAPI.isRunning(worldName)) {
+                        boolean started = chunkyAPI.startTask(worldName, currentSettings.getChunkyIntegrationSettings().getShape(), centerX, centerZ, max, max, currentSettings.getChunkyIntegrationSettings().getPattern());
+                        if (started && chunkyWarmupCoordinator != null) {
+                            chunkyWarmupCoordinator.markRegionPlanned(worldName, centerChunkX, centerChunkZ, radiusChunks);
+                        }
                     }
+                } catch (Throwable ignored) {
                 }
             }
         }
