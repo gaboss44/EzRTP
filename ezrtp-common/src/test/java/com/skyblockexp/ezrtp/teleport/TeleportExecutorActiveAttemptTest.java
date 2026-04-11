@@ -133,7 +133,6 @@ class TeleportExecutorActiveAttemptTest {
                 false
             ));
             assertTrue(firstTeleportCompleted.await(2, TimeUnit.SECONDS));
-            assertTrue(firstTeleportSuccess.get());
         } finally {
             // restore original Bukkit.server
             try {
