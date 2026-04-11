@@ -130,6 +130,68 @@ public final class PlaceholderUtil {
     }
 
     /**
+     * Attempts to resolve placeholders inside an Adventure Component using PlaceholderAPI's
+     * component-aware replacer when available. Falls back to serializing to MiniMessage,
+     * running the string-based replacement, and parsing back to a Component.
+     */
+    public static net.kyori.adventure.text.Component resolvePlaceholdersComponent(Object player, net.kyori.adventure.text.Component component, Logger logger) {
+        if (component == null) return net.kyori.adventure.text.Component.empty();
+        if (!isPlaceholderAPIAvailable(logger)) return component;
+
+        // Try reflection path that uses PlaceholderAPI's component replacer if present.
+        try {
+            ClassLoader papiLoader = Class.forName("me.clip.placeholderapi.PlaceholderAPI").getClassLoader();
+
+            // Load MiniMessage in PAPI's classloader to create runtime Component instances there.
+            Class<?> mmClass = Class.forName("net.kyori.adventure.text.minimessage.MiniMessage", true, papiLoader);
+            java.lang.reflect.Method mmFactory = mmClass.getMethod("miniMessage");
+            Object mmInst = mmFactory.invoke(null);
+            java.lang.reflect.Method deser = mmClass.getMethod("deserialize", String.class);
+
+            // Serialize our component to MiniMessage string, then deserialize with PAPI's MiniMessage
+            String mm = com.skyblockexp.ezrtp.util.MessageUtil.serializeToMiniMessage(component);
+            Object runtimeComp = deser.invoke(mmInst, mm);
+
+            // Look for a PAPI component replacer class and method
+            try {
+                Class<?> papiCompClass = Class.forName("me.clip.placeholderapi.PAPIComponents", true, papiLoader);
+                for (java.lang.reflect.Method m : papiCompClass.getMethods()) {
+                    String name = m.getName().toLowerCase();
+                    if (!(name.contains("replace") || name.contains("resolve") || name.contains("parse"))) continue;
+                    Class<?>[] params = m.getParameterTypes();
+                    if (params.length != 2) continue;
+                    // Try invoking with (Component, Player)
+                    try {
+                        Object result = m.invoke(null, runtimeComp, player);
+                        if (result != null) {
+                            // Serialize result using PAPI's MiniMessage and parse back in plugin classloader
+                            java.lang.reflect.Method serialize = mmClass.getMethod("serialize", Class.forName("net.kyori.adventure.text.Component", true, papiLoader));
+                            String outMm = (String) serialize.invoke(mmInst, result);
+                            return com.skyblockexp.ezrtp.util.MessageUtil.parseMiniMessage(outMm);
+                        }
+                    } catch (IllegalArgumentException | ReflectiveOperationException ignored) {
+                        // try next candidate
+                    }
+                }
+            } catch (ClassNotFoundException ignored) {
+                // PAPIComponents not present - fall back to string flow below
+            }
+        } catch (Throwable t) {
+            // Reflection failed; we'll fall back to string-based replacement below
+        }
+
+        // Fallback: serialize -> string placeholders -> parse back
+        try {
+            String mm = com.skyblockexp.ezrtp.util.MessageUtil.serializeToMiniMessage(component);
+            String replaced = resolvePlaceholders(player, mm, logger);
+            return com.skyblockexp.ezrtp.util.MessageUtil.parseMiniMessage(replaced);
+        } catch (Throwable t) {
+            logger.warning("Failed to resolve component placeholders: " + t.getMessage());
+            return component;
+        }
+    }
+
+    /**
      * Formats seconds into a human-readable time string (e.g., "1h 30m 45s").
      * 
      * @param totalSeconds The total number of seconds to format

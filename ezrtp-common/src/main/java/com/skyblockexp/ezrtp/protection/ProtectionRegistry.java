@@ -15,10 +15,16 @@ public final class ProtectionRegistry {
     private final Logger logger;
 
     public ProtectionRegistry(JavaPlugin plugin) {
-        this.logger = plugin.getLogger();
-        PluginManager pluginManager = plugin.getServer().getPluginManager();
-        registerProvider(new WorldGuardProtectionProvider(pluginManager, logger));
-        registerProvider(new GriefPreventionProtectionProvider(pluginManager, logger));
+        this(plugin.getServer() != null ? plugin.getServer().getPluginManager() : null, plugin.getLogger());
+    }
+
+    /**
+     * Test-friendly constructor that accepts a PluginManager and Logger directly.
+     */
+    public ProtectionRegistry(PluginManager pluginManager, Logger logger) {
+        this.logger = logger != null ? logger : java.util.logging.Logger.getAnonymousLogger();
+        registerProvider(new WorldGuardProtectionProvider(pluginManager, this.logger));
+        registerProvider(new GriefPreventionProtectionProvider(pluginManager, this.logger));
     }
 
     public Optional<String> findProtectionProvider(Location location, ProtectionSettings settings) {
