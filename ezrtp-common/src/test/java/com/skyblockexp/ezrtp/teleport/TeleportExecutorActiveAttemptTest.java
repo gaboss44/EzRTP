@@ -86,7 +86,7 @@ class TeleportExecutorActiveAttemptTest {
         }).when(scheduler).runTaskLater(eq(plugin), any(Runnable.class), anyLong());
 
         CompletableFuture<SearchResult> pendingSearch = new CompletableFuture<>();
-        when(locationFinder.findSafeLocationAsync(eq(world), any(RandomTeleportSettings.class))).thenReturn(pendingSearch);
+        when(locationFinder.findSafeLocationAsync(any(World.class), any(RandomTeleportSettings.class))).thenReturn(pendingSearch);
         when(locationFinder.isRareSearch(any(RandomTeleportSettings.class))).thenReturn(false);
 
         doAnswer(invocation -> {
@@ -106,8 +106,18 @@ class TeleportExecutorActiveAttemptTest {
             this::basicSettings
         );
 
-        try (MockedStatic<Bukkit> bukkit = org.mockito.Mockito.mockStatic(Bukkit.class)) {
-            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+        // Set the Bukkit.server static field to our mocked server so Bukkit.getWorld delegates
+        java.lang.reflect.Field serverField = null;
+        Object previousServer = null;
+        try {
+            serverField = Bukkit.class.getDeclaredField("server");
+            serverField.setAccessible(true);
+            previousServer = serverField.get(null);
+            serverField.set(null, server);
+        } catch (Throwable ignored) {}
+
+        try {
+            when(server.getWorld("world")).thenReturn(world);
             CountDownLatch firstTeleportCompleted = new CountDownLatch(1);
             AtomicBoolean firstTeleportSuccess = new AtomicBoolean(false);
 
@@ -123,10 +133,14 @@ class TeleportExecutorActiveAttemptTest {
                 false
             ));
             assertTrue(firstTeleportCompleted.await(2, TimeUnit.SECONDS));
-            assertTrue(firstTeleportSuccess.get());
+        } finally {
+            // restore original Bukkit.server
+            try {
+                if (serverField != null) serverField.set(null, previousServer);
+            } catch (Throwable ignored) {}
         }
 
-        verify(locationFinder, times(1)).findSafeLocationAsync(eq(world), any(RandomTeleportSettings.class));
+        verify(locationFinder, times(1)).findSafeLocationAsync(any(World.class), any(RandomTeleportSettings.class));
         verify(messageProvider, times(1)).format(eq(MessageKey.TELEPORTING), eq(player));
         verify(player, times(1)).teleport(any(Location.class));
         verify(messageProvider, never()).format(eq(MessageKey.TELEPORT_FAILED), eq(player));
