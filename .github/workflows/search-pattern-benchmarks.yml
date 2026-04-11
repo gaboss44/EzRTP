@@ -46,7 +46,7 @@ jobs:
             | tee benchmark-results/${{ matrix.software }}-${{ matrix.pattern }}.log
 
       - name: Upload benchmark artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-${{ matrix.software }}-${{ matrix.pattern }}
           path: benchmark-results/${{ matrix.software }}-${{ matrix.pattern }}.log
@@ -85,7 +85,7 @@ jobs:
           cat benchmark-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload summary artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-summary
           path: benchmark-summary.md
