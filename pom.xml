@@ -4,7 +4,7 @@
 
   <groupId>com.skyblockexp</groupId>
   <artifactId>ezrtp-parent</artifactId>
-  <version>2.0.1</version>
+  <version>2.0.2</version>
   <packaging>pom</packaging>
   <name>EzRTP Parent</name>
   <description>Aggregator POM for EzRTP multi-module build</description>
@@ -27,7 +27,7 @@
     <minimessage.version>4.16.0</minimessage.version>
     <junit.jupiter.version>6.0.3</junit.jupiter.version>
     <mockito.version>5.23.0</mockito.version>
-    <spotless.version>2.43.0</spotless.version>
+    <spotless.version>3.4.0</spotless.version>
   </properties>
 
   <dependencyManagement>
@@ -101,7 +101,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.11.0</version>
+          <version>3.15.0</version>
           <configuration>
             <release>${maven.compiler.release}</release>
           </configuration>
@@ -109,9 +109,14 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
+<<<<<<< HEAD
           <version>3.1.2</version>
+=======
+          <version>3.5.5</version>
+>>>>>>> 83c91454d927d45be2bdaa974451fbb974a18cf7
           <configuration>
             <!-- Run only unit tests here; exclude integration/feature tests named *IntegrationTest -->
+            <useModulePath>false</useModulePath>
             <includes>
               <include>**/*Test.java</include>
             </includes>
