@@ -25,7 +25,7 @@
     <paper.api.version>1.19.4-R0.1-SNAPSHOT</paper.api.version>
     <kyori.version>4.26.1</kyori.version>
     <minimessage.version>4.16.0</minimessage.version>
-    <junit.jupiter.version>5.10.2</junit.jupiter.version>
+    <junit.jupiter.version>6.0.3</junit.jupiter.version>
     <mockito.version>5.23.0</mockito.version>
     <spotless.version>2.43.0</spotless.version>
   </properties>
