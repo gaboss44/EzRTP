@@ -23,10 +23,10 @@
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.release>17</maven.compiler.release>
     <paper.api.version>1.19.4-R0.1-SNAPSHOT</paper.api.version>
-    <kyori.version>4.16.0</kyori.version>
+    <kyori.version>4.26.1</kyori.version>
     <minimessage.version>4.16.0</minimessage.version>
     <junit.jupiter.version>5.10.2</junit.jupiter.version>
-    <mockito.version>5.14.2</mockito.version>
+    <mockito.version>5.23.0</mockito.version>
     <spotless.version>2.43.0</spotless.version>
   </properties>
 
@@ -124,7 +124,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>2.22.2</version>
+          <version>3.5.5</version>
           <configuration>
             <!-- Run integration/feature tests here -->
             <includes>
@@ -144,12 +144,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.4.2</version>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.5.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
