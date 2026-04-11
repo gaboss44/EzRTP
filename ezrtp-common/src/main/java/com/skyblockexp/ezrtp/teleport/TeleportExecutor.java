@@ -173,7 +173,7 @@ public final class TeleportExecutor {
                                  TeleportReason reason,
                                  Consumer<Boolean> callback,
                                  Runnable completionHook) {
-        World world = Bukkit.getWorld(teleportSettings.getWorldName());
+        World world = plugin.getServer().getWorld(teleportSettings.getWorldName());
         if (world == null) {
             com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.WORLD_MISSING,
                 Map.of("world", teleportSettings.getWorldName()), player));

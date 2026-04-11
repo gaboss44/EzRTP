@@ -17,9 +17,11 @@ class MessageUtilBukkitAudiencesTest {
     @Test
     void sendsUsingBukkitAudiencesWhenAvailable() throws Exception {
         Player player = mock(Player.class);
-
         AtomicReference<Component> captured = new AtomicReference<>();
         PlatformMessageService previous = PlatformMessageServiceRegistry.get();
+        String previousPrefix = MessageUtil.getPrefix();
+        // ensure tests are deterministic regardless of global prefix state
+        MessageUtil.setPrefix("");
         PlatformMessageServiceRegistry.register(new PlatformMessageService() {
             @Override
             public String resolvePlaceholders(Object player, String text, Logger logger) {
@@ -44,6 +46,8 @@ class MessageUtilBukkitAudiencesTest {
             } else {
                 PlatformMessageServiceRegistry.unregister();
             }
+            // restore global prefix
+            MessageUtil.setPrefix(previousPrefix);
         }
     }
 }
