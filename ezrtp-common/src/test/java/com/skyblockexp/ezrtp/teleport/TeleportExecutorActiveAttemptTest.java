@@ -86,7 +86,7 @@ class TeleportExecutorActiveAttemptTest {
         }).when(scheduler).runTaskLater(eq(plugin), any(Runnable.class), anyLong());
 
         CompletableFuture<SearchResult> pendingSearch = new CompletableFuture<>();
-        when(locationFinder.findSafeLocationAsync(eq(world), any(RandomTeleportSettings.class))).thenReturn(pendingSearch);
+        when(locationFinder.findSafeLocationAsync(any(World.class), any(RandomTeleportSettings.class))).thenReturn(pendingSearch);
         when(locationFinder.isRareSearch(any(RandomTeleportSettings.class))).thenReturn(false);
 
         doAnswer(invocation -> {
@@ -141,7 +141,7 @@ class TeleportExecutorActiveAttemptTest {
             } catch (Throwable ignored) {}
         }
 
-        verify(locationFinder, times(1)).findSafeLocationAsync(eq(world), any(RandomTeleportSettings.class));
+        verify(locationFinder, times(1)).findSafeLocationAsync(any(World.class), any(RandomTeleportSettings.class));
         verify(messageProvider, times(1)).format(eq(MessageKey.TELEPORTING), eq(player));
         verify(player, times(1)).teleport(any(Location.class));
         verify(messageProvider, never()).format(eq(MessageKey.TELEPORT_FAILED), eq(player));
