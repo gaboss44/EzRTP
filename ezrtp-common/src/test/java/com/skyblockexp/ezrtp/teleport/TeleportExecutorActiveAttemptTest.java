@@ -106,8 +106,18 @@ class TeleportExecutorActiveAttemptTest {
             this::basicSettings
         );
 
-        try (MockedStatic<Bukkit> bukkit = org.mockito.Mockito.mockStatic(Bukkit.class)) {
-            bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
+        // Set the Bukkit.server static field to our mocked server so Bukkit.getWorld delegates
+        java.lang.reflect.Field serverField = null;
+        Object previousServer = null;
+        try {
+            serverField = Bukkit.class.getDeclaredField("server");
+            serverField.setAccessible(true);
+            previousServer = serverField.get(null);
+            serverField.set(null, server);
+        } catch (Throwable ignored) {}
+
+        try {
+            when(server.getWorld("world")).thenReturn(world);
             CountDownLatch firstTeleportCompleted = new CountDownLatch(1);
             AtomicBoolean firstTeleportSuccess = new AtomicBoolean(false);
 
@@ -124,6 +134,11 @@ class TeleportExecutorActiveAttemptTest {
             ));
             assertTrue(firstTeleportCompleted.await(2, TimeUnit.SECONDS));
             assertTrue(firstTeleportSuccess.get());
+        } finally {
+            // restore original Bukkit.server
+            try {
+                if (serverField != null) serverField.set(null, previousServer);
+            } catch (Throwable ignored) {}
         }
 
         verify(locationFinder, times(1)).findSafeLocationAsync(eq(world), any(RandomTeleportSettings.class));
