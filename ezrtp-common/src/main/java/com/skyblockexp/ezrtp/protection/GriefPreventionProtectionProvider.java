@@ -34,23 +34,39 @@ public final class GriefPreventionProtectionProvider implements ProtectionProvid
             Field dataStoreField = pluginClass.getField("dataStore");
             resolvedDataStore = dataStoreField.get(plugin);
             if (resolvedDataStore != null) {
-                Class<?> dataStoreInterface = classLoader.loadClass("me.ryanhamshire.GriefPrevention.DataStore");
+                // Try several possible getClaimAt signatures across GP versions.
                 try {
+                    Class<?> dataStoreInterface = classLoader.loadClass("me.ryanhamshire.GriefPrevention.DataStore");
                     Class<?> claimClass = classLoader.loadClass("me.ryanhamshire.GriefPrevention.Claim");
-                    resolvedGetClaimAt = dataStoreInterface.getMethod("getClaimAt", Location.class, boolean.class, boolean.class, claimClass);
-                } catch (NoSuchMethodException e) {
+                    // Preferred signature: getClaimAt(Location, boolean, boolean, Claim)
                     try {
-                        Class<?> claimClass = classLoader.loadClass("me.ryanhamshire.GriefPrevention.Claim");
-                        resolvedGetClaimAt = resolvedDataStore.getClass().getMethod("getClaimAt", Location.class, boolean.class, boolean.class, claimClass);
-                    } catch (NoSuchMethodException ex2) {
-                        logger.log(Level.WARNING, "GriefPrevention DataStore does not have the required getClaimAt method.", ex2);
+                        resolvedGetClaimAt = dataStoreInterface.getMethod("getClaimAt", Location.class, boolean.class, boolean.class, claimClass);
+                    } catch (NoSuchMethodException ignored) {
+                        // Try on the concrete dataStore class
+                        try {
+                            resolvedGetClaimAt = resolvedDataStore.getClass().getMethod("getClaimAt", Location.class, boolean.class, boolean.class, claimClass);
+                        } catch (NoSuchMethodException ignored2) {
+                            // Try older signature: getClaimAt(Location, boolean, boolean)
+                            try {
+                                resolvedGetClaimAt = resolvedDataStore.getClass().getMethod("getClaimAt", Location.class, boolean.class, boolean.class);
+                            } catch (NoSuchMethodException ignored3) {
+                                // Try very old signature: getClaimAt(Location)
+                                try {
+                                    resolvedGetClaimAt = resolvedDataStore.getClass().getMethod("getClaimAt", Location.class);
+                                } catch (NoSuchMethodException ex2) {
+                                    logger.log(Level.WARNING, "GriefPrevention DataStore does not have a compatible getClaimAt method.", ex2);
+                                }
+                            }
+                        }
                     }
-                }
 
-                if (resolvedGetClaimAt != null) {
-                    resolvedAvailable = true;
-                } else {
-                    logger.warning("GriefPrevention getClaimAt method not found; RTP protection will be disabled for this provider.");
+                    if (resolvedGetClaimAt != null) {
+                        resolvedAvailable = true;
+                    } else {
+                        logger.warning("GriefPrevention getClaimAt method not found; RTP protection will be disabled for this provider.");
+                    }
+                } catch (ClassNotFoundException cnfe) {
+                    logger.log(Level.WARNING, "GriefPrevention classes not found during reflection setup.", cnfe);
                 }
             } else {
                 logger.warning("GriefPrevention dataStore field is null; RTP protection will be disabled for this provider.");
@@ -79,8 +95,15 @@ public final class GriefPreventionProtectionProvider implements ProtectionProvid
             return false;
         }
         try {
-            Object claim = getClaimAtMethod.invoke(dataStore, location, false, false, null);
-            
+            int paramCount = getClaimAtMethod.getParameterCount();
+            Object claim;
+            if (paramCount == 4) {
+                claim = getClaimAtMethod.invoke(dataStore, location, false, false, null);
+            } else if (paramCount == 3) {
+                claim = getClaimAtMethod.invoke(dataStore, location, false, false);
+            } else {
+                claim = getClaimAtMethod.invoke(dataStore, location);
+            }
             return claim != null;
         } catch (ReflectiveOperationException | RuntimeException ex) {
             logger.log(Level.WARNING, "Failed to query GriefPrevention claims for RTP protection check.", ex);
