@@ -29,7 +29,9 @@ import com.skyblockexp.ezrtp.update.SpigotUpdateChecker;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.Plugin;
-import org.popcraft.chunky.api.ChunkyAPI;
+import com.skyblockexp.ezrtp.teleport.ChunkyProvider;
+import com.skyblockexp.ezrtp.teleport.ChunkyRuntimeProvider;
+// Chunky API is optional; use runtime loader via ChunkyRuntimeProvider
 
 import java.io.File;
 import java.util.ArrayList;
@@ -67,7 +69,7 @@ public final class EzRtpPluginBootstrap {
     private RtpUsageStorage usageStorage;
     private ProtectionRegistry protectionRegistry;
     private MessageProvider messageProvider;
-    private ChunkyAPI chunkyAPI;
+    private ChunkyProvider chunkyAPI;
     private EzRtpMetricsRegistrar metricsRegistrar;
     private UsageResetScheduler usageResetScheduler;
     private final HeatmapSimulationStore heatmapSimulationStore = new HeatmapSimulationStore();
@@ -191,24 +193,24 @@ public final class EzRtpPluginBootstrap {
         // Load Chunky API only if Chunky integration is enabled in config
         RandomTeleportSettings defaultSettings = configuration.getDefaultSettings();
         boolean chunkyIntegrationEnabled = defaultSettings.getChunkyIntegrationSettings().isEnabled();
-        
+
         if (chunkyIntegrationEnabled && chunkyAPI == null) {
             try {
                 Class<?> chunkyApiClass = Class.forName("org.popcraft.chunky.api.ChunkyAPI");
-                chunkyAPI = org.bukkit.Bukkit.getServicesManager().load(chunkyApiClass.asSubclass(ChunkyAPI.class));
-                if (chunkyAPI != null) {
-                    chunkyAPI.onGenerationComplete(event -> plugin.getLogger().info("Chunky pregeneration completed"));
-                    chunkyAPI.onGenerationProgress(event -> {
-                        // Logging progress without accessing event methods to avoid API compatibility issues
-                    });
-                    // Wire coordinator to Chunky listeners
-                    if (chunkyWarmupCoordinator != null) {
-                        chunkyWarmupCoordinator.registerWithChunky(chunkyAPI, plugin);
+                Object loaded = org.bukkit.Bukkit.getServicesManager().load((Class) chunkyApiClass);
+                if (loaded != null) {
+                    ChunkyProvider provider = ChunkyRuntimeProvider.loadProvider();
+                    if (provider != null) {
+                        provider.registerListeners(plugin);
+                        if (chunkyWarmupCoordinator != null) {
+                            chunkyWarmupCoordinator.registerWithChunky(provider, plugin);
+                        }
+                        this.chunkyAPI = provider;
                     }
                 }
             } catch (ClassNotFoundException e) {
                 plugin.getLogger().info("Chunky plugin not found - Chunky integration disabled.");
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 plugin.getLogger().warning("Failed to initialize Chunky integration: " + e.getMessage());
             }
         } else if (!chunkyIntegrationEnabled && chunkyAPI != null) {
@@ -344,7 +346,7 @@ public final class EzRtpPluginBootstrap {
                 usageStorage);
     }
 
-    public ChunkyAPI getChunkyAPI() {
+    public Object getChunkyAPI() {
         return chunkyAPI;
     }
 

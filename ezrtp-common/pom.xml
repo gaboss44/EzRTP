@@ -48,12 +48,7 @@
       <version>1.7.1</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.popcraft</groupId>
-      <artifactId>chunky-common</artifactId>
-      <version>1.4.58</version>
-      <scope>provided</scope>
-    </dependency>
+    <!-- Chunky integration is runtime-optional; handled by ChunkyRuntimeProvider -->
     <dependency>
       <groupId>org.bstats</groupId>
       <artifactId>bstats-bukkit</artifactId>

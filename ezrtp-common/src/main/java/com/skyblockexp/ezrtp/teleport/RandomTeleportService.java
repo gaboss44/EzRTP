@@ -29,7 +29,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.popcraft.chunky.api.ChunkyAPI;
+// ChunkyAPI is optional at runtime; keep a runtime reference without a compile-time dependency.
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -53,7 +53,7 @@ public final class RandomTeleportService {
     private final TeleportExecutor teleportExecutor;
     private final DebugFileLogger debugFileLogger;
 
-    private final org.popcraft.chunky.api.ChunkyAPI chunkyAPI;
+    private final ChunkyProvider chunkyAPI;
     private final com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator;
 
     private RandomTeleportSettings settings;
@@ -69,7 +69,7 @@ public final class RandomTeleportService {
                                  MessageProvider messageProvider,
                                  ChunkLoadStrategy chunkLoadStrategy,
                                  PlatformRuntime platformRuntime,
-                                 ChunkyAPI chunkyAPI,
+                                 ChunkyProvider chunkyAPI,
                                  com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator) {
         this.plugin = plugin;
         this.chunkyAPI = chunkyAPI;
@@ -225,11 +225,16 @@ public final class RandomTeleportService {
                             plugin.getLogger().info("[EzRTP] Skipping Chunky pregeneration for biome pre-caching due to low memory");
                         } else {
                             String worldName = world.getName();
-                            if (!chunkyAPI.isRunning(worldName)) {
-                                // Use a large radius to cover potential RTP areas
-                                int radius = Math.max(10000, (int) (world.getWorldBorder().getSize() / 2));
-                                chunkyAPI.startTask(worldName, currentSettings.getChunkyIntegrationSettings().getShape(), 0, 0, radius, radius, currentSettings.getChunkyIntegrationSettings().getPattern());
-                                plugin.getLogger().info("[EzRTP] Started Chunky pregeneration for world '" + worldName + "' to support biome pre-caching.");
+                            try {
+                                if (!chunkyAPI.isRunning(worldName)) {
+                                    int radius = Math.max(10000, (int) (world.getWorldBorder().getSize() / 2));
+                                    boolean started = chunkyAPI.startTask(worldName, currentSettings.getChunkyIntegrationSettings().getShape(), 0, 0, radius, radius, currentSettings.getChunkyIntegrationSettings().getPattern());
+                                    if (started) {
+                                        plugin.getLogger().info("[EzRTP] Started Chunky pregeneration for world '" + worldName + "' to support biome pre-caching.");
+                                    }
+                                }
+                            } catch (Throwable t) {
+                                plugin.getLogger().warning("[EzRTP] Failed to interact with Chunky API: " + t.getMessage());
                             }
                         }
                     }

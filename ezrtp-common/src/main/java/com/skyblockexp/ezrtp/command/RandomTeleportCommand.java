@@ -2,6 +2,7 @@ package com.skyblockexp.ezrtp.command;
 
 import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.command.subcommands.*;
+import com.skyblockexp.ezrtp.teleport.ChunkyProvider;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.gui.RandomTeleportGuiManager;
@@ -18,7 +19,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.popcraft.chunky.api.ChunkyAPI;
+// ChunkyAPI is optional at runtime; keep as Object to avoid compile-time dependency
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -43,7 +44,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
     private final RandomTeleportGuiManager guiManager;
     private final RtpUsageStorage usageStorage;
     private final HeatmapSimulationStore heatmapSimulationStore;
-    private final ChunkyAPI chunkyAPI;
+    private final ChunkyProvider chunkyAPI;
     private final com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator;
 
     private final Map<String, Subcommand> subcommands = new HashMap<>();
@@ -56,7 +57,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
                                  RandomTeleportGuiManager guiManager,
                                  RtpUsageStorage usageStorage,
                                  HeatmapSimulationStore heatmapSimulationStore,
-                                 ChunkyAPI chunkyAPI,
+                                 ChunkyProvider chunkyAPI,
                                  com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator) {
         this.plugin = plugin;
         this.teleportServiceSupplier = teleportServiceSupplier;
