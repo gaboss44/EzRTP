@@ -109,6 +109,17 @@ public final class GuiIconFactory {
         if (raw == null || raw.isBlank()) {
             return Component.empty();
         }
+        // Prefer component-aware placeholder resolution when PlaceholderAPI supports it.
+        try {
+            Component parsed = MessageUtil.parseMiniMessage(raw);
+            Component resolvedComp = PlaceholderUtil.resolvePlaceholdersComponent(player, parsed, logger);
+            if (resolvedComp != null && !Component.empty().equals(resolvedComp)) {
+                return resolvedComp;
+            }
+        } catch (Throwable ignored) {
+            // Fall back to string-based resolution below
+        }
+
         String resolved = PlaceholderUtil.resolvePlaceholders(player, raw, logger);
         if (resolved == null || resolved.isBlank()) {
             return Component.empty();
