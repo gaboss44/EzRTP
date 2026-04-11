@@ -1,8 +1,8 @@
 # EzRTP
 
-![Minecraft Versions](https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/minecraft-versions.png)
-![Downloads](https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/downloads.png)
-![Server Software](https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/server-software.png)
+![License](https://ezbanners.org/shields/plugins/18689604-fbbc-431c-a1da-f5ce2d5e313d/license.png)
+![Downloads](https://ezbanners.org/shields/plugins/18689604-fbbc-431c-a1da-f5ce2d5e313d/downloads.png)
+![GitHub Issues](https://ezbanners.org/shields/plugins/18689604-fbbc-431c-a1da-f5ce2d5e313d/github-issues.png)
 
 EzRTP is a production-focused random teleport plugin for Minecraft networks.
 It is designed for **safety-first teleportation**, **cross-platform compatibility**, and **configuration-driven control** for server owners.
