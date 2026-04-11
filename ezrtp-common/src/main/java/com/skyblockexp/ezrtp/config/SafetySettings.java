@@ -18,13 +18,15 @@ public final class SafetySettings {
     private final int maxVerticalRescue;
     private final int maxSurfaceScanDepth;
     private final int maxSurfaceScanDepthNether;
+    private final boolean rejectLavaAboveInNether;
+    private final boolean rejectWaterAboveInOverworld;
 
     public SafetySettings(boolean placeDirtOnWater,
                           boolean rescueEnabled,
                           int maxVerticalRescue,
                           int maxSurfaceScanDepth,
                           Material placeBlockMaterial) {
-        this(placeDirtOnWater, rescueEnabled, maxVerticalRescue, maxSurfaceScanDepth, DEFAULT_MAX_SURFACE_SCAN_DEPTH_NETHER, placeBlockMaterial);
+        this(placeDirtOnWater, rescueEnabled, maxVerticalRescue, maxSurfaceScanDepth, DEFAULT_MAX_SURFACE_SCAN_DEPTH_NETHER, placeBlockMaterial, true, true);
     }
 
     public SafetySettings(boolean placeDirtOnWater,
@@ -33,6 +35,17 @@ public final class SafetySettings {
                           int maxSurfaceScanDepth,
                           int maxSurfaceScanDepthNether,
                           Material placeBlockMaterial) {
+        this(placeDirtOnWater, rescueEnabled, maxVerticalRescue, maxSurfaceScanDepth, maxSurfaceScanDepthNether, placeBlockMaterial, true, true);
+    }
+
+    public SafetySettings(boolean placeDirtOnWater,
+                          boolean rescueEnabled,
+                          int maxVerticalRescue,
+                          int maxSurfaceScanDepth,
+                          int maxSurfaceScanDepthNether,
+                          Material placeBlockMaterial,
+                          boolean rejectLavaAboveInNether,
+                          boolean rejectWaterAboveInOverworld) {
         this.placeDirtOnWater = placeDirtOnWater;
         this.rescueEnabled = rescueEnabled;
         this.maxVerticalRescue = Math.max(1, maxVerticalRescue);
@@ -44,6 +57,8 @@ public final class SafetySettings {
             Material ice = Material.matchMaterial("ICE");
             this.placeBlockMaterial = ice != null ? ice : Material.DIRT;
         }
+        this.rejectLavaAboveInNether = rejectLavaAboveInNether;
+        this.rejectWaterAboveInOverworld = rejectWaterAboveInOverworld;
     }
 
     public boolean isPlaceDirtOnWater() {
@@ -70,8 +85,16 @@ public final class SafetySettings {
         return maxSurfaceScanDepthNether;
     }
 
+    public boolean isRejectLavaAboveInNether() {
+        return rejectLavaAboveInNether;
+    }
+
+    public boolean isRejectWaterAboveInOverworld() {
+        return rejectWaterAboveInOverworld;
+    }
+
     public static SafetySettings defaults() {
-        return new SafetySettings(false, true, 6, DEFAULT_MAX_SURFACE_SCAN_DEPTH, DEFAULT_MAX_SURFACE_SCAN_DEPTH_NETHER, null);
+        return new SafetySettings(false, true, 6, DEFAULT_MAX_SURFACE_SCAN_DEPTH, DEFAULT_MAX_SURFACE_SCAN_DEPTH_NETHER, null, true, true);
     }
 
     public static SafetySettings fromConfiguration(ConfigurationSection section, SafetySettings fallback) {
@@ -117,6 +140,9 @@ public final class SafetySettings {
                 ? recovery.getInt("max-surface-scan-depth-nether", defaults.getMaxSurfaceScanDepthNether())
                 : defaults.getMaxSurfaceScanDepthNether();
 
-        return new SafetySettings(placeDirt, rescue, maxVertical, maxSurfaceScanDepth, maxSurfaceScanDepthNether, material);
+        boolean rejectLava = section.getBoolean("reject-liquid-above-nether", defaults.isRejectLavaAboveInNether());
+        boolean rejectWater = section.getBoolean("reject-liquid-above-overworld", defaults.isRejectWaterAboveInOverworld());
+
+        return new SafetySettings(placeDirt, rescue, maxVertical, maxSurfaceScanDepth, maxSurfaceScanDepthNether, material, rejectLava, rejectWater);
     }
 }

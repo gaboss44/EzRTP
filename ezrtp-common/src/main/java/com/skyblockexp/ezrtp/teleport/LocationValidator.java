@@ -50,6 +50,22 @@ public final class LocationValidator {
             return false;
         }
 
+        // Optionally reject locations with liquid directly above (lava in Nether, water in Overworld)
+        Block blockAbove = location.clone().add(0, 1, 0).getBlock();
+        if (blockAbove.isLiquid()) {
+            org.bukkit.World.Environment env = location.getWorld().getEnvironment();
+            Material aboveType = blockAbove.getType();
+            com.skyblockexp.ezrtp.config.SafetySettings safety = currentSettings.getSafetySettings();
+            if (env == World.Environment.NETHER && aboveType == Material.LAVA && safety.isRejectLavaAboveInNether()) {
+                debugReject(currentSettings, location, "Lava above destination in Nether: " + aboveType);
+                return false;
+            }
+            if (env == World.Environment.NORMAL && aboveType == Material.WATER && safety.isRejectWaterAboveInOverworld()) {
+                debugReject(currentSettings, location, "Water above destination in Overworld: " + aboveType);
+                return false;
+            }
+        }
+
         boolean waterSurface = typeBelow == Material.WATER && !destination.isLiquid();
         if (currentSettings.getUnsafeBlocks().contains(typeBelow) && !waterSurface) {
             debugReject(currentSettings, location, "Unsafe block below: " + typeBelow);
