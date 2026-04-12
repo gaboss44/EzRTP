@@ -27,6 +27,7 @@ import org.bukkit.block.BlockFace;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 // ChunkyAPI is optional at runtime; use Object and ChunkyAdapter for runtime calls
 
 /**
@@ -51,6 +52,7 @@ public final class LocationFinder {
     private final com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator;
     private final PlatformWorldAccess platformWorldAccess;
     private final DebugFileLogger debugFileLogger;
+    private final Executor biomeFilterExecutor;
 
     public LocationFinder(org.bukkit.plugin.java.JavaPlugin plugin,
                           RtpStatistics statistics,
@@ -62,6 +64,21 @@ public final class LocationFinder {
                           PlatformRuntime platformRuntime,
                           ChunkyProvider chunkyAPI,
                           com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator) {
+        this(plugin, statistics, biomeCache, rareBiomeRegistry, chunkLoadQueue, validator, searchStrategy,
+            platformRuntime, chunkyAPI, chunkyWarmupCoordinator, null);
+    }
+
+    public LocationFinder(org.bukkit.plugin.java.JavaPlugin plugin,
+                          RtpStatistics statistics,
+                          BiomeLocationCache biomeCache,
+                          RareBiomeRegistry rareBiomeRegistry,
+                          ChunkLoadQueue chunkLoadQueue,
+                          LocationValidator validator,
+                          BiomeSearchStrategy searchStrategy,
+                          PlatformRuntime platformRuntime,
+                          ChunkyProvider chunkyAPI,
+                          com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator,
+                          Executor biomeFilterExecutor) {
         this.plugin = plugin;
         this.scheduler = platformRuntime != null ? platformRuntime.scheduler() : null;
         this.statistics = statistics;
@@ -73,6 +90,7 @@ public final class LocationFinder {
         this.chunkyAPI = chunkyAPI;
         this.chunkyWarmupCoordinator = chunkyWarmupCoordinator;
         this.platformWorldAccess = platformRuntime != null ? platformRuntime.worldAccess() : null;
+        this.biomeFilterExecutor = biomeFilterExecutor;
         this.searchFilterChain = createSearchFilterChain();
         this.debugFileLogger = new DebugFileLogger(plugin);
         if (this.scheduler == null) {
@@ -137,6 +155,7 @@ public final class LocationFinder {
                     currentSettings.getMinY(), currentSettings.getMaxY(), currentSettings.getBiomeInclude(), currentSettings.getBiomeExclude(),
                     currentSettings.getProtectionSettings(), currentSettings.getPreCacheSettings(), currentSettings.getRareBiomeOptimizationSettings(),
                     currentSettings.getChunkLoadingSettings(), currentSettings.isEnableFallbackToCache(), currentSettings.getBiomeSearchSettings(),
+                    currentSettings.isBiomeFilteringEnabled(),
                     currentSettings.getSafetySettings(), currentSettings.getSearchPattern(), currentSettings.getChunkyIntegrationSettings()
                 );
             }
@@ -154,6 +173,21 @@ public final class LocationFinder {
 
         logSearchStart(world, adjustedSettings);
         SearchContext searchContext = new SearchContext(adjustedSettings.getBiomeSearchSettings(), isRareSearch(adjustedSettings));
+        // When async-mode is false, serialise this search through the dedicated single-thread executor
+        // so competing searches do not saturate the common fork-join pool.
+        if (!adjustedSettings.getBiomeSearchSettings().isAsyncMode() && biomeFilterExecutor != null) {
+            CompletableFuture<SearchResult> gate = new CompletableFuture<>();
+            final RandomTeleportSettings finalSettings = adjustedSettings;
+            final boolean finalCacheChecked = cacheChecked;
+            biomeFilterExecutor.execute(() ->
+                attemptFindLocation(world, finalSettings, 0, false, searchContext, finalCacheChecked)
+                    .whenComplete((r, ex) -> {
+                        if (ex != null) gate.completeExceptionally(ex);
+                        else gate.complete(r);
+                    })
+            );
+            return gate;
+        }
         return attemptFindLocation(world, adjustedSettings, 0, false, searchContext, cacheChecked);
     }
 
@@ -181,6 +215,7 @@ public final class LocationFinder {
                     teleportSettings.getMinY(), teleportSettings.getMaxY(), teleportSettings.getBiomeInclude(), teleportSettings.getBiomeExclude(),
                     teleportSettings.getProtectionSettings(), teleportSettings.getPreCacheSettings(), teleportSettings.getRareBiomeOptimizationSettings(),
                     teleportSettings.getChunkLoadingSettings(), teleportSettings.isEnableFallbackToCache(), teleportSettings.getBiomeSearchSettings(),
+                    teleportSettings.isBiomeFilteringEnabled(),
                     teleportSettings.getSafetySettings(), teleportSettings.getSearchPattern(), teleportSettings.getChunkyIntegrationSettings()
                 );
             }
