@@ -1,0 +1,29 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.skyblockexp</groupId>
+    <artifactId>ezrtp-parent</artifactId>
+    <version>2.0.2</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <groupId>com.skyblockexp</groupId>
+  <artifactId>ezrtp-api</artifactId>
+  <version>2.0.2</version>
+  <packaging>jar</packaging>
+  <name>EzRTP API</name>
+  <description>Lightweight public API for EzRTP intended for third-party plugins.</description>
+
+  <dependencies>
+    <!-- Provide Bukkit API at compile time only; consumers should use provided scope when building plugins. -->
+    <dependency>
+      <groupId>io.papermc.paper</groupId>
+      <artifactId>paper-api</artifactId>
+      <version>${paper.api.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+</project>

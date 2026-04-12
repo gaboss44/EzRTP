@@ -37,7 +37,7 @@ class EzRtpAPITest {
                 Player player = mock(Player.class);
 
                 // Ensure we can fetch the service and the convenience wrapper delegates
-                RandomTeleportService fetched = EzRtpAPI.getTeleportService();
+                RandomTeleportService fetched = (RandomTeleportService) EzRtpAPI.getTeleportService();
                 assert fetched == service;
 
                 EzRtpAPI.rtpPlayer(player);
@@ -55,7 +55,7 @@ class EzRtpAPITest {
 
                 Player player = mock(Player.class);
 
-                RandomTeleportService fetched = EzRtpAPI.getTeleportService();
+                RandomTeleportService fetched = (RandomTeleportService) EzRtpAPI.getTeleportService();
                 assert fetched == service;
 
                 EzRtpAPI.rtpPlayer(player);

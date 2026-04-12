@@ -17,6 +17,13 @@
   <description>Shared utilities for EzRTP (platform-independent)</description>
 
   <dependencies>
+    <!-- API module providing the public plugin API used by external plugins and tests -->
+    <dependency>
+      <groupId>com.skyblockexp</groupId>
+      <artifactId>ezrtp-api</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>net.kyori</groupId>
       <artifactId>adventure-api</artifactId>
