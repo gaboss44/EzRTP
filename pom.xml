@@ -10,6 +10,7 @@
   <description>Aggregator POM for EzRTP multi-module build</description>
 
   <modules>
+    <module>ezrtp-api</module>
     <module>ezrtp-common</module>
     <module>ezrtp-bukkit</module>
     <module>ezrtp-paper</module>

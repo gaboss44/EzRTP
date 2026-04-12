@@ -24,6 +24,8 @@ import com.skyblockexp.ezrtp.storage.MySqlRtpUsageStorage;
 import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
 import com.skyblockexp.ezrtp.storage.YamlRtpUsageStorage;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
+import com.skyblockexp.ezrtp.api.TeleportService;
+import com.skyblockexp.ezrtp.api.EzRtpAPI;
 import com.skyblockexp.ezrtp.teleport.heatmap.HeatmapSimulationStore;
 import com.skyblockexp.ezrtp.update.SpigotUpdateChecker;
 import org.bukkit.command.PluginCommand;
@@ -176,6 +178,7 @@ public final class EzRtpPluginBootstrap {
         plugin.getServer().getScheduler().cancelTasks(plugin);
         if (teleportService != null) {
             teleportService.shutdown();
+            try { EzRtpAPI.unregisterProvider(teleportService); } catch (Throwable ignored) {}
         }
         networkCoordinator.shutdown();
         plugin.getLogger().info("EzRTP plugin disabled.");
@@ -254,11 +257,13 @@ public final class EzRtpPluginBootstrap {
                 configuration.getQueueSettings(), economyService,
                 (player, settings) -> configuration.resolveTeleportCost(player, settings),
                 protectionRegistry, messageProvider, ChunkLoadStrategyRegistry.get(), PlatformRuntimeRegistry.get(), chunkyAPI, chunkyWarmupCoordinator);
+            try { EzRtpAPI.registerProvider(plugin, teleportService); } catch (Throwable ignored) {}
         } else {
             teleportService.reload(defaultSettings, configuration.getQueueSettings());
             teleportService.setEconomyService(economyService);
             teleportService.setCostResolver((player, settings) -> configuration.resolveTeleportCost(player, settings));
             teleportService.setProtectionRegistry(protectionRegistry);
+            try { EzRtpAPI.registerProvider(plugin, teleportService); } catch (Throwable ignored) {}
         }
         networkCoordinator.reload(configuration);
         RandomTeleportGuiManager guiManager = listenerRegistrar.getGuiManager();

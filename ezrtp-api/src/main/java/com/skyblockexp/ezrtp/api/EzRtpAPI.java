@@ -1,10 +1,11 @@
 package com.skyblockexp.ezrtp.api;
 
-import org.bukkit.entity.Player;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.ServicePriority;
+
 import com.skyblockexp.ezrtp.teleport.TeleportReason;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 
 import java.util.function.Consumer;
 
@@ -16,20 +17,100 @@ public final class EzRtpAPI {
 
     private EzRtpAPI() {}
 
+
+
+
     /**
-     * Locate the running EzRTP service instance using reflection. Returns null when not available.
+     * Locate the running EzRTP service instance.
+     * First attempts Bukkit's ServicesManager lookup, then falls back to plugin reflection.
      */
-    public static Object getTeleportService() {
-        var pm = Bukkit.getPluginManager();
-        if (pm == null) return null;
-        var plugin = pm.getPlugin("EzRTP");
-        if (plugin == null) return null;
+    public static TeleportService getTeleportService() {
+        // First try Bukkit ServicesManager registration (recommended and easiest to mock in tests)
         try {
-            var m = plugin.getClass().getMethod("getTeleportService");
-            return m.invoke(plugin);
-        } catch (Throwable ignored) {
-            return null;
-        }
+            var sm = Bukkit.getServicesManager();
+            if (sm != null) {
+                RegisteredServiceProvider<TeleportService> reg = sm.getRegistration(TeleportService.class);
+                if (reg != null) return reg.getProvider();
+            }
+        } catch (Throwable ignored) {}
+
+        // Fallback: direct plugin lookup via reflection
+        try {
+            var pm = Bukkit.getPluginManager();
+            if (pm != null) {
+                var plugin = pm.getPlugin("EzRTP");
+                if (plugin != null) {
+                    try {
+                        var m = plugin.getClass().getMethod("getTeleportService");
+                        Object svc = m.invoke(plugin);
+                        if (svc != null) {
+                            if (svc instanceof TeleportService) return (TeleportService) svc;
+                            return adaptToTeleportService(svc);
+                        }
+                    } catch (Throwable ignored) {
+                        // give up and return null
+                    }
+                }
+            }
+        } catch (Throwable ignored) {}
+
+        return null;
+    }
+
+    private static TeleportService adaptToTeleportService(Object svc) {
+        return new TeleportService() {
+            @Override
+            public void teleportPlayer(org.bukkit.entity.Player player, TeleportReason reason) {
+                try { var m = svc.getClass().getMethod("teleportPlayer", org.bukkit.entity.Player.class, TeleportReason.class); m.invoke(svc, player, reason); } catch (Throwable ignored) {}
+            }
+
+            @Override
+            public void teleportPlayer(org.bukkit.entity.Player player, Object settings, TeleportReason reason) {
+                try {
+                    var m = svc.getClass().getMethod("teleportPlayer", org.bukkit.entity.Player.class, settings.getClass(), TeleportReason.class);
+                    m.invoke(svc, player, settings, reason);
+                    return;
+                } catch (NoSuchMethodException ex) {
+                    try { var m = svc.getClass().getMethod("teleportPlayer", org.bukkit.entity.Player.class, Object.class, TeleportReason.class); m.invoke(svc, player, settings, reason); } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {}
+            }
+
+            @Override
+            public void teleportPlayer(org.bukkit.entity.Player player, TeleportReason reason, java.util.function.Consumer<Boolean> callback) {
+                try { var m = svc.getClass().getMethod("teleportPlayer", org.bukkit.entity.Player.class, TeleportReason.class, java.util.function.Consumer.class); m.invoke(svc, player, reason, callback); } catch (Throwable ignored) {}
+            }
+
+            @Override
+            public void teleportPlayer(org.bukkit.entity.Player player, Object settings, TeleportReason reason, java.util.function.Consumer<Boolean> callback) {
+                try {
+                    var m = svc.getClass().getMethod("teleportPlayer", org.bukkit.entity.Player.class, settings.getClass(), TeleportReason.class, java.util.function.Consumer.class);
+                    m.invoke(svc, player, settings, reason, callback);
+                    return;
+                } catch (NoSuchMethodException ex) {
+                    try { var m = svc.getClass().getMethod("teleportPlayer", org.bukkit.entity.Player.class, TeleportReason.class, java.util.function.Consumer.class); m.invoke(svc, player, reason, callback); } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {}
+            }
+        };
+    }
+
+    /**
+     * Register a TeleportService provider with Bukkit's ServicesManager.
+     */
+    public static void registerProvider(org.bukkit.plugin.Plugin plugin, TeleportService provider) {
+        if (plugin == null || provider == null) return;
+        try {
+            Bukkit.getServicesManager().register(TeleportService.class, provider, plugin, ServicePriority.Normal);
+        } catch (Throwable ignored) {}
+    }
+
+    /**
+     * Unregister a TeleportService provider from Bukkit's ServicesManager.
+     */
+    public static void unregisterProvider(TeleportService provider) {
+        if (provider == null) return;
+        try {
+            Bukkit.getServicesManager().unregister(TeleportService.class, provider);
+        } catch (Throwable ignored) {}
     }
 
     public static boolean isAvailable() {

@@ -1,68 +1,48 @@
 package com.skyblockexp.ezrtp.api;
 
-import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
 import com.skyblockexp.ezrtp.teleport.TeleportReason;
 import org.bukkit.Bukkit;
-import org.bukkit.Server;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.ServicesManager;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.PluginManager;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class EzRtpAPITest {
 
-    @Test
-    void getTeleportServiceAndRtpPlayer_delegateToService() throws Exception {
-        Server server = mock(Server.class);
-        PluginManager pluginManager = mock(PluginManager.class);
-        when(server.getPluginManager()).thenReturn(pluginManager);
-
-        RandomTeleportService service = mock(RandomTeleportService.class);
-        EzRtpPlugin ez = mock(EzRtpPlugin.class);
-        when(ez.getTeleportService()).thenReturn(service);
-        when(pluginManager.getPlugin("EzRTP")).thenReturn(ez);
-
-        boolean mockedStaticUsed = false;
+    static {
+        // Ensure Bukkit is statically mocked so getTeleportService() can be exercised.
+        // If another test class already registered the mock, this is a no-op.
         try {
-            var mocked = org.mockito.Mockito.mockStatic(org.bukkit.Bukkit.class);
-            mockedStaticUsed = true;
-            try (org.mockito.MockedStatic<org.bukkit.Bukkit> ignored = mocked) {
-                mocked.when(org.bukkit.Bukkit::getPluginManager).thenReturn(pluginManager);
-                mocked.when(org.bukkit.Bukkit::getLogger).thenReturn(java.util.logging.Logger.getLogger("EzRTP-Test"));
+            org.mockito.Mockito.mockStatic(Bukkit.class);
+        } catch (Throwable ignored) {}
+    }
 
-                Player player = mock(Player.class);
+    @Test
+    @SuppressWarnings("unchecked")
+    void getTeleportServiceAndRtpPlayer_delegateToService() {
+        RandomTeleportService service = mock(RandomTeleportService.class);
+        RegisteredServiceProvider<TeleportService> rsp = mock(RegisteredServiceProvider.class);
+        when(rsp.getProvider()).thenReturn(service);
 
-                // Ensure we can fetch the service and the convenience wrapper delegates
-                RandomTeleportService fetched = (RandomTeleportService) EzRtpAPI.getTeleportService();
-                assert fetched == service;
+        ServicesManager sm = mock(ServicesManager.class);
+        when(sm.getRegistration(TeleportService.class)).thenReturn(rsp);
 
-                EzRtpAPI.rtpPlayer(player);
-                verify(service).teleportPlayer(player, TeleportReason.COMMAND);
-            }
-        } catch (org.mockito.exceptions.base.MockitoException ex) {
-            // Static mocking unavailable (already registered) — fall back to reflection
-            java.lang.reflect.Field serverField = null;
-            Object previousServer = null;
-            try {
-                serverField = Bukkit.class.getDeclaredField("server");
-                serverField.setAccessible(true);
-                previousServer = serverField.get(null);
-                serverField.set(null, server);
+        // Bukkit is already statically mocked (by this class's static init or another test's init).
+        // Adding a stub here is valid Mockito syntax when a static mock is already active.
+        when(Bukkit.getServicesManager()).thenReturn(sm);
 
-                Player player = mock(Player.class);
+        Player player = mock(Player.class);
 
-                RandomTeleportService fetched = (RandomTeleportService) EzRtpAPI.getTeleportService();
-                assert fetched == service;
+        TeleportService fetched = EzRtpAPI.getTeleportService();
+        assertNotNull(fetched);
 
-                EzRtpAPI.rtpPlayer(player);
-                verify(service).teleportPlayer(player, TeleportReason.COMMAND);
-            } finally {
-                try { if (serverField != null) serverField.set(null, previousServer); } catch (Throwable ignored) {}
-            }
-        }
+        EzRtpAPI.rtpPlayer(player);
+        verify(service).teleportPlayer(player, TeleportReason.COMMAND);
     }
 }
