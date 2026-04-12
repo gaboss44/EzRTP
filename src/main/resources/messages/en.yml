@@ -121,6 +121,7 @@ forcertp-executor-notification: "<green>Forcing random teleport for player <whit
 forcertp-target-notification: "<yellow>You are being teleported by an administrator...</yellow>"
 
 # Heatmap messages
+heatmap-disabled: "<red>Heatmap is disabled. Set <white>heatmap.enabled: true</white> in rtp.yml to enable it.</red>"
 heatmap-biome-caching-disabled: "<red>Biome caching is not enabled. Enable it in config.yml to use heatmap features.</red>"
 # Placeholders: <biome>
 heatmap-invalid-biome: "<red>Invalid biome: <white><biome></white></red>"

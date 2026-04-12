@@ -66,6 +66,20 @@ public class HeatmapSubcommand extends Subcommand {
             return true;
         }
 
+        // Block early when heatmap feature is disabled in config
+        EzRtpConfiguration configuration = configurationSupplier.get();
+        RandomTeleportSettings rtpSettings = configuration != null
+                ? configuration.getSettingsForWorld(player.getWorld().getName())
+                : null;
+        if (rtpSettings != null && !rtpSettings.isHeatmapEnabled()) {
+            plugin.getLogger().warning(
+                    "EzRTP: Heatmap command invoked by " + player.getName()
+                    + " but heatmap.enabled is false in rtp.yml. Enable it to use heatmap features.");
+            com.skyblockexp.ezrtp.util.MessageUtil.send(player,
+                    plugin.getMessageProvider().format(com.skyblockexp.ezrtp.message.MessageKey.HEATMAP_DISABLED, player));
+            return true;
+        }
+
         // Check for "save" subcommand
         if (args.length > 0 && SAVE_SUBCOMMAND.equalsIgnoreCase(args[0])) {
             handleHeatmapSave(player);

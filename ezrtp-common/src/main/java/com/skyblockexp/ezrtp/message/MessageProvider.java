@@ -260,6 +260,7 @@ public class MessageProvider {
             case FORCERTP_SERVICE_UNAVAILABLE -> "<red>Teleport service not initialized.</red>";
             case FORCERTP_EXECUTOR_NOTIFICATION -> "<green>Forcing random teleport for player <white><player></white>...</green>";
             case FORCERTP_TARGET_NOTIFICATION -> "<yellow>You are being teleported by an administrator...</yellow>";
+            case HEATMAP_DISABLED -> "<red>Heatmap is disabled. Set <white>heatmap.enabled: true</white> in rtp.yml to enable it.</red>";
             case HEATMAP_BIOME_CACHING_DISABLED -> "<red>Biome caching is not enabled. Enable it in config.yml to use heatmap features.</red>";
             case HEATMAP_INVALID_BIOME -> "<red>Invalid biome: <white><biome></white></red>";
             case HEATMAP_INSUFFICIENT_DATA -> "<red>Not enough RTP data to generate a meaningful heatmap.</red>";

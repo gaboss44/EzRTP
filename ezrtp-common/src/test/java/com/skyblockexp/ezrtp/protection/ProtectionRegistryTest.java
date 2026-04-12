@@ -56,8 +56,35 @@ class ProtectionRegistryTest {
 
         registry.warnMissingProviders(settings);
 
-        boolean found = messages.stream().anyMatch(m -> m.toLowerCase(Locale.ROOT).contains("configured but not available")
-                || m.toLowerCase(Locale.ROOT).contains("configured but not available;"));
-        assertTrue(found, "Expected a warning about configured but not available providers, got: " + messages);
+        // When ALL configured providers are missing, the new aggregated warning fires.
+        // It contains "not be avoided" to signal that claims will not be respected.
+        boolean found = messages.stream().anyMatch(m -> {
+            String lower = m.toLowerCase(Locale.ROOT);
+            return lower.contains("configured but not available")
+                    || lower.contains("not be avoided");
+        });
+        assertTrue(found, "Expected a warning about providers not being available, got: " + messages);
+    }
+
+    @Test
+    void warnMissingProviders_noWarningWhenAvoidClaimsFalse() {
+        PluginManager pm = Mockito.mock(PluginManager.class);
+        List<String> messages = new ArrayList<>();
+        Logger testLogger = Logger.getLogger("ProtectionRegistryTest-noWarn-" + System.nanoTime());
+        testLogger.setUseParentHandlers(false);
+        testLogger.addHandler(new Handler() {
+            @Override public void publish(LogRecord record) {
+                if (record != null && record.getMessage() != null) messages.add(record.getMessage());
+            }
+            @Override public void flush() { }
+            @Override public void close() { }
+        });
+
+        ProtectionRegistry registry = new ProtectionRegistry(pm, testLogger);
+        ProtectionSettings settings = new ProtectionSettings(false, List.of("worldguard", "griefprevention"));
+
+        registry.warnMissingProviders(settings);
+
+        assertTrue(messages.isEmpty(), "No warnings should be emitted when avoid-claims is false");
     }
 }

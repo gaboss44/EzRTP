@@ -130,6 +130,11 @@ public final class RandomTeleportSettings {
 
     public ChunkyIntegrationSettings getChunkyIntegrationSettings() { return chunkyIntegrationSettings; }
 
+    /** Returns {@code true} only when {@code heatmap.enabled: true} is explicitly set in the world's rtp.yml section. */
+    public boolean isHeatmapEnabled() {
+        return configSection != null && configSection.getBoolean("heatmap.enabled", false);
+    }
+
     public static RandomTeleportSettings fromConfiguration(ConfigurationSection section, java.util.logging.Logger logger) {
         if (section == null) {
             return new RandomTeleportSettings(null, "world", 0, 0, 100, 1000, 10, false, java.util.Collections.emptySet(),

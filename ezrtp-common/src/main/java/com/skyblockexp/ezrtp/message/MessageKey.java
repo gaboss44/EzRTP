@@ -59,6 +59,7 @@ public enum MessageKey {
     FORCERTP_TARGET_NOTIFICATION("forcertp-target-notification"),
     
     // Heatmap messages
+    HEATMAP_DISABLED("heatmap-disabled"),
     HEATMAP_BIOME_CACHING_DISABLED("heatmap-biome-caching-disabled"),
     HEATMAP_INVALID_BIOME("heatmap-invalid-biome"),
     HEATMAP_INSUFFICIENT_DATA("heatmap-insufficient-data"),
