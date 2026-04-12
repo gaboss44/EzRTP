@@ -2,6 +2,7 @@ package com.skyblockexp.ezrtp;
 
 import com.skyblockexp.ezrtp.bootstrap.EzRtpPluginBootstrap;
 import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -52,5 +53,12 @@ public final class EzRtpPlugin extends JavaPlugin {
      */
     public com.skyblockexp.ezrtp.teleport.RandomTeleportService getTeleportService() {
         return bootstrap != null ? bootstrap.getTeleportService() : null;
+    }
+
+    /**
+     * Gets the performance monitor for EzRTP, or {@code null} if not initialized.
+     */
+    public PerformanceMonitor getPerformanceMonitor() {
+        return bootstrap != null ? bootstrap.getPerformanceMonitor() : null;
     }
 }

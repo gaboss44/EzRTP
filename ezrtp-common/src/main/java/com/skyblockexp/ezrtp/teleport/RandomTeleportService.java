@@ -1,6 +1,7 @@
 package com.skyblockexp.ezrtp.teleport;
 
 import com.skyblockexp.ezrtp.config.ChunkLoadingSettings;
+import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import com.skyblockexp.ezrtp.platform.ChunkLoadStrategy;
 import com.skyblockexp.ezrtp.platform.PlatformRuntime;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
@@ -82,6 +83,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         RareBiomeOptimizationSettings rareSettings = settings != null ? settings.getRareBiomeOptimizationSettings() : null;
         this.rareBiomeRegistry = new RareBiomeRegistry(plugin, rareSettings != null ? rareSettings.getRareBiomes() : null);
         this.chunkLoadQueue = new ChunkLoadQueue(plugin, chunkLoadStrategy, platformRuntime.scheduler());
+        this.chunkLoadQueue.setStatistics(statistics);
         this.locationValidator = new LocationValidator(plugin, protectionRegistry);
         this.searchStrategy = createPatternStrategy(settings);
         this.locationFinder = new LocationFinder(plugin, statistics, biomeCache, rareBiomeRegistry, chunkLoadQueue, locationValidator, searchStrategy, platformRuntime, chunkyAPI, chunkyWarmupCoordinator);
@@ -137,6 +139,10 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
 
     public ChunkLoadQueue getChunkLoadQueue() {
         return chunkLoadQueue;
+    }
+
+    public void setPerformanceMonitor(PerformanceMonitor performanceMonitor) {
+        teleportExecutor.setPerformanceMonitor(performanceMonitor);
     }
 
     public void shutdown() {

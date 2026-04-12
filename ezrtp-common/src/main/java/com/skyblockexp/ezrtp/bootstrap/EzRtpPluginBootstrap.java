@@ -11,8 +11,10 @@ import com.skyblockexp.ezrtp.command.RandomTeleportCommand;
 import com.skyblockexp.ezrtp.command.ForceRtpCommand;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
 import com.skyblockexp.ezrtp.config.ForceRtpConfiguration;
+import com.skyblockexp.ezrtp.config.PerformanceSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.economy.EconomyService;
+import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import com.skyblockexp.ezrtp.gui.RandomTeleportGuiManager;
 import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.metrics.EzRtpMetricsRegistrar;
@@ -67,6 +69,8 @@ public final class EzRtpPluginBootstrap {
     private EzRtpConfiguration configuration;
     private ForceRtpConfiguration forceRtpConfiguration;
     private RandomTeleportService teleportService;
+    private PerformanceSettings performanceSettings;
+    private PerformanceMonitor performanceMonitor;
     private EconomyService economyService = EconomyService.disabled();
     private RtpUsageStorage usageStorage;
     private ProtectionRegistry protectionRegistry;
@@ -176,6 +180,10 @@ public final class EzRtpPluginBootstrap {
 
     public void disable() {
         plugin.getServer().getScheduler().cancelTasks(plugin);
+        if (performanceMonitor != null) {
+            performanceMonitor.shutdown();
+            performanceMonitor = null;
+        }
         if (teleportService != null) {
             teleportService.shutdown();
             try { EzRtpAPI.unregisterProvider(teleportService); } catch (Throwable ignored) {}
@@ -271,6 +279,19 @@ public final class EzRtpPluginBootstrap {
             guiManager.closeAll();
         }
         configurationService.validateEconomyConfiguration(configuration, economyService);
+
+        // Reload performance monitoring settings and (re-)create the monitor
+        performanceSettings = configurationService.reloadPerformanceConfiguration();
+        if (performanceMonitor != null) {
+            performanceMonitor.shutdown();
+        }
+        performanceMonitor = new PerformanceMonitor(
+                performanceSettings,
+                teleportService.getStatistics(),
+                teleportService.getBiomeCache(),
+                plugin.getLogger());
+        teleportService.setPerformanceMonitor(performanceMonitor);
+        performanceMonitor.schedulePeriodicExport(PlatformRuntimeRegistry.get().scheduler());
     }
 
     public MessageProvider getMessageProvider() {
@@ -279,6 +300,10 @@ public final class EzRtpPluginBootstrap {
 
     public RandomTeleportService getTeleportService() {
         return teleportService;
+    }
+
+    public PerformanceMonitor getPerformanceMonitor() {
+        return performanceMonitor;
     }
 
     public EzRtpConfiguration getConfiguration() {
