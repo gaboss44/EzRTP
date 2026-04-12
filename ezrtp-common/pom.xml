@@ -73,6 +73,16 @@
       <version>2.12.2</version>
       <scope>provided</scope>
     </dependency>
+    <!-- HikariCP connection pool — used by MySqlHotspotStorage for the persistent
+             hotspot write path. The basic DriverManager pattern in MySqlRtpUsageStorage is
+             sufficient for low-frequency usage-stat writes, but hotspot saves happen on every
+             discovered rare biome and benefit from a managed pool. -->
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>6.3.0</version>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>

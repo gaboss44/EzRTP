@@ -69,7 +69,11 @@ class LocationFinderRareSearchTest {
             true,
             2,
             3L,
-            true
+            true,
+            "none",
+            "",
+            "",
+            ""
         );
 
         return new RandomTeleportSettings(

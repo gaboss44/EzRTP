@@ -146,12 +146,19 @@ biomes:
     use-weighted-search: true
     enable-hotspot-tracking: true
     enable-background-scanning: false
-    max-hotspots-per-biome: 48
+    max-hotspots-per-biome: 20
     hotspot-scan-interval-minutes: 8
     use-chunk-load-queue: true
     chunk-load-interval-ticks: 3
     max-chunks-per-tick: 2
     auto-enable-for-filters: true
+    # Persist discovered hotspots across restarts (and share them between proxy nodes).
+    # backend: none | mysql
+    persistence:
+      backend: none
+      mysql-url: jdbc:mysql://localhost:3306/ezrtp
+      mysql-user: ""
+      mysql-password: ""
   # Legacy: biomes.search is still fully supported for backward compatibility.
   # biome-filtering.performance-budget takes precedence when both are present.
 
