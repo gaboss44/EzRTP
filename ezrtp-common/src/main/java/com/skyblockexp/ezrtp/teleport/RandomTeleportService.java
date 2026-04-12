@@ -17,6 +17,8 @@ import com.skyblockexp.ezrtp.teleport.search.BiomeSearchStrategy;
 import com.skyblockexp.ezrtp.teleport.search.CircularSearchStrategy;
 import com.skyblockexp.ezrtp.teleport.search.TriangleSearchStrategy;
 import com.skyblockexp.ezrtp.teleport.search.DiamondSearchStrategy;
+import com.skyblockexp.ezrtp.storage.HotspotStorage;
+import com.skyblockexp.ezrtp.storage.MySqlHotspotStorage;
 import com.skyblockexp.ezrtp.teleport.biome.RareBiomeRegistry;
 import com.skyblockexp.ezrtp.teleport.search.SquareSearchStrategy;
 import com.skyblockexp.ezrtp.teleport.search.UniformSearchStrategy;
@@ -59,6 +61,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
 
     private final ChunkyProvider chunkyAPI;
     private final com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator;
+    private final HotspotStorage hotspotStorage;
 
     private RandomTeleportSettings settings;
     private TeleportQueueSettings queueSettings;
@@ -84,7 +87,11 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
 
         this.biomeCache = createBiomeCache(settings);
         RareBiomeOptimizationSettings rareSettings = settings != null ? settings.getRareBiomeOptimizationSettings() : null;
-        this.rareBiomeRegistry = new RareBiomeRegistry(plugin, rareSettings != null ? rareSettings.getRareBiomes() : null);
+        this.hotspotStorage = createHotspotStorage(rareSettings);
+        this.rareBiomeRegistry = new RareBiomeRegistry(plugin, rareSettings != null ? rareSettings.getRareBiomes() : null, hotspotStorage);
+        if (hotspotStorage != null) {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> rareBiomeRegistry.loadFromStorage(hotspotStorage));
+        }
         this.chunkLoadQueue = new ChunkLoadQueue(plugin, chunkLoadStrategy, platformRuntime.scheduler());
         this.chunkLoadQueue.setStatistics(statistics);
         this.locationValidator = new LocationValidator(plugin, protectionRegistry);
@@ -156,6 +163,13 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         rareBiomeRegistry.shutdown();
         chunkLoadQueue.shutdown();
         biomeFilterExecutor.shutdown();
+        if (hotspotStorage != null) {
+            try {
+                hotspotStorage.close();
+            } catch (Exception e) {
+                plugin.getLogger().warning("[EzRTP] Failed to close hotspot storage: " + e.getMessage());
+            }
+        }
     }
 
     public CompletableFuture<Location> generateSafeLocationForCache(World world, RandomTeleportSettings teleportSettings) {
@@ -348,6 +362,22 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
             case SQUARE -> new SquareSearchStrategy();
             default -> new UniformSearchStrategy();
         };
+    }
+
+    private HotspotStorage createHotspotStorage(RareBiomeOptimizationSettings rareSettings) {
+        if (rareSettings == null || !"mysql".equalsIgnoreCase(rareSettings.getPersistenceBackend())) {
+            return null;
+        }
+        try {
+            return new MySqlHotspotStorage(
+                rareSettings.getPersistenceMysqlUrl(),
+                rareSettings.getPersistenceMysqlUser(),
+                rareSettings.getPersistenceMysqlPassword(),
+                plugin.getLogger());
+        } catch (Exception e) {
+            plugin.getLogger().warning("[EzRTP] Failed to initialise MySQL hotspot storage, falling back to in-memory only: " + e.getMessage());
+            return null;
+        }
     }
 
     private BiomeLocationCache createBiomeCache(RandomTeleportSettings initialSettings) {

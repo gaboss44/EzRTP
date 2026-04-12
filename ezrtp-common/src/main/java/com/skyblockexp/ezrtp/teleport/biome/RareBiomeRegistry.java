@@ -4,12 +4,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
+
+import com.skyblockexp.ezrtp.storage.HotspotStorage;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Registry for tracking and managing rare biome hotspots.
@@ -18,22 +23,30 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class RareBiomeRegistry {
     
-    private static final long BACKGROUND_SCAN_INTERVAL_TICKS = 6000L; // 5 minutes
-    private static final int MAX_HOTSPOTS_PER_BIOME = 100;
-    private static final int SCAN_BATCH_SIZE = 5; // Number of locations to scan per tick
+    private static final int MAX_HOTSPOTS_PER_BIOME = 30;
     private static final int HOTSPOT_RADIUS = 256; // Minimum distance between hotspots
     
     private final JavaPlugin plugin;
     private final Map<String, Map<Biome, List<BiomeHotspot>>> worldHotspots;
     private final Set<Biome> rareBiomes;
-    private BukkitTask backgroundScanTask;
+    /** Tracks chunk keys (world+coords) already scanned to avoid redundant work. */
+    private final Set<Long> scannedChunks;
+    private RareBiomeScanListener scanListener;
     private volatile boolean enabled;
     private volatile boolean backgroundScanningEnabled;
-    
+    /** Optional persistence backend; null means memory-only. */
+    private volatile HotspotStorage storage;
+
     public RareBiomeRegistry(JavaPlugin plugin, Set<Biome> rareBiomes) {
+        this(plugin, rareBiomes, null);
+    }
+
+    public RareBiomeRegistry(JavaPlugin plugin, Set<Biome> rareBiomes, HotspotStorage storage) {
         this.plugin = plugin;
         this.worldHotspots = new ConcurrentHashMap<>();
         this.rareBiomes = rareBiomes != null ? new HashSet<>(rareBiomes) : getDefaultRareBiomes();
+        this.scannedChunks = ConcurrentHashMap.newKeySet();
+        this.storage = storage;
         this.enabled = true;
         this.backgroundScanningEnabled = true;
     }
@@ -128,9 +141,9 @@ public final class RareBiomeRegistry {
         
         List<BiomeHotspot> biomeHotspots = hotspots.computeIfAbsent(
             biome,
-            k -> new CopyOnWriteArrayList<>()
+            k -> new ArrayList<>()
         );
-        
+
         synchronized (biomeHotspots) {
             // Check if this location is too close to an existing hotspot
             Location finalLocation = location;
@@ -147,6 +160,16 @@ public final class RareBiomeRegistry {
             }
             
             biomeHotspots.add(new BiomeHotspot(location.clone(), System.currentTimeMillis()));
+
+            // Persist asynchronously if a storage backend is configured.
+            if (storage != null) {
+                final HotspotStorage s = storage;
+                final double fx = location.getX(), fy = location.getY(), fz = location.getZ();
+                final String wn = worldName;
+                final String biomeName = biome.name();
+                Bukkit.getScheduler().runTaskAsynchronously(plugin,
+                    () -> s.saveHotspot(wn, biomeName, fx, fy, fz));
+            }
         }
     }
     
@@ -168,12 +191,16 @@ public final class RareBiomeRegistry {
         if (biomeHotspots == null || biomeHotspots.isEmpty()) {
             return Collections.emptyList();
         }
-        
-        // Return a shuffled copy to provide variety
-        List<Location> locations = biomeHotspots.stream()
-            .map(BiomeHotspot::location)
-            .toList();
-        List<Location> shuffled = new ArrayList<>(locations);
+
+        // Return a shuffled copy to provide variety; synchronize on the list to guard
+        // against concurrent writes in registerHotspot().
+        List<Location> shuffled;
+        synchronized (biomeHotspots) {
+            shuffled = new ArrayList<>(biomeHotspots.size());
+            for (BiomeHotspot hs : biomeHotspots) {
+                shuffled.add(hs.location());
+            }
+        }
         Collections.shuffle(shuffled);
         return shuffled;
     }
@@ -185,100 +212,120 @@ public final class RareBiomeRegistry {
         if (!enabled || world == null || !isRareBiome(biome)) {
             return 0;
         }
-        
+
         Map<Biome, List<BiomeHotspot>> hotspots = worldHotspots.get(world.getName());
         if (hotspots == null) {
             return 0;
         }
-        
+
         List<BiomeHotspot> biomeHotspots = hotspots.get(biome);
-        return biomeHotspots != null ? biomeHotspots.size() : 0;
+        if (biomeHotspots == null) {
+            return 0;
+        }
+        synchronized (biomeHotspots) {
+            return biomeHotspots.size();
+        }
     }
     
     /**
-     * Starts background scanning for rare biome hotspots during idle server times.
+     * Starts background scanning for rare biome hotspots.
+     *
+     * <p>Rather than a repeating timer that redundantly re-scans already-loaded chunks,
+     * this registers a {@link ChunkLoadEvent} listener so each chunk is scanned exactly
+     * once when it first loads. Eliminates the 5-minute poll and all redundant scans.
      */
     public void startBackgroundScanning() {
         if (!enabled || !backgroundScanningEnabled) {
             return;
         }
-        
-        // Cancel any existing task
         stopBackgroundScanning();
-        
-        // Schedule periodic background scanning
-        backgroundScanTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!enabled || !backgroundScanningEnabled) {
-                return;
-            }
-            
-            // Only scan during low server load (TPS check could be added here)
-            performBackgroundScan();
-        }, BACKGROUND_SCAN_INTERVAL_TICKS, BACKGROUND_SCAN_INTERVAL_TICKS);
+        scanListener = new RareBiomeScanListener();
+        Bukkit.getPluginManager().registerEvents(scanListener, plugin);
     }
-    
+
     /**
-     * Stops background scanning.
+     * Stops background scanning by unregistering the chunk-load listener.
      */
     public void stopBackgroundScanning() {
-        if (backgroundScanTask != null && !backgroundScanTask.isCancelled()) {
-            backgroundScanTask.cancel();
-            backgroundScanTask = null;
+        if (scanListener != null) {
+            HandlerList.unregisterAll(scanListener);
+            scanListener = null;
         }
     }
-    
+
     /**
-     * Performs a background scan for rare biomes in loaded chunks.
-     * This method is designed to be lightweight and spread across multiple ticks.
+     * Samples a freshly loaded chunk for rare biomes. Called from the main thread
+     * inside {@link RareBiomeScanListener#onChunkLoad}.
      */
-    private void performBackgroundScan() {
-        // Get all online worlds
-        List<World> worlds = Bukkit.getWorlds().stream()
-            .filter(w -> w.getEnvironment() == World.Environment.NORMAL)
-            .toList();
-        
-        if (worlds.isEmpty()) {
+    private void scanChunk(World world, int chunkX, int chunkZ) {
+        if (!enabled || !backgroundScanningEnabled) {
             return;
         }
-        
-        // Pick a random world to scan
-        World world = worlds.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(worlds.size()));
-        
-        // Scan a few random loaded chunks for rare biomes
-        var loadedChunks = world.getLoadedChunks();
-        if (loadedChunks.length == 0) {
+        // Gate on world environment to avoid scanning Nether/End.
+        if (world.getEnvironment() != World.Environment.NORMAL) {
             return;
         }
-        
-        var random = java.util.concurrent.ThreadLocalRandom.current();
-        int scanned = 0;
-        int maxScans = Math.min(SCAN_BATCH_SIZE, loadedChunks.length);
-        
-        while (scanned < maxScans) {
-            var chunk = loadedChunks[random.nextInt(loadedChunks.length)];
-            int x = chunk.getX() << 4;
-            int z = chunk.getZ() << 4;
-            
-            // Sample a few locations in this chunk
-            for (int dx = 0; dx < 16; dx += 8) {
-                for (int dz = 0; dz < 16; dz += 8) {
-                    Location loc = world.getHighestBlockAt(x + dx, z + dz).getLocation();
-                    Biome biome = loc.getBlock().getBiome();
-                    
-                    if (isRareBiome(biome)) {
-                        registerHotspot(loc);
-                    }
+        int baseX = chunkX << 4;
+        int baseZ = chunkZ << 4;
+        for (int dx = 0; dx < 16; dx += 8) {
+            for (int dz = 0; dz < 16; dz += 8) {
+                Location loc = world.getHighestBlockAt(baseX + dx, baseZ + dz).getLocation();
+                Biome biome = loc.getBlock().getBiome();
+                if (isRareBiome(biome)) {
+                    registerHotspot(loc);
                 }
             }
-            scanned++;
         }
     }
     
     /**
-     * Clears all registered hotspots.
+     * Loads hotspot records from the given storage backend into the in-memory registry.
+     * Should be called once at plugin startup (on a background thread is fine) before
+     * {@link #startBackgroundScanning()} is invoked.
+     *
+     * @param hotspotStorage storage to load from; if null the call is a no-op
+     */
+    public void loadFromStorage(HotspotStorage hotspotStorage) {
+        if (hotspotStorage == null) {
+            return;
+        }
+        this.storage = hotspotStorage;
+        List<HotspotStorage.HotspotRecord> records = hotspotStorage.loadAll();
+        for (HotspotStorage.HotspotRecord rec : records) {
+            Biome biome;
+            try {
+                biome = Biome.valueOf(rec.biome());
+            } catch (IllegalArgumentException e) {
+                continue; // biome no longer exists in this server version
+            }
+            if (!isRareBiome(biome)) {
+                continue;
+            }
+            Map<Biome, List<BiomeHotspot>> hotspots = worldHotspots.computeIfAbsent(
+                rec.world(), k -> new ConcurrentHashMap<>());
+            List<BiomeHotspot> biomeHotspots = hotspots.computeIfAbsent(
+                biome, k -> new ArrayList<>());
+            // Use a dummy Location (world may not be loaded yet); callers of getHotspots()
+            // resolve locations after worlds are available.
+            org.bukkit.World world = Bukkit.getWorld(rec.world());
+            if (world == null) {
+                continue; // world not loaded; skip rather than create an invalid Location
+            }
+            Location loc = new Location(world, rec.x(), rec.y(), rec.z());
+            synchronized (biomeHotspots) {
+                if (biomeHotspots.size() < MAX_HOTSPOTS_PER_BIOME) {
+                    biomeHotspots.add(new BiomeHotspot(loc, rec.timestamp()));
+                }
+            }
+        }
+    }
+
+    /**
+     * Clears all registered hotspots and resets the scanned-chunk tracking set.
      */
     public void clear() {
         worldHotspots.clear();
+        scannedChunks.clear();
     }
     
     /**
@@ -301,7 +348,11 @@ public final class RareBiomeRegistry {
         for (Map<Biome, List<BiomeHotspot>> worldMap : worldHotspots.values()) {
             totalBiomes += worldMap.size();
             for (Map.Entry<Biome, List<BiomeHotspot>> entry : worldMap.entrySet()) {
-                int count = entry.getValue().size();
+                List<BiomeHotspot> list = entry.getValue();
+                int count;
+                synchronized (list) {
+                    count = list.size();
+                }
                 totalHotspots += count;
                 biomeDistribution.merge(entry.getKey(), count, Integer::sum);
             }
@@ -325,10 +376,26 @@ public final class RareBiomeRegistry {
         enabled = false;
     }
     
-    /**
-     * Represents a registered rare biome hotspot.
-     */
+    /** Represents a registered rare biome hotspot. */
     private record BiomeHotspot(Location location, long timestamp) {}
+
+    /** Listens for chunk loads and scans each chunk exactly once for rare biomes. */
+    private final class RareBiomeScanListener implements Listener {
+        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+        public void onChunkLoad(ChunkLoadEvent event) {
+            int cx = event.getChunk().getX();
+            int cz = event.getChunk().getZ();
+            // Encode world name + chunk coords into a single long key.
+            // We mask the world-name hash into the upper 32 bits for a fast identity check;
+            // hash collisions between worlds are harmless (worst case: skip a scan in rare scenario).
+            long key = ((long) event.getWorld().getName().hashCode() << 32)
+                | (((long) cx << 16) & 0xFFFF0000L)
+                | ((long) (cz & 0xFFFF));
+            if (scannedChunks.add(key)) {
+                scanChunk(event.getWorld(), cx, cz);
+            }
+        }
+    }
     
     /**
      * Statistics about the registry state.

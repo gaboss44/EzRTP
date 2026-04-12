@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class BiomeLocationCache {
     
-    public static final int DEFAULT_MAX_LOCATIONS_PER_BIOME = 50;
-    public static final int DEFAULT_CACHE_WARMUP_SIZE = 20;
+    public static final int DEFAULT_MAX_LOCATIONS_PER_BIOME = 16;
+    public static final int DEFAULT_CACHE_WARMUP_SIZE = 8;
     public static final long DEFAULT_EXPIRATION_MINUTES = 10;
     private static final long WARMUP_DELAY_TICKS = 100L; // 5 seconds after startup
     private static final long WARMUP_BATCH_DELAY_TICKS = 2L; // Small delay between batches
@@ -158,12 +158,17 @@ public final class BiomeLocationCache {
             k -> new ConcurrentLinkedDeque<>()
         );
 
-        // Prevent duplicate locations (within 10 blocks)
+        // Prevent duplicate locations (within 10 blocks): only scan up to the 10 most-recently
+        // inserted tail entries, since duplicates virtually always come from nearby search rounds.
         Location finalLocation = location;
-        boolean isDuplicate = locations.stream().anyMatch(cached ->
-            cached.location().distanceSquared(finalLocation) < DUPLICATE_LOCATION_DISTANCE_SQUARED
-        );
-        if (isDuplicate) return;
+        int scanLimit = Math.min(locations.size(), 10);
+        Iterator<CachedLocation> tailIter = locations.descendingIterator();
+        for (int i = 0; i < scanLimit; i++) {
+            if (tailIter.next().location().distanceSquared(finalLocation)
+                    < DUPLICATE_LOCATION_DISTANCE_SQUARED) {
+                return;
+            }
+        }
 
         // If cache is full, remove oldest entry
         while (locations.size() >= maxLocationsPerBiome) {
@@ -186,36 +191,41 @@ public final class BiomeLocationCache {
      * Retrieves a random cached location from any biome in the specified world.
      * Returns null if no cached locations are available.
      * This is used as a fallback when RTP search fails.
+     *
+     * <p>Iterates a shuffled snapshot of biome keys and returns the first non-expired
+     * entry without materialising all locations into a temporary list.
      */
     public Location getRandomCachedLocation(World world) {
         if (!enabled || world == null) {
             return null;
         }
-        
+
         Map<Biome, Deque<CachedLocation>> biomeCache = worldCaches.get(world.getName());
         if (biomeCache == null || biomeCache.isEmpty()) {
             return null;
         }
-        
-        // Collect all non-expired locations from all biomes
-        List<Location> allValidLocations = new ArrayList<>();
+
+        // Shuffle biome keys so we don't always favour the same biome, then pick the
+        // first non-expired entry we encounter — zero temporary list allocation.
+        List<Biome> biomes = new ArrayList<>(biomeCache.keySet());
+        Collections.shuffle(biomes);
         long now = System.currentTimeMillis();
-        
-        for (Deque<CachedLocation> locations : biomeCache.values()) {
-            locations.removeIf(cached -> cached.isExpired(now));
-            for (CachedLocation cached : locations) {
-                allValidLocations.add(cached.location().clone());
+        for (Biome biome : biomes) {
+            Deque<CachedLocation> locations = biomeCache.get(biome);
+            if (locations == null) {
+                continue;
+            }
+            // Drain expired head entries, then try to consume the next live one.
+            CachedLocation head;
+            while ((head = locations.peekFirst()) != null && head.isExpired(now)) {
+                locations.pollFirst();
+            }
+            if (head != null) {
+                locations.pollFirst();
+                return head.location();
             }
         }
-        
-        if (allValidLocations.isEmpty()) {
-            return null;
-        }
-        
-        // Return a random location from all valid cached locations
-        // Using ThreadLocalRandom for better performance than creating new Random instance
-        int randomIndex = java.util.concurrent.ThreadLocalRandom.current().nextInt(allValidLocations.size());
-        return allValidLocations.get(randomIndex);
+        return null;
     }
     
     /**

@@ -15,8 +15,8 @@ import java.util.Set;
 public final class RareBiomeOptimizationSettings {
     private static final RareBiomeOptimizationSettings DISABLED_INSTANCE =
         new RareBiomeOptimizationSettings(false, Collections.emptySet(), true,
-            true, false, 48, 8, true, 2, 3L, true);
-    
+            true, false, 20, 8, true, 2, 3L, true, "none", "", "", "");
+
     private final boolean enabled;
     private final Set<Biome> rareBiomes;
     private final boolean useWeightedSearch;
@@ -28,13 +28,20 @@ public final class RareBiomeOptimizationSettings {
     private final int maxChunksPerTick;
     private final long chunkProcessingIntervalTicks;
     private final boolean autoEnableForFilters;
-    
+    // Persistence backend config (backend: none | mysql)
+    private final String persistenceBackend;
+    private final String persistenceMysqlUrl;
+    private final String persistenceMysqlUser;
+    private final String persistenceMysqlPassword;
+
     public RareBiomeOptimizationSettings(boolean enabled, Set<Biome> rareBiomes,
                                         boolean useWeightedSearch, boolean enableHotspotTracking,
                                         boolean enableBackgroundScanning, int maxHotspotsPerBiome,
                                         int hotspotScanIntervalMinutes, boolean useChunkLoadQueue,
                                         int maxChunksPerTick, long chunkProcessingIntervalTicks,
-                                        boolean autoEnableForFilters) {
+                                        boolean autoEnableForFilters,
+                                        String persistenceBackend, String persistenceMysqlUrl,
+                                        String persistenceMysqlUser, String persistenceMysqlPassword) {
         this.enabled = enabled;
         this.rareBiomes = rareBiomes != null ? new HashSet<>(rareBiomes) : Collections.emptySet();
         this.useWeightedSearch = useWeightedSearch;
@@ -46,6 +53,10 @@ public final class RareBiomeOptimizationSettings {
         this.maxChunksPerTick = Math.max(1, maxChunksPerTick);
         this.chunkProcessingIntervalTicks = Math.max(1L, chunkProcessingIntervalTicks);
         this.autoEnableForFilters = autoEnableForFilters;
+        this.persistenceBackend = persistenceBackend != null ? persistenceBackend : "none";
+        this.persistenceMysqlUrl = persistenceMysqlUrl != null ? persistenceMysqlUrl : "";
+        this.persistenceMysqlUser = persistenceMysqlUser != null ? persistenceMysqlUser : "";
+        this.persistenceMysqlPassword = persistenceMysqlPassword != null ? persistenceMysqlPassword : "";
     }
     
     public boolean isEnabled() {
@@ -91,6 +102,22 @@ public final class RareBiomeOptimizationSettings {
     public boolean isAutoEnableForFilters() {
         return autoEnableForFilters;
     }
+
+    public String getPersistenceBackend() {
+        return persistenceBackend;
+    }
+
+    public String getPersistenceMysqlUrl() {
+        return persistenceMysqlUrl;
+    }
+
+    public String getPersistenceMysqlUser() {
+        return persistenceMysqlUser;
+    }
+
+    public String getPersistenceMysqlPassword() {
+        return persistenceMysqlPassword;
+    }
     
     public static RareBiomeOptimizationSettings disabled() {
         return DISABLED_INSTANCE;
@@ -122,17 +149,24 @@ public final class RareBiomeOptimizationSettings {
         boolean useWeightedSearch = section.getBoolean("use-weighted-search", true);
         boolean enableHotspotTracking = section.getBoolean("enable-hotspot-tracking", true);
         boolean enableBackgroundScanning = section.getBoolean("enable-background-scanning", false);
-        int maxHotspotsPerBiome = section.getInt("max-hotspots-per-biome", 48);
+        int maxHotspotsPerBiome = section.getInt("max-hotspots-per-biome", 20);
         int hotspotScanIntervalMinutes = section.getInt("hotspot-scan-interval-minutes", 8);
         boolean useChunkLoadQueue = section.getBoolean("use-chunk-load-queue", true);
         int maxChunksPerTick = section.getInt("max-chunks-per-tick", 2);
         long chunkProcessingIntervalTicks = section.getLong("chunk-load-interval-ticks", 3L);
         boolean autoEnableForFilters = section.getBoolean("auto-enable-for-filters", true);
-        
+
+        ConfigurationSection persist = section.getConfigurationSection("persistence");
+        String persistenceBackend = persist != null ? persist.getString("backend", "none") : "none";
+        String persistenceMysqlUrl = persist != null ? persist.getString("mysql-url", "") : "";
+        String persistenceMysqlUser = persist != null ? persist.getString("mysql-user", "") : "";
+        String persistenceMysqlPassword = persist != null ? persist.getString("mysql-password", "") : "";
+
         return new RareBiomeOptimizationSettings(enabled, rareBiomes, useWeightedSearch,
             enableHotspotTracking, enableBackgroundScanning, maxHotspotsPerBiome,
             hotspotScanIntervalMinutes, useChunkLoadQueue, maxChunksPerTick,
-            chunkProcessingIntervalTicks, autoEnableForFilters);
+            chunkProcessingIntervalTicks, autoEnableForFilters,
+            persistenceBackend, persistenceMysqlUrl, persistenceMysqlUser, persistenceMysqlPassword);
     }
     
     /**
