@@ -59,7 +59,7 @@ public class LocationBorderIntegrationTest {
             OnJoinTeleportSettings.fromConfiguration(null), CountdownBossBarSettings.disabled(), CountdownParticleSettings.disabled(),
             0.0, 0, true, false, null, null, Collections.emptySet(), Collections.emptySet(),
             new ProtectionSettings(false, Collections.emptyList()), BiomePreCacheSettings.disabled(), RareBiomeOptimizationSettings.disabled(),
-            ChunkLoadingSettings.defaults(), true, BiomeSearchSettings.defaults(), SafetySettings.defaults(), SearchPattern.RANDOM,
+            ChunkLoadingSettings.defaults(), true, BiomeSearchSettings.defaults(), true, SafetySettings.defaults(), SearchPattern.RANDOM,
             ChunkyIntegrationSettings.defaults()
         );
 
