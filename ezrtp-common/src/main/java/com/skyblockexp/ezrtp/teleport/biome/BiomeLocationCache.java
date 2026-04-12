@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Manages a cache of pre-validated safe teleport locations organized by biome.
@@ -40,6 +41,7 @@ public final class BiomeLocationCache {
     private final int warmupSize;
     private BukkitTask warmupTask;
     private volatile boolean enabled;
+    private final AtomicLong evictionCount = new AtomicLong(0);
     
     public BiomeLocationCache(JavaPlugin plugin) {
         this(plugin, DEFAULT_MAX_LOCATIONS_PER_BIOME, DEFAULT_CACHE_WARMUP_SIZE, DEFAULT_EXPIRATION_MINUTES, null);
@@ -166,6 +168,7 @@ public final class BiomeLocationCache {
         // If cache is full, remove oldest entry
         while (locations.size() >= maxLocationsPerBiome) {
             locations.pollFirst();
+            evictionCount.incrementAndGet();
         }
 
         locations.addLast(new CachedLocation(location.clone(), System.currentTimeMillis()));
@@ -479,15 +482,19 @@ public final class BiomeLocationCache {
     public CacheStats getStats() {
         int totalLocations = 0;
         int totalBiomes = 0;
-        
+
         for (Map<Biome, Deque<CachedLocation>> worldCache : worldCaches.values()) {
             totalBiomes += worldCache.size();
             for (Deque<CachedLocation> locations : worldCache.values()) {
                 totalLocations += locations.size();
             }
         }
-        
-        return new CacheStats(worldCaches.size(), totalBiomes, totalLocations);
+
+        return new CacheStats(worldCaches.size(), totalBiomes, totalLocations, evictionCount.get());
+    }
+
+    public long getEvictionCount() {
+        return evictionCount.get();
     }
     
     /**
@@ -555,11 +562,11 @@ public final class BiomeLocationCache {
     /**
      * Statistics about the cache state.
      */
-    public record CacheStats(int worldCount, int biomeCount, int locationCount) {
+    public record CacheStats(int worldCount, int biomeCount, int locationCount, long evictions) {
         @Override
         public String toString() {
-            return String.format("CacheStats[worlds=%d, biomes=%d, locations=%d]",
-                worldCount, biomeCount, locationCount);
+            return String.format("CacheStats[worlds=%d, biomes=%d, locations=%d, evictions=%d]",
+                worldCount, biomeCount, locationCount, evictions);
         }
     }
 }

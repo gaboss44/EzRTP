@@ -2,6 +2,8 @@ package com.skyblockexp.ezrtp.command.subcommands;
 
 import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.message.MessageKey;
+import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
+import com.skyblockexp.ezrtp.performance.PerformanceSnapshot;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
 import com.skyblockexp.ezrtp.teleport.biome.BiomeLocationCache;
@@ -23,6 +25,7 @@ public class StatsSubcommand extends Subcommand {
 
     private static final String BIOMES_SUBCOMMAND = "biomes";
     private static final String RARE_BIOMES_SUBCOMMAND = "rare-biomes";
+    private static final String PERFORMANCE_SUBCOMMAND = "performance";
     private static final int DEFAULT_PAGE_SIZE = 10;
 
     private final EzRtpPlugin plugin;
@@ -47,6 +50,8 @@ public class StatsSubcommand extends Subcommand {
         } else if (args.length > 0 && RARE_BIOMES_SUBCOMMAND.equalsIgnoreCase(args[0])) {
             int page = parsePageNumber(args, 1, 1);
             displayRareBiomeStatistics(sender, page);
+        } else if (args.length > 0 && PERFORMANCE_SUBCOMMAND.equalsIgnoreCase(args[0])) {
+            displayPerformanceStatistics(sender);
         } else {
             int page = parsePageNumber(args, 0, 1);
             displayStatistics(sender, page);
@@ -65,6 +70,7 @@ public class StatsSubcommand extends Subcommand {
             List<String> suggestions = new ArrayList<>();
             suggestions.add(BIOMES_SUBCOMMAND);
             suggestions.add(RARE_BIOMES_SUBCOMMAND);
+            suggestions.add(PERFORMANCE_SUBCOMMAND);
             return suggestions;
         }
 
@@ -492,6 +498,93 @@ public class StatsSubcommand extends Subcommand {
         }
 
         sender.sendMessage("");
+        sender.sendMessage("§6§l═══════════════════════════════════════");
+    }
+
+    /**
+     * Displays performance observability metrics gathered by {@link PerformanceMonitor}.
+     */
+    private void displayPerformanceStatistics(CommandSender sender) {
+        PerformanceMonitor monitor = plugin.getPerformanceMonitor();
+
+        sender.sendMessage("§6§l═══════════════════════════════════════");
+        sender.sendMessage("§e§lEzRTP Performance Statistics");
+        sender.sendMessage("§6§l═══════════════════════════════════════");
+        sender.sendMessage("");
+
+        if (monitor == null || !monitor.isEnabled()) {
+            sender.sendMessage("§cPerformance monitoring is disabled.");
+            sender.sendMessage("§7Enable it by setting §fperformance.monitoring.enabled: true");
+            sender.sendMessage("§7in §fplugins/EzRTP/performance.yml§7 and reloading the plugin.");
+            sender.sendMessage("");
+            sender.sendMessage("§6§l═══════════════════════════════════════");
+            return;
+        }
+
+        PerformanceSnapshot snap = monitor.snapshot();
+
+        // Overall RTP performance
+        sender.sendMessage("§6§lOverall RTP Performance:");
+        sender.sendMessage(String.format("  §7Total: §f%d §7| §7Success: §a%d §7(§a%.1f%%§7) §7| §7Failures: §c%d",
+                snap.getTotalRtps(), snap.getSuccessRtps(), snap.getSuccessRatePercent(), snap.getFailureRtps()));
+        sender.sendMessage("");
+
+        // Timing percentiles
+        sender.sendMessage("§6§lResponse Time:");
+        sender.sendMessage(String.format("  §7P50: §f%.0fms §7| §7P75: §f%.0fms §7| §7P90: §f%.0fms",
+                snap.getTimingP50Ms(), snap.getTimingP75Ms(), snap.getTimingP90Ms()));
+        sender.sendMessage(String.format("  §7P95: §f%.0fms §7| §7P99: §f%.0fms",
+                snap.getTimingP95Ms(), snap.getTimingP99Ms()));
+        sender.sendMessage(String.format("  §7Min: §f%dms §7| §7Max: §f%dms",
+                snap.getTimingMinMs(), snap.getTimingMaxMs()));
+        sender.sendMessage(String.format("  §7Slow Operations (>%dms): §e%d",
+                (long) monitor.getSettings().getWarnings().getSlowRtpThresholdMs(),
+                snap.getSlowOperations()));
+        sender.sendMessage("");
+
+        // Cache
+        sender.sendMessage("§6§lBiome Cache:");
+        sender.sendMessage(String.format("  §7Hit Rate: §a%.1f%% §7(hits: §a%d§7, misses: §e%d§7)",
+                snap.getCacheHitRatePercent(), snap.getCacheHits(), snap.getCacheMisses()));
+        sender.sendMessage(String.format("  §7Evictions: §f%d", snap.getCacheEvictions()));
+        sender.sendMessage("");
+
+        // Chunk loading
+        sender.sendMessage("§6§lChunk Loading:");
+        sender.sendMessage(String.format("  §7Total: §f%d §7| §7Async: §a%d §7| §7Sync: §e%d",
+                snap.getChunkLoadsTotal(), snap.getChunkLoadsAsync(), snap.getChunkLoadsSync()));
+        sender.sendMessage("");
+
+        // Biome filtering
+        sender.sendMessage("§6§lBiome Filtering:");
+        sender.sendMessage(String.format("  §7Total Rejections: §f%d §7| §7Max Per RTP: §f%d",
+                snap.getBiomeRejectionsTotal(), snap.getBiomeRejectionsMaxPerRtp()));
+        sender.sendMessage(String.format("  §7Filter Timeouts: §f%d", snap.getBiomeFilterTimeouts()));
+        sender.sendMessage("");
+
+        // Recommendations
+        boolean hasRecommendations = false;
+        if (snap.getSlowOperations() > 0 && snap.getBiomeFilterTimeouts() > 0) {
+            if (!hasRecommendations) {
+                sender.sendMessage("§e§lRecommendations:");
+                hasRecommendations = true;
+            }
+            sender.sendMessage("  §7High biome filter timeouts detected — consider reducing");
+            sender.sendMessage("  §7'biome-search.max-biome-rejections' or disabling biome filtering.");
+        }
+        if (snap.getCacheHits() + snap.getCacheMisses() > 10 && snap.getCacheHitRatePercent() < 30.0) {
+            if (!hasRecommendations) {
+                sender.sendMessage("§e§lRecommendations:");
+                hasRecommendations = true;
+            }
+            sender.sendMessage("  §7Low cache hit rate — increase 'max-per-biome' or 'warmup-size'.");
+        }
+        if (hasRecommendations) {
+            sender.sendMessage("");
+        }
+
+        // Generated at timestamp
+        sender.sendMessage("§8Generated at: " + snap.getGeneratedAt());
         sender.sendMessage("§6§l═══════════════════════════════════════");
     }
 

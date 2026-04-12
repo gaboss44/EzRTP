@@ -3,6 +3,7 @@ package com.skyblockexp.ezrtp.teleport.queue;
 import com.skyblockexp.ezrtp.platform.ChunkLoadStrategy;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.platform.PlatformTask;
+import com.skyblockexp.ezrtp.statistics.RtpStatistics;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,6 +35,7 @@ public final class ChunkLoadQueue {
     private volatile boolean enabled;
     private final AtomicBoolean schedulerFallbackLogged = new AtomicBoolean(false);
     private volatile long minFreeMemoryMb = 256L; // Default 256MB minimum free memory
+    private volatile RtpStatistics statistics;
 
     public ChunkLoadQueue(JavaPlugin plugin, ChunkLoadStrategy chunkLoadStrategy, PlatformScheduler scheduler) {
         this.plugin = plugin;
@@ -54,6 +56,10 @@ public final class ChunkLoadQueue {
             // Restart processing if it was running
             startProcessing();
         }
+    }
+
+    public void setStatistics(RtpStatistics statistics) {
+        this.statistics = statistics;
     }
 
     /**
@@ -216,14 +222,20 @@ public final class ChunkLoadQueue {
                         request.future().complete(world.getChunkAt(chunkX, chunkZ));
                         return;
                     }
-                    chunkLoadStrategy.loadChunk(world, chunkX, chunkZ)
-                            .whenComplete((chunk, ex) -> {
-                                if (ex != null) {
-                                    request.future().completeExceptionally(ex);
-                                    return;
-                                }
-                                request.future().complete(chunk);
-                            });
+                    java.util.concurrent.CompletableFuture<Chunk> loadFuture =
+                            chunkLoadStrategy.loadChunk(world, chunkX, chunkZ);
+                    boolean isAsync = !loadFuture.isDone();
+                    loadFuture.whenComplete((chunk, ex) -> {
+                        RtpStatistics stats = statistics;
+                        if (stats != null) {
+                            stats.recordChunkLoad(isAsync);
+                        }
+                        if (ex != null) {
+                            request.future().completeExceptionally(ex);
+                            return;
+                        }
+                        request.future().complete(chunk);
+                    });
                 } catch (Exception e) {
                     request.future().completeExceptionally(e);
                     plugin.getLogger().warning("Failed to load chunk: " + e.getMessage());

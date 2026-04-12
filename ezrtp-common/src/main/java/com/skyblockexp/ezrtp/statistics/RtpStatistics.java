@@ -2,6 +2,7 @@ package com.skyblockexp.ezrtp.statistics;
 
 import org.bukkit.block.Biome;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,9 +15,9 @@ import java.util.Deque;
  * and per-biome performance data. Thread-safe for concurrent access.
  */
 public final class RtpStatistics {
-    
+
     private static final int MAX_RECENT_RESULTS = 1000;
-    
+
     // Overall statistics
     private final AtomicInteger totalAttempts = new AtomicInteger(0);
     private final AtomicInteger totalSuccesses = new AtomicInteger(0);
@@ -25,14 +26,34 @@ public final class RtpStatistics {
     private final AtomicInteger totalCacheHits = new AtomicInteger(0);
     private final AtomicInteger totalCacheMisses = new AtomicInteger(0);
     private final AtomicLong totalTeleportTimeMs = new AtomicLong(0);
-    
+
     // Recent results for moving average success rate
     private final Deque<Boolean> recentResults = new ConcurrentLinkedDeque<>();
-    
+
     // Per-biome statistics
     private final Map<Biome, BiomeStats> biomeStats = new ConcurrentHashMap<>();
-    
+
     // Failure cause tracking
+
+    // -------------------------------------------------------------------------
+    // Timing ring buffer for percentile tracking (last 2048 successful RTPs)
+    // -------------------------------------------------------------------------
+    private static final int TIMING_BUFFER_SIZE = 2048;
+    private final long[] timingSamples = new long[TIMING_BUFFER_SIZE];
+    private int timingWriteIndex = 0;
+    private int timingFilled = 0;
+    private final AtomicLong minTimeMs = new AtomicLong(Long.MAX_VALUE);
+    private final AtomicLong maxTimeMs = new AtomicLong(0L);
+
+    // Chunk load counters
+    private final AtomicLong totalChunkLoads = new AtomicLong(0);
+    private final AtomicLong asyncChunkLoads = new AtomicLong(0);
+    private final AtomicLong syncChunkLoads = new AtomicLong(0);
+
+    // Biome rejection counters
+    private final AtomicLong totalBiomeRejections = new AtomicLong(0);
+    private final AtomicInteger maxBiomeRejectionsPerRtp = new AtomicInteger(0);
+    private final AtomicInteger biomeFilterTimeouts = new AtomicInteger(0);
     private final AtomicInteger failuresSafety = new AtomicInteger(0);
     private final AtomicInteger failuresProtection = new AtomicInteger(0);
     private final AtomicInteger failuresBiome = new AtomicInteger(0);
@@ -95,11 +116,12 @@ public final class RtpStatistics {
      */
     public void recordAttempt(boolean success, long durationMs, Biome biome, boolean cacheHit, boolean cacheChecked) {
         totalAttempts.incrementAndGet();
-        
+
         if (success) {
             totalSuccesses.incrementAndGet();
             totalTeleportTimeMs.addAndGet(durationMs);
-            
+            recordTimingSample(durationMs);
+
             if (biome != null) {
                 BiomeStats stats = getBiomeStats(biome);
                 stats.recordSuccess(durationMs);
@@ -149,6 +171,7 @@ public final class RtpStatistics {
      * This doesn't count as a "failure" but tracks per-biome activity.
      */
     public void recordBiomeAttempt(Biome biome) {
+        totalBiomeRejections.incrementAndGet();
         if (biome != null) {
             getBiomeStats(biome).recordAttempt();
         }
@@ -346,6 +369,127 @@ public final class RtpStatistics {
         uniformSearchUses.set(0);
         chunkLoadQueueHits.set(0);
         recentResults.clear();
+        synchronized (this) {
+            timingWriteIndex = 0;
+            timingFilled = 0;
+            Arrays.fill(timingSamples, 0L);
+        }
+        minTimeMs.set(Long.MAX_VALUE);
+        maxTimeMs.set(0L);
+        totalChunkLoads.set(0);
+        asyncChunkLoads.set(0);
+        syncChunkLoads.set(0);
+        totalBiomeRejections.set(0);
+        maxBiomeRejectionsPerRtp.set(0);
+        biomeFilterTimeouts.set(0);
+    }
+
+    // -------------------------------------------------------------------------
+    // Timing percentile methods
+    // -------------------------------------------------------------------------
+
+    private synchronized void recordTimingSample(long ms) {
+        timingSamples[timingWriteIndex % TIMING_BUFFER_SIZE] = ms;
+        timingWriteIndex++;
+        if (timingFilled < TIMING_BUFFER_SIZE) {
+            timingFilled++;
+        }
+        // update all-time min / max with CAS loops
+        long oldMin = minTimeMs.get();
+        while (ms < oldMin && !minTimeMs.compareAndSet(oldMin, ms)) {
+            oldMin = minTimeMs.get();
+        }
+        long oldMax = maxTimeMs.get();
+        while (ms > oldMax && !maxTimeMs.compareAndSet(oldMax, ms)) {
+            oldMax = maxTimeMs.get();
+        }
+    }
+
+    public synchronized double getTimingPercentile(int percentile) {
+        if (timingFilled == 0) {
+            return 0.0;
+        }
+        long[] snapshot = Arrays.copyOf(timingSamples, timingFilled);
+        Arrays.sort(snapshot);
+        int idx = (int) Math.ceil(percentile / 100.0 * timingFilled) - 1;
+        return snapshot[Math.max(0, Math.min(idx, timingFilled - 1))];
+    }
+
+    public synchronized int getSlowOperationCount(long thresholdMs) {
+        if (timingFilled == 0) {
+            return 0;
+        }
+        int count = 0;
+        for (int i = 0; i < timingFilled; i++) {
+            if (timingSamples[i] > thresholdMs) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public long getMinTimeMs() {
+        long v = minTimeMs.get();
+        return v == Long.MAX_VALUE ? 0L : v;
+    }
+
+    public long getMaxTimeMs() {
+        return maxTimeMs.get();
+    }
+
+    // -------------------------------------------------------------------------
+    // Chunk load tracking
+    // -------------------------------------------------------------------------
+
+    public void recordChunkLoad(boolean isAsync) {
+        totalChunkLoads.incrementAndGet();
+        if (isAsync) {
+            asyncChunkLoads.incrementAndGet();
+        } else {
+            syncChunkLoads.incrementAndGet();
+        }
+    }
+
+    public long getTotalChunkLoads() {
+        return totalChunkLoads.get();
+    }
+
+    public long getAsyncChunkLoads() {
+        return asyncChunkLoads.get();
+    }
+
+    public long getSyncChunkLoads() {
+        return syncChunkLoads.get();
+    }
+
+    // -------------------------------------------------------------------------
+    // Biome rejection tracking
+    // -------------------------------------------------------------------------
+
+    public void recordBiomeRejectionCount(int count) {
+        if (count <= 0) {
+            return;
+        }
+        int old = maxBiomeRejectionsPerRtp.get();
+        while (count > old && !maxBiomeRejectionsPerRtp.compareAndSet(old, count)) {
+            old = maxBiomeRejectionsPerRtp.get();
+        }
+    }
+
+    public void recordBiomeFilterTimeout() {
+        biomeFilterTimeouts.incrementAndGet();
+    }
+
+    public long getTotalBiomeRejections() {
+        return totalBiomeRejections.get();
+    }
+
+    public int getMaxBiomeRejectionsPerRtp() {
+        return maxBiomeRejectionsPerRtp.get();
+    }
+
+    public int getBiomeFilterTimeouts() {
+        return biomeFilterTimeouts.get();
     }
     
     /**

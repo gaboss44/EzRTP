@@ -2,6 +2,7 @@ package com.skyblockexp.ezrtp.bootstrap.component;
 
 import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
+import com.skyblockexp.ezrtp.config.PerformanceSettings;
 import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.util.MessageUtil;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
@@ -111,6 +112,12 @@ public final class ConfigurationService {
         saveResourceIfMissing("queue.yml");
         saveResourceIfMissing("network.yml");
         saveResourceIfMissing("force-rtp.yml");
+        saveResourceIfMissing("performance.yml");
+    }
+
+    public PerformanceSettings reloadPerformanceConfiguration() {
+        FileConfiguration performanceConfiguration = loadExternalConfiguration("performance.yml");
+        return PerformanceSettings.fromConfiguration(performanceConfiguration);
     }
 
     private void setupMessagePrefix() {

@@ -5,6 +5,7 @@ import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.config.SafetySettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import com.skyblockexp.ezrtp.util.MessageUtil;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;
 import com.skyblockexp.ezrtp.teleport.queue.TeleportQueueManager;
@@ -47,6 +48,7 @@ public final class TeleportExecutor {
     private final CountdownManager countdownManager;
     private final LocationFinder locationFinder;
     private final Set<UUID> activeTeleportAttempts = ConcurrentHashMap.newKeySet();
+    private volatile PerformanceMonitor performanceMonitor;
 
     public TeleportExecutor(org.bukkit.plugin.java.JavaPlugin plugin,
                             MessageProvider messageProvider,
@@ -69,6 +71,10 @@ public final class TeleportExecutor {
         this.locationFinder = locationFinder;
 
         this.queueManager.setExecutionHandler(this::teleportQueuedPlayer);
+    }
+
+    public void setPerformanceMonitor(PerformanceMonitor performanceMonitor) {
+        this.performanceMonitor = performanceMonitor;
     }
 
     public void teleportPlayer(Player player, TeleportReason reason) {
@@ -260,6 +266,10 @@ public final class TeleportExecutor {
                     }
                     if (completionHook != null) {
                         completionHook.run();
+                    }
+                    PerformanceMonitor pm = performanceMonitor;
+                    if (pm != null) {
+                        pm.afterOperation(duration, world.getName());
                     }
                 }
             };
