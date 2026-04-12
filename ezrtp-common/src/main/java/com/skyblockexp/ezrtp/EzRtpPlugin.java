@@ -42,4 +42,15 @@ public final class EzRtpPlugin extends JavaPlugin {
     public MessageProvider getMessageProvider() {
         return bootstrap != null ? bootstrap.getMessageProvider() : null;
     }
+
+    /**
+     * Gets the random teleport service used by EzRTP.
+     * This is provided for other plugins to interact with EzRTP programmatically.
+     *
+     * @return the {@link com.skyblockexp.ezrtp.teleport.RandomTeleportService} instance, or {@code null}
+     * if EzRTP has not finished bootstrapping or is disabled.
+     */
+    public com.skyblockexp.ezrtp.teleport.RandomTeleportService getTeleportService() {
+        return bootstrap != null ? bootstrap.getTeleportService() : null;
+    }
 }
