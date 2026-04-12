@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 // ChunkyAPI is optional at runtime; keep a runtime reference without a compile-time dependency.
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -53,6 +55,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
     private final TeleportCostCalculator costCalculator;
     private final TeleportExecutor teleportExecutor;
     private final DebugFileLogger debugFileLogger;
+    private final ExecutorService biomeFilterExecutor;
 
     private final ChunkyProvider chunkyAPI;
     private final com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator chunkyWarmupCoordinator;
@@ -86,7 +89,9 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.chunkLoadQueue.setStatistics(statistics);
         this.locationValidator = new LocationValidator(plugin, protectionRegistry);
         this.searchStrategy = createPatternStrategy(settings);
-        this.locationFinder = new LocationFinder(plugin, statistics, biomeCache, rareBiomeRegistry, chunkLoadQueue, locationValidator, searchStrategy, platformRuntime, chunkyAPI, chunkyWarmupCoordinator);
+        this.biomeFilterExecutor = Executors.newSingleThreadExecutor(
+            r -> new Thread(r, "ezrtp-biome-filter"));
+        this.locationFinder = new LocationFinder(plugin, statistics, biomeCache, rareBiomeRegistry, chunkLoadQueue, locationValidator, searchStrategy, platformRuntime, chunkyAPI, chunkyWarmupCoordinator, biomeFilterExecutor);
         this.countdownManager = new CountdownManager(plugin, messageProvider);
         this.queueManager = new TeleportQueueManager(plugin, this.queueSettings, messageProvider);
         this.costCalculator = new TeleportCostCalculator(economyService, costResolver);
@@ -150,6 +155,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         biomeCache.shutdown();
         rareBiomeRegistry.shutdown();
         chunkLoadQueue.shutdown();
+        biomeFilterExecutor.shutdown();
     }
 
     public CompletableFuture<Location> generateSafeLocationForCache(World world, RandomTeleportSettings teleportSettings) {

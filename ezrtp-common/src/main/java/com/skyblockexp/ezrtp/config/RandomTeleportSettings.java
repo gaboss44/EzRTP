@@ -39,6 +39,7 @@ public final class RandomTeleportSettings {
     private final ChunkLoadingSettings chunkLoadingSettings;
     private final boolean enableFallbackToCache;
     private final BiomeSearchSettings biomeSearchSettings;
+    private final boolean biomeFilteringEnabled;
     private final SafetySettings safetySettings;
     private final SearchPattern searchPattern;
     private final ChunkyIntegrationSettings chunkyIntegrationSettings;
@@ -61,6 +62,7 @@ public final class RandomTeleportSettings {
                                  ChunkLoadingSettings chunkLoadingSettings,
                                  boolean enableFallbackToCache,
                                  BiomeSearchSettings biomeSearchSettings,
+                                 boolean biomeFilteringEnabled,
                                  SafetySettings safetySettings,
                                  SearchPattern searchPattern,
                                  ChunkyIntegrationSettings chunkyIntegrationSettings) {
@@ -92,6 +94,7 @@ public final class RandomTeleportSettings {
         this.chunkLoadingSettings = chunkLoadingSettings != null ? chunkLoadingSettings : ChunkLoadingSettings.defaults();
         this.enableFallbackToCache = enableFallbackToCache;
         this.biomeSearchSettings = biomeSearchSettings != null ? biomeSearchSettings : BiomeSearchSettings.defaults();
+        this.biomeFilteringEnabled = biomeFilteringEnabled;
         this.safetySettings = safetySettings != null ? safetySettings : SafetySettings.defaults();
         this.searchPattern = searchPattern != null ? searchPattern : SearchPattern.RANDOM;
         this.chunkyIntegrationSettings = chunkyIntegrationSettings != null ? chunkyIntegrationSettings : ChunkyIntegrationSettings.defaults();
@@ -107,6 +110,7 @@ public final class RandomTeleportSettings {
     public ChunkLoadingSettings getChunkLoadingSettings() { return chunkLoadingSettings; }
     public boolean isEnableFallbackToCache() { return enableFallbackToCache; }
     public BiomeSearchSettings getBiomeSearchSettings() { return biomeSearchSettings; }
+    public boolean isBiomeFilteringEnabled() { return biomeFilteringEnabled; }
     public SafetySettings getSafetySettings() { return safetySettings; }
     public SearchPattern getSearchPattern() { return searchPattern; }
 
@@ -152,6 +156,7 @@ public final class RandomTeleportSettings {
                 ChunkLoadingSettings.defaults(),
                 true,
                 BiomeSearchSettings.defaults(),
+                true,
                 SafetySettings.defaults(),
                 SearchPattern.RANDOM,
                 ChunkyIntegrationSettings.defaults());
@@ -217,27 +222,43 @@ public final class RandomTeleportSettings {
 
         ProtectionSettings protectionSettings = ProtectionSettings.fromConfiguration(section.getConfigurationSection("protection"));
         
-        BiomePreCacheSettings preCacheSettings = biomesSection != null 
+        BiomePreCacheSettings preCacheSettings = biomesSection != null
             ? BiomePreCacheSettings.fromConfiguration(biomesSection.getConfigurationSection("pre-cache"))
             : BiomePreCacheSettings.disabled();
-        
+
         RareBiomeOptimizationSettings rareBiomeSettings = biomesSection != null
             ? RareBiomeOptimizationSettings.fromConfiguration(biomesSection.getConfigurationSection("rare-biome-optimization"))
             : RareBiomeOptimizationSettings.disabled();
 
         ChunkLoadingSettings chunkLoadingSettings = ChunkLoadingSettings.fromConfiguration(
             section.getConfigurationSection("chunk-loading"), ChunkLoadingSettings.defaults());
-        
-        BiomeSearchSettings searchSettings = biomesSection != null
-            ? BiomeSearchSettings.fromConfiguration(biomesSection.getConfigurationSection("search"), BiomeSearchSettings.defaults())
+
+        // Master toggle for include/exclude filtering
+        boolean biomeFilteringEnabled = biomesSection == null
+            || biomesSection.getBoolean("biome-filtering.enabled", true);
+
+        // Resolve budget section: new path takes precedence over legacy path
+        ConfigurationSection budgetSection = null;
+        if (biomesSection != null) {
+            ConfigurationSection bfSection = biomesSection.getConfigurationSection("biome-filtering");
+            if (bfSection != null && bfSection.isConfigurationSection("performance-budget")) {
+                budgetSection = bfSection.getConfigurationSection("performance-budget");
+            } else if (biomesSection.isConfigurationSection("search")) {
+                budgetSection = biomesSection.getConfigurationSection("search");
+            }
+        }
+        boolean filtersActive = !biomeInclude.isEmpty() || !biomeExclude.isEmpty();
+        BiomeSearchSettings baseFallback = filtersActive
+            ? BiomeSearchSettings.filterAwareDefaults()
             : BiomeSearchSettings.defaults();
+        BiomeSearchSettings searchSettings = BiomeSearchSettings.fromConfiguration(budgetSection, baseFallback);
 
         SafetySettings safetySettings = SafetySettings.fromConfiguration(section.getConfigurationSection("safety"), SafetySettings.defaults());
 
         SearchPattern searchPattern = SearchPattern.fromConfig(section.getString("search-pattern"), SearchPattern.RANDOM);
 
         ChunkyIntegrationSettings chunkyIntegrationSettings = ChunkyIntegrationSettings.fromConfiguration(section.getConfigurationSection("chunky-integration"), ChunkyIntegrationSettings.defaults());
-        
+
         // Parse RTP section for enable_fallback_to_cache
         ConfigurationSection rtpSection = section.getConfigurationSection("rtp");
         boolean enableFallbackToCache = rtpSection != null ? rtpSection.getBoolean("enable_fallback_to_cache", true) : true;
@@ -252,6 +273,7 @@ public final class RandomTeleportSettings {
             chunkLoadingSettings,
             enableFallbackToCache,
             searchSettings,
+            biomeFilteringEnabled,
             safetySettings,
             searchPattern,
             chunkyIntegrationSettings);
@@ -344,7 +366,7 @@ public final class RandomTeleportSettings {
         BiomePreCacheSettings preCacheSettings = biomesSection != null && biomesSection.isConfigurationSection("pre-cache")
                 ? BiomePreCacheSettings.fromConfiguration(biomesSection.getConfigurationSection("pre-cache"))
                 : (fallback != null ? fallback.getPreCacheSettings() : BiomePreCacheSettings.disabled());
-        
+
         RareBiomeOptimizationSettings rareBiomeSettings = biomesSection != null && biomesSection.isConfigurationSection("rare-biome-optimization")
                 ? RareBiomeOptimizationSettings.fromConfiguration(biomesSection.getConfigurationSection("rare-biome-optimization"))
                 : (fallback != null ? fallback.getRareBiomeOptimizationSettings() : RareBiomeOptimizationSettings.disabled());
@@ -352,11 +374,28 @@ public final class RandomTeleportSettings {
         ChunkLoadingSettings chunkLoadingSettings = ChunkLoadingSettings.fromConfiguration(
             section.getConfigurationSection("chunk-loading"),
             fallback != null ? fallback.getChunkLoadingSettings() : ChunkLoadingSettings.defaults());
-        
-        BiomeSearchSettings searchSettings = biomesSection != null && biomesSection.isConfigurationSection("search")
-            ? BiomeSearchSettings.fromConfiguration(biomesSection.getConfigurationSection("search"),
-                fallback != null ? fallback.getBiomeSearchSettings() : BiomeSearchSettings.defaults())
-            : (fallback != null ? fallback.getBiomeSearchSettings() : BiomeSearchSettings.defaults());
+
+        // Master toggle for include/exclude filtering
+        boolean biomeFilteringEnabled = biomesSection != null && biomesSection.isSet("biome-filtering.enabled")
+            ? biomesSection.getBoolean("biome-filtering.enabled", true)
+            : (fallback != null ? fallback.isBiomeFilteringEnabled() : true);
+
+        // Resolve budget section: new path takes precedence over legacy path
+        ConfigurationSection budgetSection = null;
+        if (biomesSection != null) {
+            ConfigurationSection bfSection = biomesSection.getConfigurationSection("biome-filtering");
+            if (bfSection != null && bfSection.isConfigurationSection("performance-budget")) {
+                budgetSection = bfSection.getConfigurationSection("performance-budget");
+            } else if (biomesSection.isConfigurationSection("search")) {
+                budgetSection = biomesSection.getConfigurationSection("search");
+            }
+        }
+        boolean filtersActive = !biomeInclude.isEmpty() || !biomeExclude.isEmpty();
+        BiomeSearchSettings inheritedFallback = fallback != null ? fallback.getBiomeSearchSettings() : null;
+        BiomeSearchSettings baseFallback = budgetSection != null
+            ? (inheritedFallback != null ? inheritedFallback : (filtersActive ? BiomeSearchSettings.filterAwareDefaults() : BiomeSearchSettings.defaults()))
+            : (inheritedFallback != null ? inheritedFallback : (filtersActive ? BiomeSearchSettings.filterAwareDefaults() : BiomeSearchSettings.defaults()));
+        BiomeSearchSettings searchSettings = BiomeSearchSettings.fromConfiguration(budgetSection, baseFallback);
 
         SafetySettings safetySettings = SafetySettings.fromConfiguration(section.getConfigurationSection("safety"),
             fallback != null ? fallback.getSafetySettings() : SafetySettings.defaults());
@@ -368,10 +407,10 @@ public final class RandomTeleportSettings {
 
         ChunkyIntegrationSettings chunkyIntegrationSettings = ChunkyIntegrationSettings.fromConfiguration(section.getConfigurationSection("chunky-integration"),
             fallback != null ? fallback.getChunkyIntegrationSettings() : ChunkyIntegrationSettings.defaults());
-        
+
         // Parse RTP section for enable_fallback_to_cache
         ConfigurationSection rtpSection = section.getConfigurationSection("rtp");
-        boolean enableFallbackToCache = rtpSection != null 
+        boolean enableFallbackToCache = rtpSection != null
                 ? rtpSection.getBoolean("enable_fallback_to_cache", fallback != null ? fallback.isEnableFallbackToCache() : true)
                 : (fallback != null ? fallback.isEnableFallbackToCache() : true);
 
@@ -383,11 +422,12 @@ public final class RandomTeleportSettings {
                 preCacheSettings,
                 rareBiomeSettings,
                 chunkLoadingSettings,
-            enableFallbackToCache,
-            searchSettings,
-            safetySettings,
-            searchPattern,
-            chunkyIntegrationSettings);
+                enableFallbackToCache,
+                searchSettings,
+                biomeFilteringEnabled,
+                safetySettings,
+                searchPattern,
+                chunkyIntegrationSettings);
     }
     public int getCountdownSeconds() {
         return countdownSeconds;

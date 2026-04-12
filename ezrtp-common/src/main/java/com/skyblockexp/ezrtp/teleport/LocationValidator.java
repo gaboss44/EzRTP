@@ -125,9 +125,13 @@ public final class LocationValidator {
 
     /**
      * Checks if the given settings have biome filters enabled.
+     * Returns {@code false} when {@code biome-filtering.enabled} is set to {@code false},
+     * even if include/exclude lists are non-empty.
      */
     public static boolean hasBiomeFilters(RandomTeleportSettings settings) {
-        return settings != null && (!settings.getBiomeInclude().isEmpty() || !settings.getBiomeExclude().isEmpty());
+        return settings != null
+            && settings.isBiomeFilteringEnabled()
+            && (!settings.getBiomeInclude().isEmpty() || !settings.getBiomeExclude().isEmpty());
     }
 
     private void debugReject(RandomTeleportSettings settings, Location loc, String reason) {
