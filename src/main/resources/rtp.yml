@@ -105,6 +105,33 @@ heatmap:
 biomes:
   include: []
   exclude: []
+  biome-filtering:
+    # Set to false to disable include/exclude biome checks entirely.
+    # Useful for temporarily lifting biome restrictions without removing lists.
+    enabled: true
+    performance-budget:
+      # Wall-clock timeout for normal searches (0 = unlimited).
+      # When include/exclude lists are active the plugin automatically tightens
+      # this to 100 ms if you leave it at 0 — set an explicit value to override.
+      max-total-time-ms: 0
+      # Wall-clock timeout for rare-biome searches (millis; 0 = unlimited).
+      max-total-time-ms-rare: 8000
+      # Maximum biome rejections before giving up (0 = unlimited).
+      max-biome-rejections: 0
+      max-biome-rejections-rare: 64
+      # Maximum chunk loads per search (0 = unlimited).
+      # Same auto-tightening applies as max-total-time-ms: defaults to 10 when filters active.
+      max-chunk-loads: 0
+      max-chunk-loads-rare: 16
+      # Minimum attempts when biome filters are active.
+      min-biome-attempts: 96
+      # What to do when the budget is exhausted before a match is found.
+      # Options: cached-location | generic | abort
+      fallback-on-timeout: cached-location
+      # When false, all biome searches for this world are serialised through a single
+      # dedicated thread ("ezrtp-biome-filter") instead of the common fork-join pool.
+      # Useful on servers with many concurrent RTPs where pool saturation is a concern.
+      async-mode: true
   pre-cache:
     enabled: false
     auto-enable-for-filters: true
@@ -125,15 +152,8 @@ biomes:
     chunk-load-interval-ticks: 3
     max-chunks-per-tick: 2
     auto-enable-for-filters: true
-  search:
-    max-wait-seconds: 0
-    max-wait-seconds-rare: 8
-    max-biome-rejections: 0
-    max-biome-rejections-rare: 64
-    max-chunk-loads: 0
-    max-chunk-loads-rare: 16
-    min-biome-attempts: 96
-    failover-mode: CACHE
+  # Legacy: biomes.search is still fully supported for backward compatibility.
+  # biome-filtering.performance-budget takes precedence when both are present.
 
 protection:
   avoid-claims: false
