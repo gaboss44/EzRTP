@@ -50,7 +50,7 @@ public final class ChunkyWarmupCoordinator {
      */
     private volatile boolean memorySafetyEnabled = true;
     private volatile long minFreeMemoryMb = 512L;
-    private volatile int maxCoordinatorEntries = 10000;
+    private volatile int maxCoordinatorEntries = 2500;
     private volatile long lowMemoryRetentionMillis = 1000L * 60L * 15L; // 15 minutes default
 
     /**

@@ -96,7 +96,7 @@ chunky-integration:
   memory-safety:
     enabled: true
     min-free-memory-mb: 256
-    max-coordinator-entries: 5000
+    max-coordinator-entries: 2000
     low-memory-retention-minutes: 10
 
 heatmap:
@@ -135,8 +135,8 @@ biomes:
   pre-cache:
     enabled: false
     auto-enable-for-filters: true
-    max-per-biome: 32
-    warmup-size: 12
+    max-per-biome: 16
+    warmup-size: 8
     expiration-minutes: 15
     refill-interval-minutes: 10
     refill-batch-size: 3
