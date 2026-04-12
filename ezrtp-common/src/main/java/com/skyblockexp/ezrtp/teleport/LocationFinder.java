@@ -221,8 +221,10 @@ public final class LocationFinder {
                 boolean attemptedCacheLookup = true;
                 Location cachedLocation = getFallbackCachedLocation(world, currentSettings, false);
                 if (cachedLocation != null) {
+                    statistics.recordBiomeRejectionCount(context.getBiomeRejections());
                     return CompletableFuture.completedFuture(new SearchResult(Optional.of(cachedLocation), false, true, true, true, false, SearchLimitType.NONE));
                 }
+                statistics.recordBiomeRejectionCount(context.getBiomeRejections());
                 return CompletableFuture.completedFuture(new SearchResult(Optional.empty(), noValidBiome, false, attemptedCacheLookup, false, true, SearchLimitType.NONE));
             }
 
@@ -243,6 +245,7 @@ public final class LocationFinder {
             } catch (Exception ignored) {
             }
 
+            statistics.recordBiomeRejectionCount(context.getBiomeRejections());
             return CompletableFuture.completedFuture(new SearchResult(Optional.empty(), noValidBiome, false, cacheChecked, false, false, SearchLimitType.NONE));
         }
 
@@ -263,6 +266,7 @@ public final class LocationFinder {
                                 rareBiomeRegistry.registerHotspot(recovered);
                             }
                         }
+                        statistics.recordBiomeRejectionCount(context.getBiomeRejections());
                         return CompletableFuture.completedFuture(new SearchResult(Optional.of(recovered), false, false, cacheChecked, false, false, SearchLimitType.NONE));
                     }
                     logCandidateRejection(world, currentSettings, attempt, candidate, "unsafe_or_null_candidate");
@@ -296,6 +300,7 @@ public final class LocationFinder {
                 }
             }
 
+            statistics.recordBiomeRejectionCount(context.getBiomeRejections());
             return CompletableFuture.completedFuture(new SearchResult(Optional.of(candidate), false, false, cacheChecked, false, false, SearchLimitType.NONE));
         });
     }
@@ -697,12 +702,20 @@ public final class LocationFinder {
                 cacheFailoverProducedLocation = true;
                 logLimitDebug(world, currentSettings, context, limitType, elapsedMillis, effectiveAttemptLimit,
                         searchSettings, cacheFailoverAttempted, cacheFailoverProducedLocation);
+                statistics.recordBiomeRejectionCount(context.getBiomeRejections());
+                if (limitType == SearchLimitType.BIOME_REJECTIONS) {
+                    statistics.recordBiomeFilterTimeout();
+                }
                 return CompletableFuture.completedFuture(new SearchResult(Optional.of(cachedLocation), false, true, true, true, false, limitType));
             }
         }
 
         logLimitDebug(world, currentSettings, context, limitType, elapsedMillis, effectiveAttemptLimit,
                 searchSettings, cacheFailoverAttempted, cacheFailoverProducedLocation);
+        statistics.recordBiomeRejectionCount(context.getBiomeRejections());
+        if (limitType == SearchLimitType.BIOME_REJECTIONS) {
+            statistics.recordBiomeFilterTimeout();
+        }
 
         return CompletableFuture.completedFuture(new SearchResult(Optional.empty(), noValidBiome, false, cacheChecked, false, false, limitType));
     }
