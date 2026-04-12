@@ -47,9 +47,23 @@ public final class ProtectionRegistry {
         if (settings == null || !settings.isAvoidClaims()) {
             return;
         }
+        java.util.List<String> missing = new java.util.ArrayList<>();
         for (String providerId : settings.getProviders()) {
             ProtectionProvider provider = providers.get(providerId);
             if (provider == null || !provider.isAvailable()) {
+                missing.add(providerId);
+            }
+        }
+        if (missing.isEmpty()) {
+            return;
+        }
+        if (missing.size() == settings.getProviders().size()) {
+            // ALL providers are unavailable — emit a single high-visibility warning
+            logger.warning("EzRTP: avoid-claims is enabled but none of the configured protection providers "
+                    + missing + " are available. Protected regions will NOT be avoided. "
+                    + "Install WorldGuard or GriefPrevention, or set avoid-claims: false in rtp.yml.");
+        } else {
+            for (String providerId : missing) {
                 logger.warning("EzRTP protection provider '" + providerId
                         + "' is configured but not available; protected regions will not be avoided for this provider.");
             }

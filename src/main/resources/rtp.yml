@@ -32,7 +32,7 @@ radius:
 
 # Candidate coordinate search pattern. Options: random, circle, square, triangle, diamond.
 search-pattern: random
-max-attempts: 32
+max-attempts: 16
 cost: 0.0
 
 # Optional countdown before teleport (0 = disabled)
@@ -84,7 +84,7 @@ safety:
 # Global chunk loading throttle
 chunk-loading:
   enabled: true
-  interval-ticks: 5
+  interval-ticks: 10
   max-chunks-per-tick: 1
 
 # Chunky integration for pregenerating RTP search areas
@@ -99,11 +99,14 @@ chunky-integration:
     max-coordinator-entries: 5000
     low-memory-retention-minutes: 10
 
+heatmap:
+  enabled: false
+
 biomes:
   include: []
   exclude: []
   pre-cache:
-    enabled: true
+    enabled: false
     auto-enable-for-filters: true
     max-per-biome: 32
     warmup-size: 12
