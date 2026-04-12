@@ -38,7 +38,7 @@ import java.util.function.Consumer;
 /**
  * Thin service wrapper that wires together the teleport helper components.
  */
-public final class RandomTeleportService {
+public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.TeleportService {
 
     private final org.bukkit.plugin.java.JavaPlugin plugin;
     private final RtpStatistics statistics = new RtpStatistics();
@@ -154,6 +154,15 @@ public final class RandomTeleportService {
         teleportExecutor.teleportPlayer(player, reason);
     }
 
+    @Override
+    public void teleportPlayer(@NotNull Player player, Object settings, @NotNull TeleportReason reason) {
+        if (settings instanceof RandomTeleportSettings) {
+            teleportPlayer(player, (RandomTeleportSettings) settings, reason);
+        } else {
+            teleportPlayer(player, reason);
+        }
+    }
+
     public void teleportPlayer(@NotNull Player player,
                                RandomTeleportSettings teleportSettings,
                                @NotNull TeleportReason reason) {
@@ -171,6 +180,15 @@ public final class RandomTeleportService {
                                @NotNull TeleportReason reason,
                                Consumer<Boolean> callback) {
         teleportExecutor.teleportPlayer(player, teleportSettings, reason, callback);
+    }
+
+    
+    public void teleportPlayer(@NotNull Player player, Object settings, @NotNull TeleportReason reason, Consumer<Boolean> callback) {
+        if (settings instanceof RandomTeleportSettings) {
+            teleportPlayer(player, (RandomTeleportSettings) settings, reason, callback);
+        } else {
+            teleportPlayer(player, reason, callback);
+        }
     }
 
     private void applyCacheSettings(RandomTeleportSettings currentSettings) {
