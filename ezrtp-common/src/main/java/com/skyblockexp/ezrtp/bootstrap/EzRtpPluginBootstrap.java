@@ -120,7 +120,8 @@ public final class EzRtpPluginBootstrap {
         economyService = economyCoordinator.initializeEconomy();
         reloadPluginConfiguration();
         usageStorage = createUsageStorage();
-        usageResetScheduler = new UsageResetScheduler(plugin, usageStorage);
+        usageResetScheduler = new UsageResetScheduler(
+                plugin, PlatformRuntimeRegistry.get().scheduler(), usageStorage);
         usageResetScheduler.schedule();
         registerListeners();
         registerCommand();

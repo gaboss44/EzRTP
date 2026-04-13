@@ -2,12 +2,14 @@ package com.skyblockexp.ezrtp.teleport.biome;
 
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
 import com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
+import com.skyblockexp.ezrtp.platform.PlatformTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -39,7 +41,8 @@ public final class BiomeLocationCache {
     private final int maxLocationsPerBiome;
     private final long expirationMillis;
     private final int warmupSize;
-    private BukkitTask warmupTask;
+    private PlatformTask warmupTask;
+    private PlatformScheduler platformScheduler;
     private volatile boolean enabled;
     private final AtomicLong evictionCount = new AtomicLong(0);
     
@@ -51,7 +54,22 @@ public final class BiomeLocationCache {
         this(plugin, maxLocationsPerBiome, warmupSize, expirationMinutes, null);
     }
 
-    public BiomeLocationCache(JavaPlugin plugin, int maxLocationsPerBiome, int warmupSize, long expirationMinutes, ChunkyWarmupCoordinator chunkyCoordinator) {
+    public BiomeLocationCache(
+            JavaPlugin plugin,
+            int maxLocationsPerBiome,
+            int warmupSize,
+            long expirationMinutes,
+            ChunkyWarmupCoordinator chunkyCoordinator) {
+        this(plugin, maxLocationsPerBiome, warmupSize, expirationMinutes, chunkyCoordinator, null);
+    }
+
+    public BiomeLocationCache(
+            JavaPlugin plugin,
+            int maxLocationsPerBiome,
+            int warmupSize,
+            long expirationMinutes,
+            ChunkyWarmupCoordinator chunkyCoordinator,
+            PlatformScheduler platformScheduler) {
         this.plugin = plugin;
         this.worldCaches = new ConcurrentHashMap<>();
         this.maxLocationsPerBiome = maxLocationsPerBiome;
@@ -59,6 +77,11 @@ public final class BiomeLocationCache {
         this.expirationMillis = expirationMinutes * 60 * 1000;
         this.enabled = true;
         this.chunkyCoordinator = chunkyCoordinator;
+        this.platformScheduler = platformScheduler;
+    }
+
+    private PlatformScheduler effectiveScheduler() {
+        return platformScheduler != null ? platformScheduler : PlatformRuntimeRegistry.get().scheduler();
     }
     
     /**
@@ -260,12 +283,13 @@ public final class BiomeLocationCache {
         }
         
         // Cancel any existing warmup task
-        if (warmupTask != null && !warmupTask.isCancelled()) {
+        if (warmupTask != null) {
             warmupTask.cancel();
+            warmupTask = null;
         }
         
         // Schedule warmup task with a delay to avoid startup lag
-        warmupTask = Bukkit.getScheduler().runTaskLater(plugin,
+        warmupTask = effectiveScheduler().executeGlobalDelayed(
             () -> performWarmup(world, settings, teleportService, 0),
             WARMUP_DELAY_TICKS
         );
@@ -347,10 +371,10 @@ public final class BiomeLocationCache {
                 final int completedSnapshot = completedCount;
                 CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
                 allOf.thenRun(() -> {
-                    Bukkit.getScheduler().runTask(plugin, () -> {
+                    effectiveScheduler().executeGlobal(() -> {
                         int newCompleted = completedSnapshot + batchSnapshot;
                         if (newCompleted < warmupSize) {
-                            Bukkit.getScheduler().runTaskLater(plugin,
+                            effectiveScheduler().executeGlobalDelayed(
                                 () -> performWarmup(world, settings, teleportService, newCompleted),
                                 WARMUP_BATCH_DELAY_TICKS
                             );
@@ -370,7 +394,7 @@ public final class BiomeLocationCache {
         warmupAttempt(world, settings, teleportService, () -> {
             int newCompleted = completedCount + 1;
             if (newCompleted < warmupSize) {
-                Bukkit.getScheduler().runTaskLater(plugin,
+                effectiveScheduler().executeGlobalDelayed(
                     () -> performWarmup(world, settings, teleportService, newCompleted),
                     WARMUP_BATCH_DELAY_TICKS
                 );
@@ -416,7 +440,7 @@ public final class BiomeLocationCache {
                 ));
                 // Run the success callback on the main thread
                 try {
-                    Bukkit.getScheduler().runTask(plugin, onSuccess);
+                    effectiveScheduler().executeGlobal(onSuccess);
                 } catch (IllegalStateException ex) {
                     // Plugin is shutting down, log warning to indicate warmup was interrupted
                     if (plugin.isEnabled()) {
@@ -541,8 +565,9 @@ public final class BiomeLocationCache {
      * Shuts down the cache and cancels any pending warmup tasks.
      */
     public void shutdown() {
-        if (warmupTask != null && !warmupTask.isCancelled()) {
+        if (warmupTask != null) {
             warmupTask.cancel();
+            warmupTask = null;
         }
         clear();
         enabled = false;

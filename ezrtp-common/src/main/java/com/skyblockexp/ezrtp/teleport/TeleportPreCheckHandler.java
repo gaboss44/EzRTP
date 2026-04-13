@@ -3,8 +3,8 @@ package com.skyblockexp.ezrtp.teleport;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -15,15 +15,17 @@ import java.util.function.Consumer;
 public final class TeleportPreCheckHandler {
 
     private final org.bukkit.plugin.java.JavaPlugin plugin;
-    private final BukkitScheduler scheduler;
+    private final PlatformScheduler scheduler;
     private final MessageProvider messageProvider;
     private final TeleportCostCalculator costCalculator;
 
-    public TeleportPreCheckHandler(org.bukkit.plugin.java.JavaPlugin plugin,
-                                   MessageProvider messageProvider,
-                                   TeleportCostCalculator costCalculator) {
+    public TeleportPreCheckHandler(
+            org.bukkit.plugin.java.JavaPlugin plugin,
+            PlatformScheduler scheduler,
+            MessageProvider messageProvider,
+            TeleportCostCalculator costCalculator) {
         this.plugin = plugin;
-        this.scheduler = plugin.getServer().getScheduler();
+        this.scheduler = scheduler;
         this.messageProvider = messageProvider;
         this.costCalculator = costCalculator;
     }
@@ -38,7 +40,7 @@ public final class TeleportPreCheckHandler {
         long totalMemoryMb = runtime.totalMemory() / (1024L * 1024L);
         if (freeMemoryMb < 128) { // Less than 128MB free memory
             com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORTING, player));
-            scheduler.runTaskLater(plugin, () -> {
+            scheduler.executeGlobalDelayed(() -> {
                 com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.WORLD_MISSING,
                     Map.of("world", "Server memory too low for teleport"), player));
                 if (callback != null) callback.accept(false);

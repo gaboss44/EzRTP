@@ -11,8 +11,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import com.skyblockexp.ezrtp.util.compat.BossBarCompat;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -26,13 +26,16 @@ import java.util.function.Consumer;
 public final class CountdownManager {
 
     private final org.bukkit.plugin.java.JavaPlugin plugin;
-    private final BukkitScheduler scheduler;
+    private final PlatformScheduler scheduler;
     private final MessageProvider messageProvider;
     private final Map<UUID, BossBarCompat.Wrapper> countdownBossBars = new HashMap<>();
 
-    public CountdownManager(org.bukkit.plugin.java.JavaPlugin plugin, MessageProvider messageProvider) {
+    public CountdownManager(
+            org.bukkit.plugin.java.JavaPlugin plugin,
+            PlatformScheduler scheduler,
+            MessageProvider messageProvider) {
         this.plugin = plugin;
-        this.scheduler = plugin.getServer().getScheduler();
+        this.scheduler = scheduler;
         this.messageProvider = messageProvider;
     }
 
@@ -83,7 +86,7 @@ public final class CountdownManager {
         playCountdownParticles(player, teleportSettings.getCountdownParticleSettings());
 
         // Schedule next tick
-        scheduler.runTaskLater(plugin, () ->
+        scheduler.executeGlobalDelayed(() ->
             runCountdown(player, teleportSettings, callback, seconds - 1, totalSeconds, onComplete), 20L);
     }
 
