@@ -5,7 +5,6 @@ import com.skyblockexp.ezrtp.unsafe.UnsafeLocationCause;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationStatistics;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.command.CommandSender;
@@ -57,7 +56,7 @@ public class UnsafeStatsSubcommand extends Subcommand {
         sender.sendMessage("§6§lBreakdown by Cause:");
         allTime.entrySet().stream()
                 .filter(e -> e.getValue() > 0)
-                .sorted(Comparator.<Map.Entry<UnsafeLocationCause, Long>>comparingByValue().reversed())
+                .sorted(Map.Entry.<UnsafeLocationCause, Long>comparingByValue().reversed())
                 .forEach(e -> {
                     double pct = allTimeTotal > 0 ? (e.getValue() * 100.0 / allTimeTotal) : 0.0;
                     sender.sendMessage(String.format(
