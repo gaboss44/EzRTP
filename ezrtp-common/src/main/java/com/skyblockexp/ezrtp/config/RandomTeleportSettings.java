@@ -40,6 +40,7 @@ public final class RandomTeleportSettings {
     private final boolean enableFallbackToCache;
     private final BiomeSearchSettings biomeSearchSettings;
     private final boolean biomeFilteringEnabled;
+    private final boolean biomeSystemEnabled;
     private final SafetySettings safetySettings;
     private final SearchPattern searchPattern;
     private final ChunkyIntegrationSettings chunkyIntegrationSettings;
@@ -63,6 +64,7 @@ public final class RandomTeleportSettings {
                                  boolean enableFallbackToCache,
                                  BiomeSearchSettings biomeSearchSettings,
                                  boolean biomeFilteringEnabled,
+                                 boolean biomeSystemEnabled,
                                  SafetySettings safetySettings,
                                  SearchPattern searchPattern,
                                  ChunkyIntegrationSettings chunkyIntegrationSettings) {
@@ -95,6 +97,7 @@ public final class RandomTeleportSettings {
         this.enableFallbackToCache = enableFallbackToCache;
         this.biomeSearchSettings = biomeSearchSettings != null ? biomeSearchSettings : BiomeSearchSettings.defaults();
         this.biomeFilteringEnabled = biomeFilteringEnabled;
+        this.biomeSystemEnabled = biomeSystemEnabled;
         this.safetySettings = safetySettings != null ? safetySettings : SafetySettings.defaults();
         this.searchPattern = searchPattern != null ? searchPattern : SearchPattern.RANDOM;
         this.chunkyIntegrationSettings = chunkyIntegrationSettings != null ? chunkyIntegrationSettings : ChunkyIntegrationSettings.defaults();
@@ -111,6 +114,7 @@ public final class RandomTeleportSettings {
     public boolean isEnableFallbackToCache() { return enableFallbackToCache; }
     public BiomeSearchSettings getBiomeSearchSettings() { return biomeSearchSettings; }
     public boolean isBiomeFilteringEnabled() { return biomeFilteringEnabled; }
+    public boolean isBiomeSystemEnabled() { return biomeSystemEnabled; }
     public SafetySettings getSafetySettings() { return safetySettings; }
     public SearchPattern getSearchPattern() { return searchPattern; }
 
@@ -156,6 +160,7 @@ public final class RandomTeleportSettings {
                 ChunkLoadingSettings.defaults(),
                 true,
                 BiomeSearchSettings.defaults(),
+                true,
                 true,
                 SafetySettings.defaults(),
                 SearchPattern.RANDOM,
@@ -233,6 +238,10 @@ public final class RandomTeleportSettings {
         ChunkLoadingSettings chunkLoadingSettings = ChunkLoadingSettings.fromConfiguration(
             section.getConfigurationSection("chunk-loading"), ChunkLoadingSettings.defaults());
 
+        // Master switch: biomes.enabled — disables all biome infrastructure when false
+        boolean biomeSystemEnabled = biomesSection == null
+            || biomesSection.getBoolean("enabled", true);
+
         // Master toggle for include/exclude filtering
         boolean biomeFilteringEnabled = biomesSection == null
             || biomesSection.getBoolean("biome-filtering.enabled", true);
@@ -274,6 +283,7 @@ public final class RandomTeleportSettings {
             enableFallbackToCache,
             searchSettings,
             biomeFilteringEnabled,
+            biomeSystemEnabled,
             safetySettings,
             searchPattern,
             chunkyIntegrationSettings);
@@ -375,6 +385,11 @@ public final class RandomTeleportSettings {
             section.getConfigurationSection("chunk-loading"),
             fallback != null ? fallback.getChunkLoadingSettings() : ChunkLoadingSettings.defaults());
 
+        // Master switch: biomes.enabled — disables all biome infrastructure when false
+        boolean biomeSystemEnabled = biomesSection != null && biomesSection.isSet("enabled")
+            ? biomesSection.getBoolean("enabled", true)
+            : (fallback != null ? fallback.isBiomeSystemEnabled() : true);
+
         // Master toggle for include/exclude filtering
         boolean biomeFilteringEnabled = biomesSection != null && biomesSection.isSet("biome-filtering.enabled")
             ? biomesSection.getBoolean("biome-filtering.enabled", true)
@@ -425,6 +440,7 @@ public final class RandomTeleportSettings {
                 enableFallbackToCache,
                 searchSettings,
                 biomeFilteringEnabled,
+                biomeSystemEnabled,
                 safetySettings,
                 searchPattern,
                 chunkyIntegrationSettings);

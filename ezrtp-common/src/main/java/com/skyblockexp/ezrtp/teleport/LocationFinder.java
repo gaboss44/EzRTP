@@ -162,7 +162,7 @@ public final class LocationFinder {
                     currentSettings.getMinY(), currentSettings.getMaxY(), currentSettings.getBiomeInclude(), currentSettings.getBiomeExclude(),
                     currentSettings.getProtectionSettings(), currentSettings.getPreCacheSettings(), currentSettings.getRareBiomeOptimizationSettings(),
                     currentSettings.getChunkLoadingSettings(), currentSettings.isEnableFallbackToCache(), currentSettings.getBiomeSearchSettings(),
-                    currentSettings.isBiomeFilteringEnabled(),
+                    currentSettings.isBiomeFilteringEnabled(), currentSettings.isBiomeSystemEnabled(),
                     currentSettings.getSafetySettings(), currentSettings.getSearchPattern(), currentSettings.getChunkyIntegrationSettings()
                 );
             }
@@ -222,7 +222,7 @@ public final class LocationFinder {
                     teleportSettings.getMinY(), teleportSettings.getMaxY(), teleportSettings.getBiomeInclude(), teleportSettings.getBiomeExclude(),
                     teleportSettings.getProtectionSettings(), teleportSettings.getPreCacheSettings(), teleportSettings.getRareBiomeOptimizationSettings(),
                     teleportSettings.getChunkLoadingSettings(), teleportSettings.isEnableFallbackToCache(), teleportSettings.getBiomeSearchSettings(),
-                    teleportSettings.isBiomeFilteringEnabled(),
+                    teleportSettings.isBiomeFilteringEnabled(), teleportSettings.isBiomeSystemEnabled(),
                     teleportSettings.getSafetySettings(), teleportSettings.getSearchPattern(), teleportSettings.getChunkyIntegrationSettings()
                 );
             }

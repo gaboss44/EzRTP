@@ -103,6 +103,10 @@ heatmap:
   enabled: false
 
 biomes:
+  # Master kill-switch. Set to false to disable all biome infrastructure
+  # (include/exclude filtering, pre-cache, rare-biome optimization) regardless
+  # of individual sub-section settings. Default true keeps existing behaviour.
+  enabled: true
   include: []
   exclude: []
   biome-filtering:
