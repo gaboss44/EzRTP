@@ -81,11 +81,18 @@ safety:
     # Nether-only scan depth. Defaults deeper than overworld to handle roof-start candidates safely.
     max-surface-scan-depth-nether: 128
 
-# Global chunk loading throttle
+# Global chunk loading configuration.
+# use-paper-async-api: auto-detect  -> bypass the throttle queue on Paper 1.21+ (recommended)
+#                      always        -> bypass unconditionally (safe on all platforms; Bukkit/Spigot get a sync-completed future)
+#                      never         -> always use the legacy throttle regardless of platform
+# The legacy-throttle sub-section is used when the async API is not in use (Spigot, old Paper,
+# or when use-paper-async-api is set to 'never').
 chunk-loading:
-  enabled: true
-  interval-ticks: 10
-  max-chunks-per-tick: 1
+  use-paper-async-api: auto-detect
+  legacy-throttle:
+    enabled: true
+    interval-ticks: 10
+    max-chunks-per-tick: 1
 
 # Chunky integration for pregenerating RTP search areas
 chunky-integration:

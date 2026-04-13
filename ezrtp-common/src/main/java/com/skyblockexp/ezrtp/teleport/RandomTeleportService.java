@@ -5,6 +5,7 @@ import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import com.skyblockexp.ezrtp.platform.ChunkLoadStrategy;
 import com.skyblockexp.ezrtp.platform.PlatformRuntime;
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeCapabilitiesDetector;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.config.biome.RareBiomeOptimizationSettings;
@@ -352,14 +353,52 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
 
     private void applyChunkLoadingSettings(RandomTeleportSettings currentSettings) {
         ChunkLoadingSettings chunkSettings = currentSettings != null
-            ? currentSettings.getChunkLoadingSettings()
-            : ChunkLoadingSettings.defaults();
+                ? currentSettings.getChunkLoadingSettings()
+                : ChunkLoadingSettings.defaults();
+        if (chunkSettings == null) {
+            chunkSettings = ChunkLoadingSettings.defaults();
+        }
 
-        if (chunkSettings != null && chunkSettings.isEnabled()) {
-            chunkLoadQueue.configure(chunkSettings.getProcessingIntervalTicks(), chunkSettings.getMaxChunksPerTick());
+        ChunkLoadingSettings.PaperAsyncApiMode mode = chunkSettings.getUsePaperAsyncApi();
+        boolean usePaperAsync = switch (mode) {
+            case ALWAYS -> true;
+            case NEVER -> false;
+            case AUTO_DETECT -> PlatformRuntimeCapabilitiesDetector.isPaper121PlusAsync(
+                    plugin.getClass().getClassLoader());
+        };
+
+        if (usePaperAsync) {
+            // Paper 1.21+: async chunk loading bypasses the tick throttle.
+            // The queue object is kept enabled so LocationFinder's isEnabled() guard routes
+            // through requestChunkLoad() (which will take the passthrough fast-path).
+            chunkLoadQueue.setAsyncPassthrough(true);
             chunkLoadQueue.setEnabled(true);
+
+            // Warn if the operator explicitly forced ALWAYS on a non-Paper server — the setting
+            // is harmless but misleading.
+            if (mode == ChunkLoadingSettings.PaperAsyncApiMode.ALWAYS
+                    && !PlatformRuntimeCapabilitiesDetector
+                            .detect(plugin.getClass().getClassLoader())
+                            .paperApi()) {
+                plugin.getLogger().warning(
+                        "[EzRTP] chunk-loading.use-paper-async-api is set to 'always' but Paper"
+                                + " API was not detected. The async fast-path will still run but"
+                                + " chunk loading will not be genuinely non-blocking.");
+            } else {
+                plugin.getLogger().info(
+                        "[EzRTP] Using Paper async chunk loading — legacy throttle bypassed.");
+            }
         } else {
-            chunkLoadQueue.setEnabled(false);
+            // Legacy path: tick-based throttle queue.
+            chunkLoadQueue.setAsyncPassthrough(false);
+            ChunkLoadingSettings.LegacyThrottleSettings legacy = chunkSettings.getLegacyThrottle();
+            if (legacy.isEnabled()) {
+                chunkLoadQueue.configure(
+                        legacy.getProcessingIntervalTicks(), legacy.getMaxChunksPerTick());
+                chunkLoadQueue.setEnabled(true);
+            } else {
+                chunkLoadQueue.setEnabled(false);
+            }
         }
 
         // Configure memory safety for chunk loading
