@@ -33,6 +33,13 @@ public final class ChunkLoadQueue {
     private volatile long processingIntervalTicks = DEFAULT_PROCESSING_INTERVAL_TICKS;
     private volatile int maxChunksPerTick = DEFAULT_MAX_CHUNKS_PER_TICK;
     private volatile boolean enabled;
+    /**
+     * When {@code true}, {@link #requestChunkLoad} bypasses the tick-based queue entirely and
+     * delegates straight to the underlying {@link ChunkLoadStrategy}. Used on Paper 1.21+ where
+     * {@code World.getChunkAtAsync()} is genuinely non-blocking, making the throttle
+     * counterproductive.
+     */
+    private volatile boolean asyncPassthrough = false;
     private final AtomicBoolean schedulerFallbackLogged = new AtomicBoolean(false);
     private volatile long minFreeMemoryMb = 256L; // Default 256MB minimum free memory
     private volatile RtpStatistics statistics;
@@ -90,6 +97,33 @@ public final class ChunkLoadQueue {
     }
 
     /**
+     * Enables or disables async-passthrough mode.
+     *
+     * <p>When {@code true}, {@link #requestChunkLoad} skips the tick-based throttle queue and
+     * calls the underlying strategy immediately inside a region-safe callback. The scheduler
+     * task is stopped because it is no longer needed.
+     *
+     * <p>When {@code false}, normal throttled queuing resumes on the next
+     * {@link #requestChunkLoad} call.
+     *
+     * @param passthrough {@code true} to enable the Paper async fast-path
+     */
+    public void setAsyncPassthrough(boolean passthrough) {
+        this.asyncPassthrough = passthrough;
+        if (passthrough) {
+            // No tick task needed for passthrough — cancel any running one.
+            stop();
+        }
+    }
+
+    /**
+     * Returns whether async-passthrough mode is active.
+     */
+    public boolean isAsyncPassthrough() {
+        return asyncPassthrough;
+    }
+
+    /**
      * Requests a chunk to be loaded asynchronously through the queue.
      * Returns a CompletableFuture that completes when the chunk is loaded.
      *
@@ -99,6 +133,36 @@ public final class ChunkLoadQueue {
      * @return Future that completes with the loaded chunk
      */
     public CompletableFuture<Chunk> requestChunkLoad(World world, int chunkX, int chunkZ) {
+        // Async-passthrough fast-path: bypass the throttle queue entirely.
+        // Used on Paper 1.21+ where getChunkAtAsync() is genuinely non-blocking.
+        if (asyncPassthrough) {
+            CompletableFuture<Chunk> future = new CompletableFuture<>();
+            scheduler.executeRegion(world, chunkX, chunkZ, () -> {
+                try {
+                    if (world.isChunkLoaded(chunkX, chunkZ)) {
+                        future.complete(world.getChunkAt(chunkX, chunkZ));
+                        return;
+                    }
+                    CompletableFuture<Chunk> loadFuture = chunkLoadStrategy.loadChunk(world, chunkX, chunkZ);
+                    boolean isAsync = !loadFuture.isDone();
+                    loadFuture.whenComplete((chunk, ex) -> {
+                        RtpStatistics stats = statistics;
+                        if (stats != null) {
+                            stats.recordChunkLoad(isAsync);
+                        }
+                        if (ex != null) {
+                            future.completeExceptionally(ex);
+                        } else {
+                            future.complete(chunk);
+                        }
+                    });
+                } catch (Exception e) {
+                    future.completeExceptionally(e);
+                }
+            });
+            return future;
+        }
+
         if (!enabled) {
             // If disabled, load immediately without queueing
             CompletableFuture<Chunk> future = new CompletableFuture<>();
