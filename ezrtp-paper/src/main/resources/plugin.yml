@@ -4,4 +4,5 @@ main: com.skyblockexp.ezrtp.paper.EzRtpPaperModulePlugin
 api-version: '1.19'
 author: SkyblockEXP
 description: Paper platform module for EzRTP runtime adapters.
+folia-supported: true
 depend: [EzRTP]
