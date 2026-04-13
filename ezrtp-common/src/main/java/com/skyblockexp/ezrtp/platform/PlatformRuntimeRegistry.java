@@ -127,7 +127,24 @@ public final class PlatformRuntimeRegistry {
 
         @Override
         public PlatformTask scheduleRepeating(Runnable task, long delayTicks, long periodTicks) {
-            return () -> { };
+            return () -> {};
+        }
+
+        @Override
+        public void executeGlobal(Runnable task) {
+            task.run();
+        }
+
+        @Override
+        public PlatformTask executeGlobalDelayed(Runnable task, long delayTicks) {
+            task.run();
+            return () -> {};
+        }
+
+        @Override
+        public void executeRegionDelayed(
+                World world, int chunkX, int chunkZ, Runnable task, long delayTicks) {
+            task.run();
         }
     }
 
