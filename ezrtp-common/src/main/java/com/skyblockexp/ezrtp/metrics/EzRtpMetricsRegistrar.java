@@ -2,6 +2,8 @@ package com.skyblockexp.ezrtp.metrics;
 
 import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
+import com.skyblockexp.ezrtp.unsafe.UnsafeLocationCause;
+import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bstats.charts.SimplePie;
@@ -66,6 +68,7 @@ public final class EzRtpMetricsRegistrar {
             metrics.addCustomChart(new SimplePie("rtp_success_distribution", this::describeSuccessRateBucket));
             metrics.addCustomChart(new SimplePie("teleport_time_distribution", this::describeAverageTeleportTimeBucket));
             metrics.addCustomChart(new SimplePie("failure_cause", this::describeTopFailureCause));
+            metrics.addCustomChart(new SimplePie("unsafe_location_cause", this::describeTopUnsafeLocationCause));
 
             metrics.addCustomChart(new SimplePie("cache_enabled", () -> {
                 RandomTeleportService service = teleportServiceSupplier.get();
@@ -122,6 +125,19 @@ public final class EzRtpMetricsRegistrar {
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse("Unknown");
+    }
+
+    private String describeTopUnsafeLocationCause() {
+        UnsafeLocationMonitor monitor = plugin.getUnsafeLocationMonitor();
+        if (monitor == null || !monitor.isEnabled()) {
+            return "No Data";
+        }
+        var allTime = monitor.getStatistics().getAllTimeCounts();
+        return allTime.entrySet().stream()
+                .filter(e -> e.getValue() > 0)
+                .max(Map.Entry.comparingByValue())
+                .map(e -> e.getKey().getDisplayName())
+                .orElse("No Data");
     }
 
     private String describeSuccessRateBucket() {

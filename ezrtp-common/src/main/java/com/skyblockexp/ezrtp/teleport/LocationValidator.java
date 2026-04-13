@@ -2,7 +2,9 @@ package com.skyblockexp.ezrtp.teleport;
 
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.protection.ProtectionRegistry;
+import com.skyblockexp.ezrtp.unsafe.UnsafeLocationCause;
 
+import java.util.Optional;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -27,27 +29,58 @@ public final class LocationValidator {
 
     /**
      * Checks if a location is safe for teleportation.
+     *
+     * @return {@code true} when the location passes all safety checks
      */
     public boolean isSafe(Location location, RandomTeleportSettings currentSettings) {
+        return checkSafety(location, currentSettings).isEmpty();
+    }
+
+    /**
+     * Checks if a location is safe for teleportation and returns the cause of any rejection.
+     *
+     * <p>All debug-rejection logging is preserved. When the location passes every check,
+     * {@link Optional#empty()} is returned. Otherwise an {@link Optional} containing the
+     * {@link UnsafeLocationCause} that triggered the first failing check is returned.
+     *
+     * @param location        the candidate location, may be {@code null}
+     * @param currentSettings the RTP settings in effect, may be {@code null}
+     * @return empty when safe; the cause when unsafe
+     */
+    public Optional<UnsafeLocationCause> checkSafety(
+            Location location, RandomTeleportSettings currentSettings) {
         if (location == null || currentSettings == null) {
-            return false;
+            return Optional.of(UnsafeLocationCause.OTHER);
         }
 
         Block blockBelow = location.clone().subtract(0, 1, 0).getBlock();
         Block destination = location.getBlock();
         Material typeBelow = blockBelow.getType();
         int y = location.getBlockY();
-        int minY = currentSettings.getMinY() != null ? currentSettings.getMinY() : getWorldMinHeight(location.getWorld());
-        int maxY = currentSettings.getMaxY() != null ? currentSettings.getMaxY() : getWorldMaxHeight(location.getWorld());
+        int minY =
+                currentSettings.getMinY() != null
+                        ? currentSettings.getMinY()
+                        : getWorldMinHeight(location.getWorld());
+        int maxY =
+                currentSettings.getMaxY() != null
+                        ? currentSettings.getMaxY()
+                        : getWorldMaxHeight(location.getWorld());
 
         if (y < minY || y > maxY) {
-            debugReject(currentSettings, location, "Y out of range: " + y + " not in [" + minY + ", " + maxY + "]");
-            return false;
+            debugReject(
+                    currentSettings,
+                    location,
+                    "Y out of range: " + y + " not in [" + minY + ", " + maxY + "]");
+            return Optional.of(UnsafeLocationCause.OUT_OF_BOUNDS);
         }
 
         if (destination.isLiquid()) {
-            debugReject(currentSettings, location, "Destination is inside liquid: " + destination.getType());
-            return false;
+            debugReject(
+                    currentSettings, location, "Destination is inside liquid: " + destination.getType());
+            return Optional.of(
+                    destination.getType() == Material.LAVA
+                            ? UnsafeLocationCause.LAVA
+                            : UnsafeLocationCause.LIQUID);
         }
 
         // Optionally reject locations with liquid directly above (lava in Nether, water in Overworld)
@@ -56,33 +89,45 @@ public final class LocationValidator {
             org.bukkit.World.Environment env = location.getWorld().getEnvironment();
             Material aboveType = blockAbove.getType();
             com.skyblockexp.ezrtp.config.SafetySettings safety = currentSettings.getSafetySettings();
-            if (env == World.Environment.NETHER && aboveType == Material.LAVA && safety.isRejectLavaAboveInNether()) {
-                debugReject(currentSettings, location, "Lava above destination in Nether: " + aboveType);
-                return false;
+            if (env == World.Environment.NETHER
+                    && aboveType == Material.LAVA
+                    && safety.isRejectLavaAboveInNether()) {
+                debugReject(
+                        currentSettings, location, "Lava above destination in Nether: " + aboveType);
+                return Optional.of(UnsafeLocationCause.LAVA);
             }
-            if (env == World.Environment.NORMAL && aboveType == Material.WATER && safety.isRejectWaterAboveInOverworld()) {
-                debugReject(currentSettings, location, "Water above destination in Overworld: " + aboveType);
-                return false;
+            if (env == World.Environment.NORMAL
+                    && aboveType == Material.WATER
+                    && safety.isRejectWaterAboveInOverworld()) {
+                debugReject(
+                        currentSettings,
+                        location,
+                        "Water above destination in Overworld: " + aboveType);
+                return Optional.of(UnsafeLocationCause.LIQUID_SURFACE);
             }
         }
 
         boolean waterSurface = typeBelow == Material.WATER && !destination.isLiquid();
         if (currentSettings.getUnsafeBlocks().contains(typeBelow) && !waterSurface) {
             debugReject(currentSettings, location, "Unsafe block below: " + typeBelow);
-            return false;
+            UnsafeLocationCause cause =
+                    (typeBelow == Material.LAVA || typeBelow == Material.MAGMA_BLOCK)
+                            ? UnsafeLocationCause.LAVA
+                            : UnsafeLocationCause.UNSAFE_BLOCK;
+            return Optional.of(cause);
         }
 
         if (!blockBelow.getType().isSolid() && !waterSurface) {
             debugReject(currentSettings, location, "Block below not solid: " + typeBelow);
-            return false;
+            return Optional.of(UnsafeLocationCause.VOID);
         }
 
         if (!com.skyblockexp.ezrtp.util.compat.WorldBorderCompat.isInside(location)) {
             debugReject(currentSettings, location, "Outside world border");
-            return false;
+            return Optional.of(UnsafeLocationCause.OUT_OF_BOUNDS);
         }
 
-        return true;
+        return Optional.empty();
     }
 
     /**

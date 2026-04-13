@@ -2,6 +2,7 @@ package com.skyblockexp.ezrtp.teleport;
 
 import com.skyblockexp.ezrtp.config.ChunkLoadingSettings;
 import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
+import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import com.skyblockexp.ezrtp.platform.ChunkLoadStrategy;
 import com.skyblockexp.ezrtp.platform.PlatformRuntime;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
@@ -155,6 +156,10 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
 
     public void setPerformanceMonitor(PerformanceMonitor performanceMonitor) {
         teleportExecutor.setPerformanceMonitor(performanceMonitor);
+    }
+
+    public void setUnsafeLocationMonitor(UnsafeLocationMonitor monitor) {
+        locationFinder.setUnsafeLocationMonitor(monitor);
     }
 
     public void shutdown() {
