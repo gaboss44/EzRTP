@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.gui;
 
-import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.platform.PlatformGuiBridgeRegistry;
 import com.skyblockexp.ezrtp.util.PlaceholderUtil;
@@ -64,7 +64,7 @@ class GuiIconFactoryClassloaderSafetyTest {
         doThrow(new ClassCastException("simulated component classloader mismatch"))
                 .when(meta).lore(anyList());
 
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
                 settings,
                 stack,
                 10,
@@ -86,7 +86,7 @@ class GuiIconFactoryClassloaderSafetyTest {
         assertNotNull(built);
     }
 
-    private EzRtpConfiguration.GuiWorldOption createGuiWorldOption(
+    private GuiWorldOption createGuiWorldOption(
             RandomTeleportSettings settings,
             ItemStack template,
             int slot,
@@ -96,10 +96,10 @@ class GuiIconFactoryClassloaderSafetyTest {
             String rawName,
             List<String> rawLore) {
         try {
-            Class<EzRtpConfiguration.GuiWorldOption> clazz = EzRtpConfiguration.GuiWorldOption.class;
+            Class<GuiWorldOption> clazz = GuiWorldOption.class;
             @SuppressWarnings("unchecked")
-            Constructor<EzRtpConfiguration.GuiWorldOption> constructor =
-                    (Constructor<EzRtpConfiguration.GuiWorldOption>) clazz.getDeclaredConstructor(
+            Constructor<GuiWorldOption> constructor =
+                    (Constructor<GuiWorldOption>) clazz.getDeclaredConstructor(
                             RandomTeleportSettings.class,
                             ItemStack.class,
                             int.class,

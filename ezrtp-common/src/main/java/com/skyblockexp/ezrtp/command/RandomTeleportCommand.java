@@ -4,6 +4,8 @@ import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.command.subcommands.*;
 import com.skyblockexp.ezrtp.teleport.ChunkyProvider;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
+import com.skyblockexp.ezrtp.config.NamedCenter;
+import com.skyblockexp.ezrtp.config.teleport.RtpLimitSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.gui.RandomTeleportGuiManager;
 import com.skyblockexp.ezrtp.protection.ProtectionRegistry;
@@ -112,12 +114,12 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
             return false;
         }
 
-        java.util.Optional<EzRtpConfiguration.NamedCenter> namedCenterOptional = configuration.getNamedCenter(centerName);
+        java.util.Optional<NamedCenter> namedCenterOptional = configuration.getNamedCenter(centerName);
         if (namedCenterOptional.isEmpty()) {
             return false;
         }
 
-        EzRtpConfiguration.NamedCenter namedCenter = namedCenterOptional.get();
+        NamedCenter namedCenter = namedCenterOptional.get();
         RandomTeleportSettings baseSettings = configuration.getSettingsForWorld(namedCenter.world());
         if (baseSettings == null) {
             MessageUtil.send(player, "<red>Unable to load RTP settings for center world '<white>"
@@ -268,7 +270,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
             }
             return true;
         }
-        EzRtpConfiguration.RtpLimitSettings limit = configuration.getLimitSettings(world, group);
+        RtpLimitSettings limit = configuration.getLimitSettings(world, group);
         long now = System.currentTimeMillis();
         long lastRtp = usageStorage.getLastRtpTime(player.getUniqueId(), world);
         int daily = usageStorage.getUsageCount(player.getUniqueId(), world, "daily");
@@ -276,17 +278,17 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
         // Cooldown check (skip if player has never used RTP before - lastRtp == 0)
         // Also skip if GUI is enabled and allow-gui-during-cooldown is true (for direct teleport)
         boolean skipCooldownForGui = guiManager != null && configuration.isAllowGuiDuringCooldown();
-        if (!skipCooldownForGui && limit.cooldownSeconds > 0 && lastRtp > 0 && (now - lastRtp) < limit.cooldownSeconds * 1000L) {
-            long wait = (limit.cooldownSeconds * 1000L - (now - lastRtp)) / 1000L;
+        if (!skipCooldownForGui && limit.getCooldownSeconds() > 0 && lastRtp > 0 && (now - lastRtp) < limit.getCooldownSeconds() * 1000L) {
+            long wait = (limit.getCooldownSeconds() * 1000L - (now - lastRtp)) / 1000L;
             com.skyblockexp.ezrtp.util.PluginMessageHelper.sendCooldownMessage(sender, plugin, configuration, wait);
             return true;
         }
         // Daily/weekly limit check
-        if (!limit.disableDailyLimit && limit.dailyLimit > 0 && daily >= limit.dailyLimit) {
+        if (!limit.isDisableDailyLimit() && limit.getDailyLimit() > 0 && daily >= limit.getDailyLimit()) {
             com.skyblockexp.ezrtp.util.PluginMessageHelper.sendLimitMessage(sender, plugin, "daily");
             return true;
         }
-        if (!limit.disableDailyLimit && limit.weeklyLimit > 0 && weekly >= limit.weeklyLimit) {
+        if (!limit.isDisableDailyLimit() && limit.getWeeklyLimit() > 0 && weekly >= limit.getWeeklyLimit()) {
             com.skyblockexp.ezrtp.util.PluginMessageHelper.sendLimitMessage(sender, plugin, "weekly");
             return true;
         }

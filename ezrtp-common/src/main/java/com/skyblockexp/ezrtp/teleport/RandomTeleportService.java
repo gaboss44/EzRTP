@@ -1,15 +1,15 @@
 package com.skyblockexp.ezrtp.teleport;
 
-import com.skyblockexp.ezrtp.config.ChunkLoadingSettings;
+import com.skyblockexp.ezrtp.config.teleport.ChunkLoadingSettings;
 import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import com.skyblockexp.ezrtp.platform.ChunkLoadStrategy;
 import com.skyblockexp.ezrtp.platform.PlatformRuntime;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
-import com.skyblockexp.ezrtp.config.RareBiomeOptimizationSettings;
-import com.skyblockexp.ezrtp.config.SearchPattern;
-import com.skyblockexp.ezrtp.config.TeleportQueueSettings;
+import com.skyblockexp.ezrtp.config.biome.RareBiomeOptimizationSettings;
+import com.skyblockexp.ezrtp.config.teleport.SearchPattern;
+import com.skyblockexp.ezrtp.config.network.TeleportQueueSettings;
 import com.skyblockexp.ezrtp.economy.EconomyService;
 import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.protection.ProtectionRegistry;

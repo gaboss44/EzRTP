@@ -1,18 +1,19 @@
 package com.skyblockexp.ezrtp.teleport;
 
-import com.skyblockexp.ezrtp.config.BiomePreCacheSettings;
-import com.skyblockexp.ezrtp.config.BiomeSearchSettings;
-import com.skyblockexp.ezrtp.config.ChunkLoadingSettings;
-import com.skyblockexp.ezrtp.config.ChunkyIntegrationSettings;
-import com.skyblockexp.ezrtp.config.CountdownBossBarSettings;
-import com.skyblockexp.ezrtp.config.CountdownParticleSettings;
-import com.skyblockexp.ezrtp.config.OnJoinTeleportSettings;
-import com.skyblockexp.ezrtp.config.ParticleSettings;
-import com.skyblockexp.ezrtp.config.ProtectionSettings;
+import com.skyblockexp.ezrtp.config.biome.BiomePreCacheSettings;
+import com.skyblockexp.ezrtp.config.biome.BiomeSearchSettings;
+import com.skyblockexp.ezrtp.config.teleport.ChunkLoadingSettings;
+import com.skyblockexp.ezrtp.config.biome.ChunkyIntegrationSettings;
+import com.skyblockexp.ezrtp.config.effects.CountdownBossBarSettings;
+import com.skyblockexp.ezrtp.config.effects.CountdownParticleSettings;
+import com.skyblockexp.ezrtp.config.teleport.OnJoinTeleportSettings;
+import com.skyblockexp.ezrtp.config.effects.ParticleSettings;
+import com.skyblockexp.ezrtp.config.safety.ProtectionSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
-import com.skyblockexp.ezrtp.config.RareBiomeOptimizationSettings;
-import com.skyblockexp.ezrtp.config.SafetySettings;
-import com.skyblockexp.ezrtp.config.SearchPattern;
+import com.skyblockexp.ezrtp.config.teleport.TeleportMessages;
+import com.skyblockexp.ezrtp.config.biome.RareBiomeOptimizationSettings;
+import com.skyblockexp.ezrtp.config.safety.SafetySettings;
+import com.skyblockexp.ezrtp.config.teleport.SearchPattern;
 import com.skyblockexp.ezrtp.teleport.biome.RareBiomeRegistry;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
@@ -78,7 +79,7 @@ class LocationFinderRareSearchTest {
 
         return new RandomTeleportSettings(
             null, "world", 0, 0, 100, 1000, 10, false,
-            Collections.emptySet(), RandomTeleportSettings.TeleportMessages.defaultMessages(), ParticleSettings.disabled(),
+            Collections.emptySet(), TeleportMessages.defaultMessages(), ParticleSettings.disabled(),
             OnJoinTeleportSettings.fromConfiguration(null), CountdownBossBarSettings.disabled(), CountdownParticleSettings.disabled(),
             0.0D, 0, true, false, null, null, include, Collections.emptySet(),
             new ProtectionSettings(false, Collections.emptyList()), BiomePreCacheSettings.disabled(), rareSettings,

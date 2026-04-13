@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.protection;
 
-import com.skyblockexp.ezrtp.config.ProtectionSettings;
+import com.skyblockexp.ezrtp.config.safety.ProtectionSettings;
 import org.bukkit.Location;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;

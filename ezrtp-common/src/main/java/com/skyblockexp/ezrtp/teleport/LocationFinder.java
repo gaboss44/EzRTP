@@ -1,8 +1,8 @@
 package com.skyblockexp.ezrtp.teleport;
 
-import com.skyblockexp.ezrtp.config.BiomeSearchSettings;
+import com.skyblockexp.ezrtp.config.biome.BiomeSearchSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
-import com.skyblockexp.ezrtp.config.SafetySettings;
+import com.skyblockexp.ezrtp.config.safety.SafetySettings;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;
 import com.skyblockexp.ezrtp.teleport.biome.BiomeLocationCache;
 import com.skyblockexp.ezrtp.teleport.search.BiomeSearchStrategy;

@@ -1,5 +1,6 @@
 package com.skyblockexp.ezrtp.config;
 
+import com.skyblockexp.ezrtp.config.biome.BiomeSearchSettings;
 import com.skyblockexp.ezrtp.teleport.LocationValidator;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;

@@ -1,7 +1,7 @@
 package com.skyblockexp.ezrtp.teleport.queue;
 
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
-import com.skyblockexp.ezrtp.config.TeleportQueueSettings;
+import com.skyblockexp.ezrtp.config.network.TeleportQueueSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;

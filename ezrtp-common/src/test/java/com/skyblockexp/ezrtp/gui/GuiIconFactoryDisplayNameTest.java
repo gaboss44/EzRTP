@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.gui;
 
-import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
 import com.skyblockexp.ezrtp.util.PlaceholderUtil;
 import com.skyblockexp.ezrtp.util.MessageUtil;
 import com.skyblockexp.ezrtp.util.compat.ItemMetaCompat;
@@ -50,7 +50,7 @@ class GuiIconFactoryDisplayNameTest {
         String rawName = "<gradient:#7ed957:#2ecc71><bold>Overworld</bold></gradient>";
         ItemStack template = new ItemStack(Material.GRASS_BLOCK);
 
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
                 mock(com.skyblockexp.ezrtp.config.RandomTeleportSettings.class),
                 template, 22, "", false, 1, rawName, List.of("<gray>Click to begin your adventure.</gray>")
         );
@@ -75,7 +75,7 @@ class GuiIconFactoryDisplayNameTest {
         ItemMetaCompat.setDisplayName(templateMeta, MessageUtil.parseMiniMessage("<green>Template Name</green>"));
         template.setItemMeta(templateMeta);
 
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
                 mock(com.skyblockexp.ezrtp.config.RandomTeleportSettings.class),
                 template, 22, "", false, 1, "   ", List.of()
         );
@@ -104,7 +104,7 @@ class GuiIconFactoryDisplayNameTest {
         return null;
     }
 
-    private EzRtpConfiguration.GuiWorldOption createGuiWorldOption(
+    private GuiWorldOption createGuiWorldOption(
             com.skyblockexp.ezrtp.config.RandomTeleportSettings settings,
             ItemStack template,
             int slot,
@@ -114,9 +114,9 @@ class GuiIconFactoryDisplayNameTest {
             String rawName,
             List<String> rawLore) {
         try {
-            Class<EzRtpConfiguration.GuiWorldOption> clazz = EzRtpConfiguration.GuiWorldOption.class;
+            Class<GuiWorldOption> clazz = GuiWorldOption.class;
             @SuppressWarnings("unchecked")
-            Constructor<EzRtpConfiguration.GuiWorldOption> constructor = (Constructor<EzRtpConfiguration.GuiWorldOption>) clazz
+            Constructor<GuiWorldOption> constructor = (Constructor<GuiWorldOption>) clazz
                     .getDeclaredConstructor(
                             com.skyblockexp.ezrtp.config.RandomTeleportSettings.class,
                             org.bukkit.inventory.ItemStack.class,

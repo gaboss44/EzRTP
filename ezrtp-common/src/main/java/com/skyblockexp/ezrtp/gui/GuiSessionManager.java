@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.gui;
 
-import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
+import com.skyblockexp.ezrtp.config.gui.GuiSettings;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
@@ -25,7 +25,7 @@ public class GuiSessionManager {
      */
     public void startSession(Player player, Inventory inventory,
                            Map<Integer, GuiOption> optionMap,
-                           EzRtpConfiguration.GuiSettings settings) {
+                           GuiSettings settings) {
         GuiSession session = new GuiSession(inventory, optionMap, settings);
         openMenus.put(player.getUniqueId(), session);
     }
@@ -82,10 +82,10 @@ public class GuiSessionManager {
     public static class GuiSession {
         private final Inventory inventory;
         private final Map<Integer, GuiOption> options;
-        private final EzRtpConfiguration.GuiSettings settings;
+        private final GuiSettings settings;
 
         public GuiSession(Inventory inventory, Map<Integer, GuiOption> options,
-                         EzRtpConfiguration.GuiSettings settings) {
+                         GuiSettings settings) {
             this.inventory = inventory;
             this.options = options;
             this.settings = settings;
@@ -99,7 +99,7 @@ public class GuiSessionManager {
             return options;
         }
 
-        public EzRtpConfiguration.GuiSettings settings() {
+        public GuiSettings settings() {
             return settings;
         }
     }

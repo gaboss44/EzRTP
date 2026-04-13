@@ -3,7 +3,7 @@ package com.skyblockexp.ezrtp.command.subcommands;
 import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
-import com.skyblockexp.ezrtp.config.SearchPattern;
+import com.skyblockexp.ezrtp.config.teleport.SearchPattern;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
 import com.skyblockexp.ezrtp.teleport.biome.BiomeLocationCache;
 import com.skyblockexp.ezrtp.teleport.search.BiomeSearchStrategy;

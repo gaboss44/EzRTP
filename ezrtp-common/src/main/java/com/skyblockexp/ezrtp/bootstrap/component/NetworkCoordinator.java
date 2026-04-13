@@ -2,7 +2,7 @@ package com.skyblockexp.ezrtp.bootstrap.component;
 
 import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
 import com.skyblockexp.ezrtp.network.NetworkService;
 
 /**

@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.teleport;
 
-import com.skyblockexp.ezrtp.config.BiomeSearchSettings;
+import com.skyblockexp.ezrtp.config.biome.BiomeSearchSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;

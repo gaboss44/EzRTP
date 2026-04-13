@@ -1,7 +1,7 @@
 package com.skyblockexp.ezrtp.teleport;
 
-import com.skyblockexp.ezrtp.config.CountdownBossBarSettings;
-import com.skyblockexp.ezrtp.config.CountdownParticleSettings;
+import com.skyblockexp.ezrtp.config.effects.CountdownBossBarSettings;
+import com.skyblockexp.ezrtp.config.effects.CountdownParticleSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;
