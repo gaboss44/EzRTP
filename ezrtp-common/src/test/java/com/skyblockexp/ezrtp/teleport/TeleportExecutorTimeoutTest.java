@@ -116,6 +116,7 @@ class TeleportExecutorTimeoutTest {
             true,
             biomeSearchSettings,
             true,
+            true,
             null,
             null,
             null

@@ -144,7 +144,7 @@ class LocationFinderSurfaceScanDepthTest {
             OnJoinTeleportSettings.fromConfiguration(null), CountdownBossBarSettings.disabled(), CountdownParticleSettings.disabled(),
             0.0D, 0, true, false, null, null, Collections.emptySet(), Collections.emptySet(),
             new ProtectionSettings(false, Collections.emptyList()), BiomePreCacheSettings.disabled(), RareBiomeOptimizationSettings.disabled(),
-            ChunkLoadingSettings.defaults(), true, BiomeSearchSettings.defaults(), true, safety, SearchPattern.RANDOM,
+            ChunkLoadingSettings.defaults(), true, BiomeSearchSettings.defaults(), true, true, safety, SearchPattern.RANDOM,
             ChunkyIntegrationSettings.defaults()
         );
     }

@@ -82,7 +82,7 @@ class LocationFinderRareSearchTest {
             OnJoinTeleportSettings.fromConfiguration(null), CountdownBossBarSettings.disabled(), CountdownParticleSettings.disabled(),
             0.0D, 0, true, false, null, null, include, Collections.emptySet(),
             new ProtectionSettings(false, Collections.emptyList()), BiomePreCacheSettings.disabled(), rareSettings,
-            ChunkLoadingSettings.defaults(), true, BiomeSearchSettings.defaults(), true, SafetySettings.defaults(), SearchPattern.RANDOM,
+            ChunkLoadingSettings.defaults(), true, BiomeSearchSettings.defaults(), true, true, SafetySettings.defaults(), SearchPattern.RANDOM,
             ChunkyIntegrationSettings.defaults()
         );
     }

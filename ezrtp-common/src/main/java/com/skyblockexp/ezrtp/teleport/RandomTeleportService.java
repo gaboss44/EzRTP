@@ -224,6 +224,10 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
 
     private void applyCacheSettings(RandomTeleportSettings currentSettings) {
         if (currentSettings != null && currentSettings.getPreCacheSettings() != null) {
+            if (!currentSettings.isBiomeSystemEnabled()) {
+                biomeCache.setEnabled(false);
+                return;
+            }
             boolean shouldEnable = currentSettings.getPreCacheSettings().isEnabled();
             boolean hasBiomeFilters = LocationValidator.hasBiomeFilters(currentSettings);
             
@@ -303,6 +307,14 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         RareBiomeOptimizationSettings rareSettings = currentSettings != null ? currentSettings.getRareBiomeOptimizationSettings() : null;
         boolean chunkQueueOverridden = false;
         BiomeSearchStrategy patternStrategy = createPatternStrategy(currentSettings);
+
+        if (currentSettings != null && !currentSettings.isBiomeSystemEnabled()) {
+            rareBiomeRegistry.setEnabled(false);
+            rareBiomeRegistry.setBackgroundScanningEnabled(false);
+            this.searchStrategy = patternStrategy;
+            locationFinder.setSearchStrategy(this.searchStrategy);
+            return;
+        }
 
         if (rareSettings != null) {
             boolean hasBiomeFilters = LocationValidator.hasBiomeFilters(currentSettings);

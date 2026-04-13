@@ -187,6 +187,7 @@ class TeleportExecutorActiveAttemptTest {
             true,
             biomeSearchSettings,
             true,
+            true,
             null,
             null,
             null

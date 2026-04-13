@@ -175,6 +175,7 @@ public final class LocationValidator {
      */
     public static boolean hasBiomeFilters(RandomTeleportSettings settings) {
         return settings != null
+            && settings.isBiomeSystemEnabled()
             && settings.isBiomeFilteringEnabled()
             && (!settings.getBiomeInclude().isEmpty() || !settings.getBiomeExclude().isEmpty());
     }
