@@ -14,7 +14,17 @@ import java.util.Set;
  */
 public final class DiamondSearchStrategy implements BiomeSearchStrategy {
 
-    
+    // Unit-space vertices of the 8-vertex chamfered diamond (octagonal lozenge).
+    // All coordinates are expressed as multiples of the radius so they can be scaled
+    // at call time without any per-call array allocation.
+    // Order: top, upper-right bevel, right, lower-right bevel,
+    //        bottom, lower-left bevel, left, upper-left bevel.
+    private static final double[] UNIT_VERTS_X = { 0.0,  0.5,  1.0,  0.5,  0.0, -0.5, -1.0, -0.5};
+    private static final double[] UNIT_VERTS_Z = {-1.0, -0.5,  0.0,  0.5,  1.0,  0.5,  0.0, -0.5};
+
+    // All 8 edges are identical in length in unit space: hypot(0.5, 0.5) = sqrt(0.5).
+    // Pre-computing avoids calling Math.hypot inside the hot path.
+    private static final double UNIT_EDGE_LENGTH = Math.hypot(0.5, 0.5);
 
     @Override
     public int[] generateCandidateCoordinates(World world, int centerX, int centerZ,
@@ -36,61 +46,23 @@ public final class DiamondSearchStrategy implements BiomeSearchStrategy {
             return new int[]{centerX, centerZ};
         }
 
-        double r = radius;
-        double half = r * 0.5;
-        double[][] verts = new double[][]{
-            {0.0, -r},            // top
-            {half, -half},        // upper-right bevel
-            {r, 0.0},             // right
-            {half, half},         // lower-right bevel
-            {0.0, r},             // bottom
-            {-half, half},        // lower-left bevel
-            {-r, 0.0},            // left
-            {-half, -half}        // upper-left bevel
-        };
-
-        // Compute approximate integer-perimeter lengths for each edge and sample a single
-        // index without allocating the full point list to avoid heavy CPU/memory usage.
-        int[] edgeSteps = new int[verts.length];
-        int totalSteps = 0;
-        for (int e = 0; e < verts.length; e++) {
-            int next = (e + 1) % verts.length;
-            double dx = verts[next][0] - verts[e][0];
-            double dz = verts[next][1] - verts[e][1];
-            int steps = Math.max(1, (int) Math.round(Math.hypot(dx, dz)));
-            edgeSteps[e] = steps;
-            totalSteps = Math.addExact(totalSteps, steps);
-        }
-
-        if (totalSteps <= 0) {
-            return new int[]{centerX, centerZ};
-        }
+        // All 8 edges have the same integer step count because the octagon is symmetric.
+        // Using division/modulo instead of a loop avoids allocating an int[] per call.
+        int edgeSteps = Math.max(1, (int) Math.round(radius * UNIT_EDGE_LENGTH));
+        int totalSteps = 8 * edgeSteps;
 
         int idx = ThreadLocalRandom.current().nextInt(totalSteps);
-        int accum = 0;
-        int chosenEdge = 0;
-        int chosenStep = 0;
-        for (int e = 0; e < edgeSteps.length; e++) {
-            int es = edgeSteps[e];
-            if (idx < accum + es) {
-                chosenEdge = e;
-                chosenStep = idx - accum;
-                break;
-            }
-            accum += es;
-        }
+        int chosenEdge = idx / edgeSteps;
+        int chosenStep = idx % edgeSteps;
 
-        int nextEdge = (chosenEdge + 1) % verts.length;
-        double x1 = verts[chosenEdge][0];
-        double z1 = verts[chosenEdge][1];
-        double x2 = verts[nextEdge][0];
-        double z2 = verts[nextEdge][1];
-        double dx = x2 - x1;
-        double dz = z2 - z1;
-        int steps = edgeSteps[chosenEdge];
-        double t = chosenStep / (double) steps;
-        int px = centerX + (int) Math.round(x1 + dx * t);
-        int pz = centerZ + (int) Math.round(z1 + dz * t);
+        int nextEdge = (chosenEdge + 1) % 8;
+        double x1 = UNIT_VERTS_X[chosenEdge];
+        double z1 = UNIT_VERTS_Z[chosenEdge];
+        double dx = UNIT_VERTS_X[nextEdge] - x1;
+        double dz = UNIT_VERTS_Z[nextEdge] - z1;
+        double t = chosenStep / (double) edgeSteps;
+        int px = centerX + (int) Math.round((x1 + dx * t) * radius);
+        int pz = centerZ + (int) Math.round((z1 + dz * t) * radius);
         return new int[]{px, pz};
     }
 

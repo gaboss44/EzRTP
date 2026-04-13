@@ -33,7 +33,7 @@ jobs:
           cache: maven
 
       - name: Compile benchmark classpath
-        run: mvn -B -ntp -pl ezrtp-${{ matrix.software }},ezrtp-common -am -DskipTests -Dspotless.check.skip=true test-compile
+        run: mvn -B -ntp -pl ezrtp-${{ matrix.software }},ezrtp-common -am -DskipTests -Dspotless.check.skip=true install
 
       - name: Run search-pattern benchmark
         run: |
