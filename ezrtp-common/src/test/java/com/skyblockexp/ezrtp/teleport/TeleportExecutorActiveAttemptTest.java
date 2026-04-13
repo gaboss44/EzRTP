@@ -4,6 +4,8 @@ import com.skyblockexp.ezrtp.config.BiomeSearchSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
+import com.skyblockexp.ezrtp.platform.PlatformTask;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;
 import com.skyblockexp.ezrtp.teleport.queue.TeleportQueueManager;
 import net.kyori.adventure.text.Component;
@@ -15,7 +17,6 @@ import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
@@ -44,7 +45,7 @@ class TeleportExecutorActiveAttemptTest {
     void burstRequestsForSamePlayerOnlyEmitOneSearchingAndSuccessSequence() throws Exception {
         JavaPlugin plugin = mock(JavaPlugin.class);
         Server server = mock(Server.class);
-        BukkitScheduler scheduler = mock(BukkitScheduler.class);
+        PlatformScheduler platformScheduler = mock(PlatformScheduler.class);
         MessageProvider messageProvider = mock(MessageProvider.class);
         RtpStatistics statistics = mock(RtpStatistics.class);
         TeleportCostCalculator costCalculator = mock(TeleportCostCalculator.class);
@@ -56,7 +57,6 @@ class TeleportExecutorActiveAttemptTest {
         Block block = mock(Block.class);
 
         when(plugin.getServer()).thenReturn(server);
-        when(server.getScheduler()).thenReturn(scheduler);
         when(player.getUniqueId()).thenReturn(java.util.UUID.randomUUID());
         when(player.getName()).thenReturn("BurstTester");
         when(player.isOnline()).thenReturn(true);
@@ -74,16 +74,24 @@ class TeleportExecutorActiveAttemptTest {
         when(messageProvider.format(any(MessageKey.class), any())).thenReturn(Component.text("msg"));
         when(messageProvider.format(any(MessageKey.class), any(), any())).thenReturn(Component.text("msg"));
 
+        // executeRegion runs the task immediately (simulates Folia/Bukkit region thread)
         doAnswer(invocation -> {
-            Runnable task = invocation.getArgument(1);
+            Runnable task = invocation.getArgument(3);
             task.run();
             return null;
-        }).when(scheduler).runTask(eq(plugin), any(Runnable.class));
+        }).when(platformScheduler).executeRegion(any(World.class), anyInt(), anyInt(), any(Runnable.class));
+        // executeGlobal runs the task immediately
         doAnswer(invocation -> {
-            Runnable task = invocation.getArgument(1);
+            Runnable task = invocation.getArgument(0);
             task.run();
             return null;
-        }).when(scheduler).runTaskLater(eq(plugin), any(Runnable.class), anyLong());
+        }).when(platformScheduler).executeGlobal(any(Runnable.class));
+        // executeGlobalDelayed runs the task immediately
+        doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(0);
+            task.run();
+            return (PlatformTask) () -> {};
+        }).when(platformScheduler).executeGlobalDelayed(any(Runnable.class), anyLong());
 
         CompletableFuture<SearchResult> pendingSearch = new CompletableFuture<>();
         when(locationFinder.findSafeLocationAsync(any(World.class), any(RandomTeleportSettings.class))).thenReturn(pendingSearch);
@@ -97,6 +105,7 @@ class TeleportExecutorActiveAttemptTest {
 
         TeleportExecutor executor = new TeleportExecutor(
             plugin,
+            platformScheduler,
             messageProvider,
             statistics,
             costCalculator,

@@ -59,10 +59,91 @@ public final class PaperPlatformScheduler implements PlatformScheduler {
 
     private boolean invokeRegionTask(World world, int chunkX, int chunkZ, Runnable task) {
         try {
-            Object regionScheduler = world.getClass().getMethod("getRegionScheduler").invoke(world);
-            Method run = regionScheduler.getClass().getMethod("run", Plugin.class, World.class, int.class, int.class, java.util.function.Consumer.class);
+            Object regionScheduler = Bukkit.class.getMethod("getRegionScheduler").invoke(null);
+            Method run = regionScheduler.getClass().getMethod(
+                    "run", Plugin.class, World.class, int.class, int.class,
+                    java.util.function.Consumer.class);
             run.invoke(regionScheduler, plugin, world, chunkX, chunkZ,
                     (java.util.function.Consumer<Object>) scheduledTask -> task.run());
+            return true;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
+    }
+
+    @Override
+    public void executeGlobal(Runnable task) {
+        if (capabilities.regionizedRuntime() && invokeGlobalRun(task)) {
+            return;
+        }
+        plugin.getServer().getScheduler().runTask(plugin, task);
+    }
+
+    @Override
+    public PlatformTask executeGlobalDelayed(Runnable task, long delayTicks) {
+        if (capabilities.regionizedRuntime()) {
+            PlatformTask foliaTask = invokeGlobalRunDelayed(task, delayTicks);
+            if (foliaTask != null) {
+                return foliaTask;
+            }
+        }
+        org.bukkit.scheduler.BukkitTask bukkit =
+                plugin.getServer().getScheduler().runTaskLater(plugin, task, delayTicks);
+        return bukkit::cancel;
+    }
+
+    @Override
+    public void executeRegionDelayed(
+            World world, int chunkX, int chunkZ, Runnable task, long delayTicks) {
+        if (capabilities.regionizedRuntime()
+                && world != null
+                && invokeRegionDelayed(world, chunkX, chunkZ, task, delayTicks)) {
+            return;
+        }
+        plugin.getServer().getScheduler().runTaskLater(plugin, task, delayTicks);
+    }
+
+    private boolean invokeGlobalRun(Runnable task) {
+        try {
+            Object globalScheduler = Bukkit.class.getMethod("getGlobalRegionScheduler").invoke(null);
+            Method run = globalScheduler.getClass().getMethod(
+                    "run", Plugin.class, java.util.function.Consumer.class);
+            run.invoke(globalScheduler, plugin,
+                    (java.util.function.Consumer<Object>) ignored -> task.run());
+            return true;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
+    }
+
+    private PlatformTask invokeGlobalRunDelayed(Runnable task, long delayTicks) {
+        try {
+            Object globalScheduler = Bukkit.class.getMethod("getGlobalRegionScheduler").invoke(null);
+            Method runDelayed = globalScheduler.getClass().getMethod(
+                    "runDelayed", Plugin.class, java.util.function.Consumer.class, long.class);
+            Object scheduledTask = runDelayed.invoke(globalScheduler, plugin,
+                    (java.util.function.Consumer<Object>) ignored -> task.run(), delayTicks);
+            Method cancel = scheduledTask.getClass().getMethod("cancel");
+            return () -> {
+                try {
+                    cancel.invoke(scheduledTask);
+                } catch (ReflectiveOperationException ignored) {
+                }
+            };
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+    }
+
+    private boolean invokeRegionDelayed(
+            World world, int chunkX, int chunkZ, Runnable task, long delayTicks) {
+        try {
+            Object regionScheduler = Bukkit.class.getMethod("getRegionScheduler").invoke(null);
+            Method runDelayed = regionScheduler.getClass().getMethod(
+                    "runDelayed", Plugin.class, World.class, int.class, int.class,
+                    java.util.function.Consumer.class, long.class);
+            runDelayed.invoke(regionScheduler, plugin, world, chunkX, chunkZ,
+                    (java.util.function.Consumer<Object>) ignored -> task.run(), delayTicks);
             return true;
         } catch (ReflectiveOperationException ignored) {
             return false;

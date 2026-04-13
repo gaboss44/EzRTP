@@ -18,8 +18,8 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import com.skyblockexp.ezrtp.util.BlockCompat;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +37,7 @@ import java.util.function.Supplier;
 public final class TeleportExecutor {
 
     private final org.bukkit.plugin.java.JavaPlugin plugin;
-    private final BukkitScheduler scheduler;
+    private final PlatformScheduler scheduler;
     private final TeleportPreCheckHandler preCheckHandler;
     private final TeleportResultHandler resultHandler;
     private final TeleportQueueManager queueManager;
@@ -51,6 +51,7 @@ public final class TeleportExecutor {
     private volatile PerformanceMonitor performanceMonitor;
 
     public TeleportExecutor(org.bukkit.plugin.java.JavaPlugin plugin,
+                            PlatformScheduler scheduler,
                             MessageProvider messageProvider,
                             RtpStatistics statistics,
                             TeleportCostCalculator costCalculator,
@@ -59,9 +60,9 @@ public final class TeleportExecutor {
                             TeleportQueueManager queueManager,
                             Supplier<RandomTeleportSettings> defaultSettingsSupplier) {
         this.plugin = plugin;
-        this.scheduler = plugin.getServer().getScheduler();
-        this.preCheckHandler = new TeleportPreCheckHandler(plugin, messageProvider, costCalculator);
-        this.resultHandler = new TeleportResultHandler(plugin, messageProvider, statistics, locationFinder);
+        this.scheduler = scheduler;
+        this.preCheckHandler = new TeleportPreCheckHandler(plugin, scheduler, messageProvider, costCalculator);
+        this.resultHandler = new TeleportResultHandler(plugin, scheduler, messageProvider, statistics, locationFinder);
         this.queueManager = queueManager;
         this.defaultSettingsSupplier = defaultSettingsSupplier;
         this.messageProvider = messageProvider;
@@ -275,7 +276,18 @@ public final class TeleportExecutor {
             };
 
             try {
-                scheduler.runTask(plugin, task);
+                if (result != null && result.location().isPresent()) {
+                    Location dest = result.location().get();
+                    World destWorld = dest.getWorld();
+                    if (destWorld != null) {
+                        scheduler.executeRegion(
+                                destWorld, dest.getBlockX() >> 4, dest.getBlockZ() >> 4, task);
+                    } else {
+                        scheduler.executeGlobal(task);
+                    }
+                } else {
+                    scheduler.executeGlobal(task);
+                }
             } catch (IllegalStateException ex) {
                 if (callback != null) callback.accept(false);
                 if (completionHook != null) completionHook.run();

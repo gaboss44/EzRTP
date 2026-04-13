@@ -1,6 +1,7 @@
 package com.skyblockexp.ezrtp.bootstrap.component;
 
 import com.skyblockexp.ezrtp.EzRtpPlugin;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
 
 import java.time.DayOfWeek;
@@ -15,21 +16,24 @@ import java.util.logging.Level;
 public final class UsageResetScheduler {
 
     private final EzRtpPlugin plugin;
+    private final PlatformScheduler scheduler;
     private final RtpUsageStorage usageStorage;
 
-    public UsageResetScheduler(EzRtpPlugin plugin, RtpUsageStorage usageStorage) {
+    public UsageResetScheduler(
+            EzRtpPlugin plugin, PlatformScheduler scheduler, RtpUsageStorage usageStorage) {
         this.plugin = plugin;
+        this.scheduler = scheduler;
         this.usageStorage = usageStorage;
     }
 
     public void schedule() {
         long ticksPerDay = 24 * 60 * 60 * 20L;
         long ticksUntilMidnight = getTicksUntilNext(0, 0);
-        plugin.getServer().getScheduler().runTaskTimer(plugin, this::resetDailyUsage, ticksUntilMidnight, ticksPerDay);
+        scheduler.scheduleRepeating(this::resetDailyUsage, ticksUntilMidnight, ticksPerDay);
 
         long ticksPerWeek = 7 * 24 * 60 * 60 * 20L;
         long ticksUntilSunday = getTicksUntilNextSundayMidnight();
-        plugin.getServer().getScheduler().runTaskTimer(plugin, this::resetWeeklyUsage, ticksUntilSunday, ticksPerWeek);
+        scheduler.scheduleRepeating(this::resetWeeklyUsage, ticksUntilSunday, ticksPerWeek);
     }
 
     private void resetDailyUsage() {

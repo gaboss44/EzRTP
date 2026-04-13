@@ -27,4 +27,22 @@ public final class BukkitPlatformScheduler implements PlatformScheduler {
                 .runTaskTimer(plugin, task, delayTicks, periodTicks);
         return bukkitTask::cancel;
     }
+
+    @Override
+    public void executeGlobal(Runnable task) {
+        plugin.getServer().getScheduler().runTask(plugin, task);
+    }
+
+    @Override
+    public PlatformTask executeGlobalDelayed(Runnable task, long delayTicks) {
+        org.bukkit.scheduler.BukkitTask bukkitTask =
+                plugin.getServer().getScheduler().runTaskLater(plugin, task, delayTicks);
+        return bukkitTask::cancel;
+    }
+
+    @Override
+    public void executeRegionDelayed(
+            World world, int chunkX, int chunkZ, Runnable task, long delayTicks) {
+        plugin.getServer().getScheduler().runTaskLater(plugin, task, delayTicks);
+    }
 }

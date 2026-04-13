@@ -20,6 +20,7 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
 import com.skyblockexp.ezrtp.util.MessageUtil;
 
 import java.util.ArrayList;
@@ -190,7 +191,7 @@ public class FakeSubcommand extends Subcommand {
                 }
 
                 // Switch back to main thread to create Location objects and add to store
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                PlatformRuntimeRegistry.get().scheduler().executeGlobal(() -> {
                     java.util.List<Location> generatedLocations = new java.util.ArrayList<>(coords.size());
                     for (int[] c : coords) {
                         generatedLocations.add(new Location(targetWorldFinal, c[0], sampleYFinal, c[1]));

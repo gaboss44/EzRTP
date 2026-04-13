@@ -3,6 +3,7 @@ package com.skyblockexp.ezrtp.listener;
 import com.skyblockexp.ezrtp.config.OnJoinTeleportSettings;
 
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
 import com.skyblockexp.ezrtp.teleport.TeleportReason;
 import org.bukkit.entity.Player;
@@ -20,13 +21,17 @@ import java.util.function.Supplier;
 public final class PlayerJoinTeleportListener implements Listener {
 
     private final JavaPlugin plugin;
+    private final PlatformScheduler scheduler;
     private final Supplier<RandomTeleportService> teleportServiceSupplier;
     private final Supplier<RandomTeleportSettings> settingsSupplier;
 
-    public PlayerJoinTeleportListener(JavaPlugin plugin,
-                                      Supplier<RandomTeleportService> teleportServiceSupplier,
-                                      Supplier<RandomTeleportSettings> settingsSupplier) {
+    public PlayerJoinTeleportListener(
+            JavaPlugin plugin,
+            PlatformScheduler scheduler,
+            Supplier<RandomTeleportService> teleportServiceSupplier,
+            Supplier<RandomTeleportSettings> settingsSupplier) {
         this.plugin = plugin;
+        this.scheduler = scheduler;
         this.teleportServiceSupplier = teleportServiceSupplier;
         this.settingsSupplier = settingsSupplier;
     }
@@ -53,7 +58,7 @@ public final class PlayerJoinTeleportListener implements Listener {
         RandomTeleportService service = Objects.requireNonNull(teleportServiceSupplier.get(),
                 "Teleport service not initialised");
         long delay = Math.max(0L, onJoin.delayTicks());
-        plugin.getServer().getScheduler().runTaskLater(plugin,
+        scheduler.executeGlobalDelayed(
                 () -> service.teleportPlayer(player, TeleportReason.JOIN), delay);
     }
 

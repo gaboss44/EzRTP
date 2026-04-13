@@ -5,6 +5,7 @@ import com.skyblockexp.ezrtp.performance.PerformanceMonitor;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import com.skyblockexp.ezrtp.platform.ChunkLoadStrategy;
 import com.skyblockexp.ezrtp.platform.PlatformRuntime;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.config.RareBiomeOptimizationSettings;
 import com.skyblockexp.ezrtp.config.SearchPattern;
@@ -86,7 +87,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.settings = settings;
         this.queueSettings = queueSettings != null ? queueSettings : TeleportQueueSettings.disabled();
 
-        this.biomeCache = createBiomeCache(settings);
+        this.biomeCache = createBiomeCache(settings, platformRuntime.scheduler());
         RareBiomeOptimizationSettings rareSettings = settings != null ? settings.getRareBiomeOptimizationSettings() : null;
         this.hotspotStorage = createHotspotStorage(rareSettings);
         this.rareBiomeRegistry = new RareBiomeRegistry(plugin, rareSettings != null ? rareSettings.getRareBiomes() : null, hotspotStorage);
@@ -100,10 +101,10 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.biomeFilterExecutor = Executors.newSingleThreadExecutor(
             r -> new Thread(r, "ezrtp-biome-filter"));
         this.locationFinder = new LocationFinder(plugin, statistics, biomeCache, rareBiomeRegistry, chunkLoadQueue, locationValidator, searchStrategy, platformRuntime, chunkyAPI, chunkyWarmupCoordinator, biomeFilterExecutor);
-        this.countdownManager = new CountdownManager(plugin, messageProvider);
-        this.queueManager = new TeleportQueueManager(plugin, this.queueSettings, messageProvider);
+        this.countdownManager = new CountdownManager(plugin, platformRuntime.scheduler(), messageProvider);
+        this.queueManager = new TeleportQueueManager(plugin, platformRuntime.scheduler(), this.queueSettings, messageProvider);
         this.costCalculator = new TeleportCostCalculator(economyService, costResolver);
-        this.teleportExecutor = new TeleportExecutor(plugin, messageProvider, statistics,
+        this.teleportExecutor = new TeleportExecutor(plugin, platformRuntime.scheduler(), messageProvider, statistics,
                 costCalculator, countdownManager, locationFinder, queueManager, () -> this.settings);
 
         applyChunkLoadingSettings(this.settings);
@@ -397,7 +398,8 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         }
     }
 
-    private BiomeLocationCache createBiomeCache(RandomTeleportSettings initialSettings) {
+    private BiomeLocationCache createBiomeCache(
+            RandomTeleportSettings initialSettings, PlatformScheduler scheduler) {
         if (initialSettings != null && initialSettings.getPreCacheSettings() != null) {
             var preCache = initialSettings.getPreCacheSettings();
             BiomeLocationCache cache = new BiomeLocationCache(
@@ -405,12 +407,13 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
                     preCache.getMaxPerBiome(),
                     preCache.getWarmupSize(),
                     preCache.getExpirationMinutes(),
-                    this.chunkyWarmupCoordinator);
+                    this.chunkyWarmupCoordinator,
+                    scheduler);
             cache.setEnabled(preCache.isEnabled());
             return cache;
         }
 
-        BiomeLocationCache cache = new BiomeLocationCache(plugin, BiomeLocationCache.DEFAULT_MAX_LOCATIONS_PER_BIOME, BiomeLocationCache.DEFAULT_CACHE_WARMUP_SIZE, BiomeLocationCache.DEFAULT_EXPIRATION_MINUTES, this.chunkyWarmupCoordinator);
+        BiomeLocationCache cache = new BiomeLocationCache(plugin, BiomeLocationCache.DEFAULT_MAX_LOCATIONS_PER_BIOME, BiomeLocationCache.DEFAULT_CACHE_WARMUP_SIZE, BiomeLocationCache.DEFAULT_EXPIRATION_MINUTES, this.chunkyWarmupCoordinator, scheduler);
         cache.setEnabled(false);
         return cache;
     }

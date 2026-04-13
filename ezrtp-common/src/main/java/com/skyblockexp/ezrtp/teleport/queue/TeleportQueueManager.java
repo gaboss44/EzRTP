@@ -4,10 +4,10 @@ import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.config.TeleportQueueSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.teleport.TeleportReason;
 
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -26,7 +26,7 @@ public final class TeleportQueueManager {
     }
 
     private final org.bukkit.plugin.java.JavaPlugin plugin;
-    private final BukkitScheduler scheduler;
+    private final PlatformScheduler scheduler;
     private final MessageProvider messageProvider;
     private final Deque<QueuedTeleport> teleportQueue = new ArrayDeque<>();
 
@@ -35,11 +35,13 @@ public final class TeleportQueueManager {
     private UUID activeTeleportPlayer;
     private QueueExecutionHandler executionHandler;
 
-    public TeleportQueueManager(org.bukkit.plugin.java.JavaPlugin plugin,
-                               TeleportQueueSettings queueSettings,
-                               MessageProvider messageProvider) {
+    public TeleportQueueManager(
+            org.bukkit.plugin.java.JavaPlugin plugin,
+            PlatformScheduler scheduler,
+            TeleportQueueSettings queueSettings,
+            MessageProvider messageProvider) {
         this.plugin = plugin;
-        this.scheduler = plugin.getServer().getScheduler();
+        this.scheduler = scheduler;
         this.queueSettings = queueSettings != null ? queueSettings : TeleportQueueSettings.disabled();
         this.messageProvider = messageProvider;
     }
@@ -89,7 +91,7 @@ public final class TeleportQueueManager {
 
     private void scheduleDispatch(long delayTicks) {
         try {
-            scheduler.runTaskLater(plugin, this::dispatchNextTeleport, delayTicks);
+            scheduler.executeGlobalDelayed(this::dispatchNextTeleport, delayTicks);
         } catch (IllegalStateException ex) {
             queueProcessing = false;
             teleportQueue.clear();

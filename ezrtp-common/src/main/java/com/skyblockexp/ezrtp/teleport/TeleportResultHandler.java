@@ -4,6 +4,7 @@ import com.skyblockexp.ezrtp.config.ParticleSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;
 import com.skyblockexp.ezrtp.teleport.SearchResult.SearchLimitType;
 
@@ -11,7 +12,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.Map;
 
@@ -21,17 +21,19 @@ import java.util.Map;
 public final class TeleportResultHandler {
 
     private final org.bukkit.plugin.java.JavaPlugin plugin;
-    private final BukkitScheduler scheduler;
+    private final PlatformScheduler scheduler;
     private final MessageProvider messageProvider;
     private final RtpStatistics statistics;
     private final LocationFinder locationFinder;
 
-    public TeleportResultHandler(org.bukkit.plugin.java.JavaPlugin plugin,
-                                 MessageProvider messageProvider,
-                                 RtpStatistics statistics,
-                                 LocationFinder locationFinder) {
+    public TeleportResultHandler(
+            org.bukkit.plugin.java.JavaPlugin plugin,
+            PlatformScheduler scheduler,
+            MessageProvider messageProvider,
+            RtpStatistics statistics,
+            LocationFinder locationFinder) {
         this.plugin = plugin;
-        this.scheduler = plugin.getServer().getScheduler();
+        this.scheduler = scheduler;
         this.messageProvider = messageProvider;
         this.statistics = statistics;
         this.locationFinder = locationFinder;
@@ -154,7 +156,13 @@ public final class TeleportResultHandler {
     }
 
     private void unloadOldChunk(Location oldLocation, Location newLocation) {
-        scheduler.runTask(plugin, () -> {
+        World oldWorld = oldLocation.getWorld();
+        if (oldWorld == null) {
+            return;
+        }
+        int oldChunkX = oldLocation.getBlockX() >> 4;
+        int oldChunkZ = oldLocation.getBlockZ() >> 4;
+        scheduler.executeRegion(oldWorld, oldChunkX, oldChunkZ, () -> {
             try {
                 org.bukkit.Chunk oldChunk = oldLocation.getWorld().getChunkAt(oldLocation);
                 if (oldLocation.getWorld().isChunkLoaded(oldChunk.getX(), oldChunk.getZ())) {
