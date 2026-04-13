@@ -14,6 +14,8 @@ import com.skyblockexp.ezrtp.teleport.SearchResult.SearchLimitType;
 import com.skyblockexp.ezrtp.teleport.filter.SearchFilter;
 import com.skyblockexp.ezrtp.teleport.filter.SearchFilterChain;
 import com.skyblockexp.ezrtp.teleport.filter.SearchFilterResult;
+import com.skyblockexp.ezrtp.unsafe.UnsafeLocationCause;
+import com.skyblockexp.ezrtp.unsafe.UnsafeLocationMonitor;
 import com.skyblockexp.ezrtp.util.DebugFileLogger;
 
 import org.bukkit.Location;
@@ -53,6 +55,7 @@ public final class LocationFinder {
     private final PlatformWorldAccess platformWorldAccess;
     private final DebugFileLogger debugFileLogger;
     private final Executor biomeFilterExecutor;
+    private volatile UnsafeLocationMonitor unsafeMonitor;
 
     public LocationFinder(org.bukkit.plugin.java.JavaPlugin plugin,
                           RtpStatistics statistics,
@@ -100,6 +103,10 @@ public final class LocationFinder {
 
     public void setSearchStrategy(BiomeSearchStrategy searchStrategy) {
         this.searchStrategy = searchStrategy;
+    }
+
+    public void setUnsafeLocationMonitor(UnsafeLocationMonitor monitor) {
+        this.unsafeMonitor = monitor;
     }
 
     /**
@@ -306,6 +313,7 @@ public final class LocationFinder {
                     }
                     logCandidateRejection(world, currentSettings, attempt, candidate, "unsafe_or_null_candidate");
                     statistics.recordSafetyFailure();
+                    recordUnsafeCause(candidate, currentSettings);
                     return attemptFindLocation(world, currentSettings, attempt + 1, rejectedForBiome, context, cacheChecked);
                 }
 
@@ -849,6 +857,19 @@ public final class LocationFinder {
             sb.append("  strategy=").append(searchStrategy != null ? searchStrategy.getClass().getSimpleName() : "UniformSearchStrategy");
             debugFileLogger.log(sb.toString());
         } catch (Exception ignored) {
+        }
+    }
+
+    private void recordUnsafeCause(Location candidate, RandomTeleportSettings settings) {
+        UnsafeLocationMonitor monitor = this.unsafeMonitor;
+        if (monitor == null || !monitor.isEnabled()) {
+            return;
+        }
+        if (candidate == null) {
+            monitor.recordRejection(UnsafeLocationCause.NULL_CANDIDATE);
+        } else {
+            UnsafeLocationCause cause = validator.checkSafety(candidate, settings).orElse(UnsafeLocationCause.OTHER);
+            monitor.recordRejection(cause);
         }
     }
 

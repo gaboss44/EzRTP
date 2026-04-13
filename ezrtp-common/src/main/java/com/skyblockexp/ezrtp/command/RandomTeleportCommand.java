@@ -72,6 +72,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
         // Initialize subcommands
         subcommands.put("reload", new ReloadSubcommand(plugin));
         subcommands.put("stats", new StatsSubcommand(plugin, teleportServiceSupplier));
+        subcommands.put("unsafe-stats", new UnsafeStatsSubcommand(plugin));
         subcommands.put("heatmap", new HeatmapSubcommand(plugin, teleportServiceSupplier, configurationSupplier, heatmapSimulationStore));
         subcommands.put("fake", new FakeSubcommand(plugin, teleportServiceSupplier, configurationSupplier, heatmapSimulationStore));
         subcommands.put("setcenter", new SetCenterSubcommand(plugin, configurationSupplier));
