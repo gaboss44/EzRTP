@@ -3,12 +3,11 @@ package com.skyblockexp.ezrtp.teleport;
 import com.skyblockexp.ezrtp.config.BiomeSearchSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.message.MessageProvider;
+import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;
 import com.skyblockexp.ezrtp.teleport.queue.TeleportQueueManager;
-import org.bukkit.Server;
 import org.bukkit.block.Biome;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,14 +24,10 @@ class TeleportExecutorTimeoutTest {
     @BeforeEach
     void setUp() {
         JavaPlugin plugin = mock(JavaPlugin.class);
-        Server server = mock(Server.class);
-        BukkitScheduler scheduler = mock(BukkitScheduler.class);
-
-        when(plugin.getServer()).thenReturn(server);
-        when(server.getScheduler()).thenReturn(scheduler);
 
         executor = new TeleportExecutor(
             plugin,
+            mock(PlatformScheduler.class),
             mock(MessageProvider.class),
             mock(RtpStatistics.class),
             mock(TeleportCostCalculator.class),
