@@ -1,9 +1,10 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.teleport;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.skyblockexp.ezrtp.config.teleport.ChunkLoadingSettings;
 
 class ChunkLoadingSettingsTest {
 

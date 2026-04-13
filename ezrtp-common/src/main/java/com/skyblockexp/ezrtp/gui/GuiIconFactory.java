@@ -1,7 +1,8 @@
 package com.skyblockexp.ezrtp.gui;
 
-import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration;
+import com.skyblockexp.ezrtp.config.gui.GuiServerOption;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
 import com.skyblockexp.ezrtp.network.NetworkService;
 import com.skyblockexp.ezrtp.platform.PlatformGuiBridge;
 import com.skyblockexp.ezrtp.platform.PlatformGuiBridgeRegistry;
@@ -31,7 +32,7 @@ public final class GuiIconFactory {
     }
 
     public ItemStack buildWorldIcon(Player player,
-                                    EzRtpConfiguration.GuiWorldOption option,
+                                    GuiWorldOption option,
                                     CooldownInfo cooldownInfo,
                                     boolean humanReadableCooldown) {
         ItemStack icon = safeClone(option.createIcon());
@@ -69,7 +70,7 @@ public final class GuiIconFactory {
         return icon;
     }
 
-    public ItemStack buildServerIcon(EzRtpConfiguration.GuiServerOption serverOption,
+    public ItemStack buildServerIcon(GuiServerOption serverOption,
                                      NetworkConfiguration.ServerStatusSnapshot status,
                                      NetworkService networkService) {
         NetworkConfiguration.NetworkServer server = serverOption.getServer();

@@ -1,6 +1,7 @@
 package com.skyblockexp.ezrtp.teleport;
 
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
+import com.skyblockexp.ezrtp.config.safety.SafetySettings;
 import com.skyblockexp.ezrtp.protection.ProtectionRegistry;
 import com.skyblockexp.ezrtp.unsafe.UnsafeLocationCause;
 
@@ -88,7 +89,7 @@ public final class LocationValidator {
         if (blockAbove.isLiquid()) {
             org.bukkit.World.Environment env = location.getWorld().getEnvironment();
             Material aboveType = blockAbove.getType();
-            com.skyblockexp.ezrtp.config.SafetySettings safety = currentSettings.getSafetySettings();
+            SafetySettings safety = currentSettings.getSafetySettings();
             if (env == World.Environment.NETHER
                     && aboveType == Material.LAVA
                     && safety.isRejectLavaAboveInNether()) {

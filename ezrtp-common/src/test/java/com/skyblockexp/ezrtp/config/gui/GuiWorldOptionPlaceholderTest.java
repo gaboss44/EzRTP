@@ -1,5 +1,7 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.gui;
 
+import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
 import com.skyblockexp.ezrtp.gui.GuiIconFactory;
 import com.skyblockexp.ezrtp.util.ItemFlagUtil;
 import com.skyblockexp.ezrtp.util.PlaceholderUtil;
@@ -65,7 +67,7 @@ class GuiWorldOptionPlaceholderTest {
             "<gray>Your health: %player_health%</gray>"
         );
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 0, "", false, 1, rawName, rawLore
         );
         
@@ -89,7 +91,7 @@ class GuiWorldOptionPlaceholderTest {
             "<gray>Welcome %player_name%</gray>"
         );
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 0, "", false, 1, rawName, rawLore
         );
         
@@ -116,7 +118,7 @@ class GuiWorldOptionPlaceholderTest {
         String rawName = "<green>Test</green>";
         List<String> rawLore = Collections.singletonList("<gray>Test lore</gray>");
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 0, "", false, 1, rawName, rawLore
         );
         
@@ -137,7 +139,7 @@ class GuiWorldOptionPlaceholderTest {
         String rawName = "<green>Simple World</green>";
         List<String> rawLore = Collections.emptyList();
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 0, "", false, 1, rawName, rawLore
         );
         
@@ -159,7 +161,7 @@ class GuiWorldOptionPlaceholderTest {
         String rawName = "   ";
         List<String> rawLore = Collections.singletonList("<gray>Test</gray>");
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 0, "", false, 1, rawName, rawLore
         );
         
@@ -180,7 +182,7 @@ class GuiWorldOptionPlaceholderTest {
         String rawName = "<green>Sword World</green>";
         List<String> rawLore = Collections.singletonList("<gray>Enter if you dare</gray>");
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 5, "test.permission", true, 10, rawName, rawLore
         );
         
@@ -196,7 +198,7 @@ class GuiWorldOptionPlaceholderTest {
     /**
      * Helper method to create GuiWorldOption using reflection since constructor is private.
      */
-    private EzRtpConfiguration.GuiWorldOption createGuiWorldOption(
+    private GuiWorldOption createGuiWorldOption(
             RandomTeleportSettings settings,
             ItemStack template,
             int slot,
@@ -206,10 +208,10 @@ class GuiWorldOptionPlaceholderTest {
             String rawName,
             List<String> rawLore) {
         try {
-            Class<EzRtpConfiguration.GuiWorldOption> clazz = EzRtpConfiguration.GuiWorldOption.class;
+            Class<GuiWorldOption> clazz = GuiWorldOption.class;
             @SuppressWarnings("unchecked")
-            Constructor<EzRtpConfiguration.GuiWorldOption> constructor = 
-                (Constructor<EzRtpConfiguration.GuiWorldOption>) clazz.getDeclaredConstructor(
+            Constructor<GuiWorldOption> constructor = 
+                (Constructor<GuiWorldOption>) clazz.getDeclaredConstructor(
                 RandomTeleportSettings.class,
                 ItemStack.class,
                 int.class,
@@ -228,7 +230,7 @@ class GuiWorldOptionPlaceholderTest {
         }
     }
 
-    private ItemStack buildWorldIcon(EzRtpConfiguration.GuiWorldOption option) {
+    private ItemStack buildWorldIcon(GuiWorldOption option) {
         return iconFactory.buildWorldIcon(
             player,
             option,

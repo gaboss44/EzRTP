@@ -1,4 +1,4 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.safety;
 
 import java.util.List;
 import org.bukkit.configuration.ConfigurationSection;

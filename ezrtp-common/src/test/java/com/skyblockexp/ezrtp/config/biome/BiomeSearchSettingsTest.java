@@ -1,5 +1,6 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.biome;
 
+import com.skyblockexp.ezrtp.config.biome.BiomeSearchSettings;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 

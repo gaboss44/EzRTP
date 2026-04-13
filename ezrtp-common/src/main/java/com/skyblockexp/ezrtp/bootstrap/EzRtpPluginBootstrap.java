@@ -12,7 +12,7 @@ import com.skyblockexp.ezrtp.command.ForceRtpCommand;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
 import com.skyblockexp.ezrtp.config.ForceRtpConfiguration;
 import com.skyblockexp.ezrtp.config.PerformanceSettings;
-import com.skyblockexp.ezrtp.config.UnsafeLocationSettings;
+import com.skyblockexp.ezrtp.config.safety.UnsafeLocationSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.economy.EconomyService;
 import com.skyblockexp.ezrtp.performance.PerformanceMonitor;

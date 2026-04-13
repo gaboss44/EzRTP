@@ -1,8 +1,8 @@
 package com.skyblockexp.ezrtp.network;
 
-import com.skyblockexp.ezrtp.config.NetworkConfiguration;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration.NetworkServer;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration.ServerStatusSnapshot;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration.NetworkServer;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration.ServerStatusSnapshot;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

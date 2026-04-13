@@ -1,6 +1,7 @@
 package com.skyblockexp.ezrtp.gui;
 
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
+import com.skyblockexp.ezrtp.config.gui.GuiSettings;
 import com.skyblockexp.ezrtp.network.NetworkService;
 import com.skyblockexp.ezrtp.platform.PlatformGuiBridgeRegistry;
 import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
@@ -48,7 +49,7 @@ public class GuiBuilder {
      * @return A GuiBuildResult containing the inventory and option map
      */
     public GuiBuildResult buildGui(Player player) {
-        EzRtpConfiguration.GuiSettings guiSettings = configuration.getGuiSettings();
+        GuiSettings guiSettings = configuration.getGuiSettings();
 
         Inventory inventory = createInventory(guiSettings);
 
@@ -61,7 +62,7 @@ public class GuiBuilder {
         return new GuiBuildResult(inventory, optionMap, guiSettings);
     }
 
-    private Inventory createInventory(EzRtpConfiguration.GuiSettings guiSettings) {
+    private Inventory createInventory(GuiSettings guiSettings) {
         return PlatformGuiBridgeRegistry.get().createInventory(DUMMY_HOLDER, guiSettings.getSize(), guiSettings.getTitle());
     }
 
@@ -71,10 +72,10 @@ public class GuiBuilder {
     public static class GuiBuildResult {
         private final Inventory inventory;
         private final Map<Integer, GuiOption> optionMap;
-        private final EzRtpConfiguration.GuiSettings settings;
+        private final GuiSettings settings;
 
         public GuiBuildResult(Inventory inventory, Map<Integer, GuiOption> optionMap,
-                             EzRtpConfiguration.GuiSettings settings) {
+                             GuiSettings settings) {
             this.inventory = inventory;
             this.optionMap = optionMap;
             this.settings = settings;
@@ -88,7 +89,7 @@ public class GuiBuilder {
             return optionMap;
         }
 
-        public EzRtpConfiguration.GuiSettings getSettings() {
+        public GuiSettings getSettings() {
             return settings;
         }
     }

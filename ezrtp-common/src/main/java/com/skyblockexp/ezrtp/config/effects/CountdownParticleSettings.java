@@ -1,4 +1,4 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.effects;
 
 import org.bukkit.Particle;
 import org.bukkit.configuration.ConfigurationSection;

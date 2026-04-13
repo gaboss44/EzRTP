@@ -1,4 +1,4 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.effects;
 
 import net.kyori.adventure.text.Component;
 import com.skyblockexp.ezrtp.util.MessageUtil;

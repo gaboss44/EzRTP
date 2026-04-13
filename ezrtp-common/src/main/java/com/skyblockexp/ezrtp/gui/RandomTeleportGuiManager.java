@@ -4,7 +4,11 @@ import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration;
+import com.skyblockexp.ezrtp.config.gui.GuiServerOption;
+import com.skyblockexp.ezrtp.config.gui.GuiSettings;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
+import com.skyblockexp.ezrtp.config.teleport.RtpLimitSettings;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
 import com.skyblockexp.ezrtp.network.NetworkService;
 import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
@@ -89,7 +93,7 @@ public final class RandomTeleportGuiManager implements Listener {
             return false;
         }
 
-        EzRtpConfiguration.GuiSettings guiSettings = configuration.getGuiSettings();
+        GuiSettings guiSettings = configuration.getGuiSettings();
         if (!guiSettings.isEnabled()) {
             return false;
         }
@@ -131,8 +135,8 @@ public final class RandomTeleportGuiManager implements Listener {
     }
 
     private boolean checkGlobalCooldown(Player player, EzRtpConfiguration configuration) {
-        EzRtpConfiguration.RtpLimitSettings limit = configuration.getLimitSettings(player.getWorld().getName(), null);
-        int cooldownSeconds = limit != null ? limit.cooldownSeconds : 0;
+        RtpLimitSettings limit = configuration.getLimitSettings(player.getWorld().getName(), null);
+        int cooldownSeconds = limit != null ? limit.getCooldownSeconds() : 0;
         if (cooldownSeconds <= 0) {
             return false;
         }
@@ -143,7 +147,7 @@ public final class RandomTeleportGuiManager implements Listener {
         return lastRtp > 0 && (now - lastRtp) < cooldownMs;
     }
 
-    private void sendCacheFilterMessage(Player player, EzRtpConfiguration.GuiSettings guiSettings) {
+    private void sendCacheFilterMessage(Player player, GuiSettings guiSettings) {
         // This method would send a message if some options were filtered due to cache
         // For now, it's empty as the logic is handled in GuiOptionsBuilder
     }
@@ -207,7 +211,7 @@ public final class RandomTeleportGuiManager implements Listener {
         }
 
         if (option.isWorldOption()) {
-            EzRtpConfiguration.GuiWorldOption worldOption = option.worldOption();
+            GuiWorldOption worldOption = option.worldOption();
             if (!worldOption.getPermission().isEmpty() && !player.hasPermission(worldOption.getPermission())) {
                 session.settings().noPermissionMessage().ifPresent(msg -> MessageUtil.send(player, msg));
                 return;
@@ -237,15 +241,15 @@ public final class RandomTeleportGuiManager implements Listener {
 
             if (!bypass) {
                 String group = configuration.resolveGroup(player, worldName);
-                EzRtpConfiguration.RtpLimitSettings limit = configuration.getLimitSettings(worldName, group);
+                RtpLimitSettings limit = configuration.getLimitSettings(worldName, group);
                 long now = System.currentTimeMillis();
                 long lastRtp = usageStorage.getLastRtpTime(player.getUniqueId(), worldName);
                 int daily = usageStorage.getUsageCount(player.getUniqueId(), worldName, "daily");
                 int weekly = usageStorage.getUsageCount(player.getUniqueId(), worldName, "weekly");
 
                 // Cooldown check
-                if (limit.cooldownSeconds > 0 && lastRtp > 0 && (now - lastRtp) < limit.cooldownSeconds * 1000L) {
-                    long wait = (limit.cooldownSeconds * 1000L - (now - lastRtp)) / 1000L;
+                if (limit.getCooldownSeconds() > 0 && lastRtp > 0 && (now - lastRtp) < limit.getCooldownSeconds() * 1000L) {
+                    long wait = (limit.getCooldownSeconds() * 1000L - (now - lastRtp)) / 1000L;
                     String msg = messages.getMessage(MessageKey.COOLDOWN);
                     if (configuration.isHumanReadableCooldown()) {
                         String formattedTime = PlaceholderUtil.formatTime((int) wait);
@@ -264,14 +268,14 @@ public final class RandomTeleportGuiManager implements Listener {
                 }
 
                 // Daily limit check
-                if (!limit.disableDailyLimit && limit.dailyLimit > 0 && daily >= limit.dailyLimit) {
+                if (!limit.isDisableDailyLimit() && limit.getDailyLimit() > 0 && daily >= limit.getDailyLimit()) {
                     String msg = messages.getMessage(MessageKey.LIMIT_DAILY);
                     MessageUtil.send(player, com.skyblockexp.ezrtp.util.MessageUtil.parseMiniMessage(PlaceholderUtil.resolvePlaceholders(player, msg, plugin.getLogger())));
                     return;
                 }
 
                 // Weekly limit check
-                if (!limit.disableDailyLimit && limit.weeklyLimit > 0 && weekly >= limit.weeklyLimit) {
+                if (!limit.isDisableDailyLimit() && limit.getWeeklyLimit() > 0 && weekly >= limit.getWeeklyLimit()) {
                     String msg = messages.getMessage(MessageKey.LIMIT_WEEKLY);
                     MessageUtil.send(player, com.skyblockexp.ezrtp.util.MessageUtil.parseMiniMessage(PlaceholderUtil.resolvePlaceholders(player, msg, plugin.getLogger())));
                     return;
@@ -293,7 +297,7 @@ public final class RandomTeleportGuiManager implements Listener {
             return;
         }
 
-        EzRtpConfiguration.GuiServerOption serverOption = option.serverOption();
+        GuiServerOption serverOption = option.serverOption();
         if (serverOption == null) {
             return;
         }

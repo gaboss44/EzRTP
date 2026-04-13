@@ -1,4 +1,4 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.teleport;
 
 /**
  * Supported spatial search patterns for candidate coordinate generation.

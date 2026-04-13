@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.tools;
 
-import com.skyblockexp.ezrtp.config.SearchPattern;
+import com.skyblockexp.ezrtp.config.teleport.SearchPattern;
 import com.skyblockexp.ezrtp.teleport.biome.RareBiomeRegistry;
 import com.skyblockexp.ezrtp.teleport.search.BiomeSearchStrategy;
 import com.skyblockexp.ezrtp.teleport.search.CircularSearchStrategy;

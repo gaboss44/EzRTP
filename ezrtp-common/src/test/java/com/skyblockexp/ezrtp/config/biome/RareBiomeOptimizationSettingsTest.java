@@ -1,5 +1,6 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.biome;
 
+import com.skyblockexp.ezrtp.config.biome.RareBiomeOptimizationSettings;
 import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;

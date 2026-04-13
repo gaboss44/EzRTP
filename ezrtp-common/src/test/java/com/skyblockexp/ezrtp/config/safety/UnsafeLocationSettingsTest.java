@@ -1,9 +1,10 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.safety;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.skyblockexp.ezrtp.config.safety.UnsafeLocationSettings;
 
 class UnsafeLocationSettingsTest {
 

@@ -1,4 +1,4 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.biome;
 
 import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;

@@ -3,7 +3,7 @@ package com.skyblockexp.ezrtp.bootstrap.component;
 import com.skyblockexp.ezrtp.EzRtpPlugin;
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
 import com.skyblockexp.ezrtp.config.PerformanceSettings;
-import com.skyblockexp.ezrtp.config.UnsafeLocationSettings;
+import com.skyblockexp.ezrtp.config.safety.UnsafeLocationSettings;
 import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.util.MessageUtil;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;

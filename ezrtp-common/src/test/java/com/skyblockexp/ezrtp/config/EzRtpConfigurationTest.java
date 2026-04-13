@@ -1,5 +1,9 @@
 package com.skyblockexp.ezrtp.config;
 
+import com.skyblockexp.ezrtp.config.gui.GuiServerOption;
+import com.skyblockexp.ezrtp.config.gui.GuiSettings;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -58,7 +62,7 @@ class EzRtpConfigurationTest {
 
     @Test
     void duplicateServerSlotsAreIgnoredAndWarned() throws Exception {
-        Map<Integer, EzRtpConfiguration.GuiWorldOption> worldOptions = new HashMap<>();
+        Map<Integer, GuiWorldOption> worldOptions = new HashMap<>();
         worldOptions.put(1, null);
 
         NetworkConfiguration.NetworkServer serverA = createServer("alpha", 0);
@@ -67,13 +71,13 @@ class EzRtpConfigurationTest {
 
         NetworkConfiguration configuration = createConfiguration(serverA, serverB, serverC);
 
-        Method parseServerOptions = EzRtpConfiguration.GuiSettings.class.getDeclaredMethod(
+        Method parseServerOptions = GuiSettings.class.getDeclaredMethod(
                 "parseServerOptions", int.class, Map.class, NetworkConfiguration.class, Logger.class);
         parseServerOptions.setAccessible(true);
 
         @SuppressWarnings("unchecked")
-        List<EzRtpConfiguration.GuiServerOption> serverOptions =
-                (List<EzRtpConfiguration.GuiServerOption>) parseServerOptions.invoke(null, 9, worldOptions,
+        List<GuiServerOption> serverOptions =
+                (List<GuiServerOption>) parseServerOptions.invoke(null, 9, worldOptions,
                         configuration, logger);
 
         assertEquals(1, serverOptions.size(), "Only the first valid server should be available");

@@ -1,4 +1,4 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.network;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;

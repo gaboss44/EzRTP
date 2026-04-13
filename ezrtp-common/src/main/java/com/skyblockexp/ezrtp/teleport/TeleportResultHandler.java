@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.teleport;
 
-import com.skyblockexp.ezrtp.config.ParticleSettings;
+import com.skyblockexp.ezrtp.config.effects.ParticleSettings;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.message.MessageKey;
 import com.skyblockexp.ezrtp.message.MessageProvider;

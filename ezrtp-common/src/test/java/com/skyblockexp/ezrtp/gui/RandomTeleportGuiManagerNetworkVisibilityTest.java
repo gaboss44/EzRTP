@@ -1,8 +1,10 @@
 package com.skyblockexp.ezrtp.gui;
 
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration.NetworkServer;
+import com.skyblockexp.ezrtp.config.gui.GuiServerOption;
+import com.skyblockexp.ezrtp.config.gui.GuiSettings;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration.NetworkServer;
 import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.network.NetworkService;
 import net.kyori.adventure.text.Component;
@@ -194,8 +196,8 @@ class RandomTeleportGuiManagerNetworkVisibilityTest {
 
     private static EzRtpConfiguration createEzRtpConfiguration(NetworkConfiguration networkConfiguration,
                                                                NetworkServer server) throws Exception {
-        EzRtpConfiguration.GuiServerOption serverOption = createGuiServerOption(server);
-        EzRtpConfiguration.GuiSettings guiSettings = createGuiSettings(serverOption);
+        GuiServerOption serverOption = createGuiServerOption(server);
+        GuiSettings guiSettings = createGuiSettings(serverOption);
 
         // Provide a minimal valid RandomTeleportSettings mock with a real config section
         com.skyblockexp.ezrtp.config.RandomTeleportSettings mockSettings = mock(com.skyblockexp.ezrtp.config.RandomTeleportSettings.class);
@@ -204,27 +206,27 @@ class RandomTeleportGuiManagerNetworkVisibilityTest {
 
         Constructor<EzRtpConfiguration> constructor = EzRtpConfiguration.class.getDeclaredConstructor(
                 com.skyblockexp.ezrtp.config.RandomTeleportSettings.class,
-                EzRtpConfiguration.GuiSettings.class,
-                com.skyblockexp.ezrtp.config.TeleportQueueSettings.class,
+                GuiSettings.class,
+                com.skyblockexp.ezrtp.config.network.TeleportQueueSettings.class,
                 NetworkConfiguration.class);
         constructor.setAccessible(true);
         return constructor.newInstance(mockSettings, guiSettings, null, networkConfiguration);
     }
 
-    private static EzRtpConfiguration.GuiServerOption createGuiServerOption(NetworkServer server) throws Exception {
-        Constructor<EzRtpConfiguration.GuiServerOption> constructor = EzRtpConfiguration.GuiServerOption.class
+    private static GuiServerOption createGuiServerOption(NetworkServer server) throws Exception {
+        Constructor<GuiServerOption> constructor = GuiServerOption.class
                 .getDeclaredConstructor(NetworkServer.class);
         constructor.setAccessible(true);
         return constructor.newInstance(server);
     }
 
-    private static EzRtpConfiguration.GuiSettings createGuiSettings(
-            EzRtpConfiguration.GuiServerOption serverOption) throws Exception {
-        Constructor<EzRtpConfiguration.GuiSettings> constructor = EzRtpConfiguration.GuiSettings.class
+    private static GuiSettings createGuiSettings(
+            GuiServerOption serverOption) throws Exception {
+        Constructor<GuiSettings> constructor = GuiSettings.class
                 .getDeclaredConstructor(boolean.class, Component.class, int.class, ItemStack.class,
                         List.class, List.class, Component.class, boolean.class);
         constructor.setAccessible(true);
-        List<EzRtpConfiguration.GuiServerOption> serverOptions = new ArrayList<>();
+        List<GuiServerOption> serverOptions = new ArrayList<>();
         serverOptions.add(serverOption);
         return constructor.newInstance(true, Component.text("Select"), 9, null,
                 Collections.emptyList(), Collections.unmodifiableList(serverOptions),

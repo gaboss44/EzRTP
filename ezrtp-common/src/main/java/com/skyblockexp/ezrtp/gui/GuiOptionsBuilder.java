@@ -1,7 +1,11 @@
 package com.skyblockexp.ezrtp.gui;
 
 import com.skyblockexp.ezrtp.config.EzRtpConfiguration;
-import com.skyblockexp.ezrtp.config.NetworkConfiguration;
+import com.skyblockexp.ezrtp.config.gui.GuiServerOption;
+import com.skyblockexp.ezrtp.config.gui.GuiSettings;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
+import com.skyblockexp.ezrtp.config.teleport.RtpLimitSettings;
+import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
 import com.skyblockexp.ezrtp.gui.GuiIconFactory.CooldownInfo;
 import com.skyblockexp.ezrtp.network.NetworkService;
 import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
@@ -48,7 +52,7 @@ public class GuiOptionsBuilder {
      */
     public Map<Integer, GuiOption> buildOptions(Inventory inventory) {
         Map<Integer, GuiOption> optionMap = new HashMap<>();
-        EzRtpConfiguration.GuiSettings guiSettings = configuration.getGuiSettings();
+        GuiSettings guiSettings = configuration.getGuiSettings();
 
         addWorldOptions(inventory, optionMap, guiSettings);
         addServerOptions(inventory, optionMap, guiSettings);
@@ -58,8 +62,8 @@ public class GuiOptionsBuilder {
 
     private void addWorldOptions(Inventory inventory,
                                  Map<Integer, GuiOption> optionMap,
-                                 EzRtpConfiguration.GuiSettings guiSettings) {
-        for (EzRtpConfiguration.GuiWorldOption option : guiSettings.getWorldOptions()) {
+                                 GuiSettings guiSettings) {
+        for (GuiWorldOption option : guiSettings.getWorldOptions()) {
             if (!option.getPermission().isEmpty() && !player.hasPermission(option.getPermission())) {
                 continue;
             }
@@ -89,10 +93,10 @@ public class GuiOptionsBuilder {
         }
     }
 
-    private CooldownInfo evaluateCooldown(EzRtpConfiguration.GuiWorldOption option) {
-        EzRtpConfiguration.RtpLimitSettings limit = configuration.getLimitSettings(
+    private CooldownInfo evaluateCooldown(GuiWorldOption option) {
+        RtpLimitSettings limit = configuration.getLimitSettings(
                 option.getSettings().getWorldName(), null);
-        if (limit == null || limit.cooldownSeconds <= 0) {
+        if (limit == null || limit.getCooldownSeconds() <= 0) {
             return CooldownInfo.inactive();
         }
 
@@ -102,7 +106,7 @@ public class GuiOptionsBuilder {
         }
 
         long elapsed = System.currentTimeMillis() - lastRtp;
-        long remainingMillis = limit.cooldownSeconds * 1000L - elapsed;
+        long remainingMillis = limit.getCooldownSeconds() * 1000L - elapsed;
         if (remainingMillis <= 0) {
             return CooldownInfo.inactive();
         }
@@ -121,11 +125,11 @@ public class GuiOptionsBuilder {
             }
         }
         String group = configuration.resolveGroup(player, worldName);
-        EzRtpConfiguration.RtpLimitSettings limit = configuration.getLimitSettings(worldName, group);
-        return limit != null && limit.disableDailyLimit;
+        RtpLimitSettings limit = configuration.getLimitSettings(worldName, group);
+        return limit != null && limit.isDisableDailyLimit();
     }
 
-    private boolean meetsCacheRequirements(EzRtpConfiguration.GuiWorldOption option) {
+    private boolean meetsCacheRequirements(GuiWorldOption option) {
         if (biomeCache == null) {
             return false;
         }
@@ -137,12 +141,12 @@ public class GuiOptionsBuilder {
 
     private void addServerOptions(Inventory inventory,
                                   Map<Integer, GuiOption> optionMap,
-                                  EzRtpConfiguration.GuiSettings guiSettings) {
+                                  GuiSettings guiSettings) {
         if (networkService == null || !configuration.getNetworkConfiguration().isLobbyServer()) {
             return;
         }
 
-        for (EzRtpConfiguration.GuiServerOption serverOption : guiSettings.getServerOptions()) {
+        for (GuiServerOption serverOption : guiSettings.getServerOptions()) {
             NetworkConfiguration.NetworkServer server = serverOption.getServer();
 
             if (!server.getPermission().isEmpty() && !player.hasPermission(server.getPermission())) {

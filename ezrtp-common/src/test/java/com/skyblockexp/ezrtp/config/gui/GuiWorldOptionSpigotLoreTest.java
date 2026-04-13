@@ -1,5 +1,7 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.gui;
 
+import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
+import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
 import com.skyblockexp.ezrtp.gui.GuiIconFactory;
 import com.skyblockexp.ezrtp.util.PlaceholderUtil;
 import org.bukkit.Material;
@@ -66,7 +68,7 @@ class GuiWorldOptionSpigotLoreTest {
             "<yellow>Line 2: Have fun</yellow>"
         );
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, spyStack, 0, "", false, 1, "<green>Test</green>", rawLore
         );
         
@@ -93,7 +95,7 @@ class GuiWorldOptionSpigotLoreTest {
             "<blue>Blue text</blue>"
         );
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 0, "", false, 1, "<yellow>Title</yellow>", rawLore
         );
         
@@ -123,7 +125,7 @@ class GuiWorldOptionSpigotLoreTest {
             "<gray>World: world</gray>"
         );
         
-        EzRtpConfiguration.GuiWorldOption option = createGuiWorldOption(
+        GuiWorldOption option = createGuiWorldOption(
             settings, template, 0, "", false, 1, "<green>Test</green>", rawLore
         );
         
@@ -139,7 +141,7 @@ class GuiWorldOptionSpigotLoreTest {
     /**
      * Helper method to create GuiWorldOption using reflection since constructor is private.
      */
-    private EzRtpConfiguration.GuiWorldOption createGuiWorldOption(
+    private GuiWorldOption createGuiWorldOption(
             RandomTeleportSettings settings,
             ItemStack template,
             int slot,
@@ -149,10 +151,10 @@ class GuiWorldOptionSpigotLoreTest {
             String rawName,
             List<String> rawLore) {
         try {
-            Class<EzRtpConfiguration.GuiWorldOption> clazz = EzRtpConfiguration.GuiWorldOption.class;
+            Class<GuiWorldOption> clazz = GuiWorldOption.class;
             @SuppressWarnings("unchecked")
-            Constructor<EzRtpConfiguration.GuiWorldOption> constructor = 
-                (Constructor<EzRtpConfiguration.GuiWorldOption>) clazz.getDeclaredConstructor(
+            Constructor<GuiWorldOption> constructor = 
+                (Constructor<GuiWorldOption>) clazz.getDeclaredConstructor(
                 RandomTeleportSettings.class,
                 ItemStack.class,
                 int.class,
@@ -171,7 +173,7 @@ class GuiWorldOptionSpigotLoreTest {
         }
     }
 
-    private ItemStack buildWorldIcon(EzRtpConfiguration.GuiWorldOption option) {
+    private ItemStack buildWorldIcon(GuiWorldOption option) {
         return iconFactory.buildWorldIcon(
             player,
             option,

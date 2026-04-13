@@ -1,6 +1,6 @@
 package com.skyblockexp.ezrtp.unsafe;
 
-import com.skyblockexp.ezrtp.config.UnsafeLocationSettings;
+import com.skyblockexp.ezrtp.config.safety.UnsafeLocationSettings;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.platform.PlatformTask;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;

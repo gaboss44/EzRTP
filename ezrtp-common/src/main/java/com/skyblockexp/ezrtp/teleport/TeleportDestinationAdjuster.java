@@ -1,7 +1,7 @@
 package com.skyblockexp.ezrtp.teleport;
 
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
-import com.skyblockexp.ezrtp.config.SafetySettings;
+import com.skyblockexp.ezrtp.config.safety.SafetySettings;
 import com.skyblockexp.ezrtp.util.BlockCompat;
 
 import org.bukkit.Location;

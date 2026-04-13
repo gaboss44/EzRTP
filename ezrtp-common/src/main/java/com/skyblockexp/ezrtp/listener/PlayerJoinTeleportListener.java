@@ -1,6 +1,6 @@
 
 package com.skyblockexp.ezrtp.listener;
-import com.skyblockexp.ezrtp.config.OnJoinTeleportSettings;
+import com.skyblockexp.ezrtp.config.teleport.OnJoinTeleportSettings;
 
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
