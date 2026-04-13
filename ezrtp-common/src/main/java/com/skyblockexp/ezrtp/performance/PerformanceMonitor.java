@@ -1,6 +1,8 @@
 package com.skyblockexp.ezrtp.performance;
 
-import com.skyblockexp.ezrtp.config.PerformanceSettings;
+import com.skyblockexp.ezrtp.config.performance.MetricsSettings;
+import com.skyblockexp.ezrtp.config.performance.PerformanceSettings;
+import com.skyblockexp.ezrtp.config.performance.WarningsSettings;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.platform.PlatformTask;
 import com.skyblockexp.ezrtp.statistics.RtpStatistics;
@@ -76,7 +78,7 @@ public final class PerformanceMonitor {
         if (!isEnabled()) {
             return;
         }
-        PerformanceSettings.WarningsSettings warnings = settings.getWarnings();
+        WarningsSettings warnings = settings.getWarnings();
         if (durationMs >= warnings.getSlowRtpThresholdMs()) {
             String message = String.format(
                     "[EzRTP] Slow RTP: %dms in world '%s' (threshold %dms)",
@@ -100,7 +102,7 @@ public final class PerformanceMonitor {
      */
     public void schedulePeriodicExport(PlatformScheduler scheduler) {
         cancelPeriodicTask();
-        PerformanceSettings.MetricsSettings metrics = settings.getMetrics();
+        MetricsSettings metrics = settings.getMetrics();
         if (!isEnabled() || !metrics.isEnabled()) {
             return;
         }

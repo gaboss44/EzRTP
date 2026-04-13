@@ -1,4 +1,4 @@
-package com.skyblockexp.ezrtp.config;
+package com.skyblockexp.ezrtp.config.performance;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ class PerformanceSettingsTest {
 
     @Test
     void testDefaultWarningValues() {
-        PerformanceSettings.WarningsSettings w = PerformanceSettings.defaults().getWarnings();
+        WarningsSettings w = PerformanceSettings.defaults().getWarnings();
 
         assertEquals(100, w.getSlowRtpThresholdMs());
         assertTrue(w.isLogToConsole());
@@ -29,7 +29,7 @@ class PerformanceSettingsTest {
 
     @Test
     void testDefaultMetricsDisabled() {
-        PerformanceSettings.MetricsSettings m = PerformanceSettings.defaults().getMetrics();
+        MetricsSettings m = PerformanceSettings.defaults().getMetrics();
 
         assertFalse(m.isEnabled());
         assertTrue(m.getExportIntervalMinutes() > 0);
@@ -38,7 +38,7 @@ class PerformanceSettingsTest {
 
     @Test
     void testDefaultPercentileTrackingEnabled() {
-        PerformanceSettings.PercentilesSettings p = PerformanceSettings.defaults().getPercentiles();
+        PercentilesSettings p = PerformanceSettings.defaults().getPercentiles();
 
         assertTrue(p.isTrack());
         assertFalse(p.getBuckets().isEmpty());
@@ -80,7 +80,7 @@ class PerformanceSettingsTest {
         root.getConfigurationSection("performance.warnings").set("file-path", "/tmp/slow.log");
 
         PerformanceSettings settings = PerformanceSettings.fromConfiguration(root);
-        PerformanceSettings.WarningsSettings w = settings.getWarnings();
+        WarningsSettings w = settings.getWarnings();
 
         assertEquals(250, w.getSlowRtpThresholdMs());
         assertFalse(w.isLogToConsole());
@@ -96,7 +96,7 @@ class PerformanceSettingsTest {
         root.getConfigurationSection("performance.metrics").set("export-path", "/tmp/metrics.json");
 
         PerformanceSettings settings = PerformanceSettings.fromConfiguration(root);
-        PerformanceSettings.MetricsSettings m = settings.getMetrics();
+        MetricsSettings m = settings.getMetrics();
 
         assertTrue(m.isEnabled());
         assertEquals(10, m.getExportIntervalMinutes());
@@ -116,7 +116,7 @@ class PerformanceSettingsTest {
 
     @Test
     void testMetricsExportIntervalClampedToPositive() {
-        PerformanceSettings.MetricsSettings m = new PerformanceSettings.MetricsSettings(true, 0, "/tmp/x.json");
+        MetricsSettings m = new MetricsSettings(true, 0, "/tmp/x.json");
 
         assertTrue(m.getExportIntervalMinutes() > 0);
     }
