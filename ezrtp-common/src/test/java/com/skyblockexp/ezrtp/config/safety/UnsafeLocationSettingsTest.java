@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import com.skyblockexp.ezrtp.config.safety.UnsafeLocationSettings;
+import com.skyblockexp.ezrtp.config.safety.CausesSettings;
+import com.skyblockexp.ezrtp.config.safety.LoggingSettings;
+import com.skyblockexp.ezrtp.config.safety.MetricsSettings;
 
 class UnsafeLocationSettingsTest {
 
@@ -17,7 +20,7 @@ class UnsafeLocationSettingsTest {
 
     @Test
     void testDefaultLoggingValues() {
-        UnsafeLocationSettings.LoggingSettings logging = UnsafeLocationSettings.defaults().getLogging();
+        LoggingSettings logging = UnsafeLocationSettings.defaults().getLogging();
 
         assertTrue(logging.isWarnOnUnsafe());
         assertTrue(logging.isLogToConsole());
@@ -29,7 +32,7 @@ class UnsafeLocationSettingsTest {
 
     @Test
     void testDefaultMetricsDisabled() {
-        UnsafeLocationSettings.MetricsSettings metrics = UnsafeLocationSettings.defaults().getMetrics();
+        MetricsSettings metrics = UnsafeLocationSettings.defaults().getMetrics();
 
         assertFalse(metrics.isEnabled());
         assertTrue(metrics.getExportIntervalMinutes() > 0);
@@ -78,7 +81,7 @@ class UnsafeLocationSettingsTest {
         root.getConfigurationSection("unsafe-location-monitoring.logging").set("file-path", "/tmp/unsafe.log");
         root.getConfigurationSection("unsafe-location-monitoring.logging").set("warn-threshold-percent", 35.0);
 
-        UnsafeLocationSettings.LoggingSettings logging =
+        LoggingSettings logging =
                 UnsafeLocationSettings.fromConfiguration(root).getLogging();
 
         assertFalse(logging.isWarnOnUnsafe());
@@ -97,7 +100,7 @@ class UnsafeLocationSettingsTest {
         root.getConfigurationSection("unsafe-location-monitoring.metrics")
                 .set("export-path", "/tmp/unsafe-metrics.json");
 
-        UnsafeLocationSettings.MetricsSettings metrics =
+        MetricsSettings metrics =
                 UnsafeLocationSettings.fromConfiguration(root).getMetrics();
 
         assertTrue(metrics.isEnabled());
@@ -110,7 +113,7 @@ class UnsafeLocationSettingsTest {
         YamlConfiguration root = new YamlConfiguration();
         root.createSection("unsafe-location-monitoring.causes").set("track", false);
 
-        UnsafeLocationSettings.CausesSettings causes =
+        CausesSettings causes =
                 UnsafeLocationSettings.fromConfiguration(root).getCauses();
 
         assertFalse(causes.isTrack());

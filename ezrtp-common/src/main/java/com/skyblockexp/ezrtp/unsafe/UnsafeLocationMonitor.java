@@ -1,5 +1,7 @@
 package com.skyblockexp.ezrtp.unsafe;
 
+import com.skyblockexp.ezrtp.config.safety.LoggingSettings;
+import com.skyblockexp.ezrtp.config.safety.MetricsSettings;
 import com.skyblockexp.ezrtp.config.safety.UnsafeLocationSettings;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.platform.PlatformTask;
@@ -93,7 +95,7 @@ public final class UnsafeLocationMonitor {
      */
     public void schedulePeriodicExport(PlatformScheduler scheduler) {
         cancelPeriodicTask();
-        UnsafeLocationSettings.MetricsSettings metricsSettings = settings.getMetrics();
+        MetricsSettings metricsSettings = settings.getMetrics();
         if (!isEnabled() || !metricsSettings.isEnabled()) {
             return;
         }
@@ -129,7 +131,7 @@ public final class UnsafeLocationMonitor {
             ioExecutor.submit(() -> writeFile(exportPath, json));
         }
 
-        UnsafeLocationSettings.LoggingSettings logging = settings.getLogging();
+        LoggingSettings logging = settings.getLogging();
         if (logging.isWarnOnUnsafe() && snapshot.getUnsafeRate() * 100 >= logging.getWarnThresholdPercent()) {
             String message = String.format(
                     "[EzRTP] High unsafe location rejection rate: %.1f%% (%d/%d RTPs) in the last %d minutes",

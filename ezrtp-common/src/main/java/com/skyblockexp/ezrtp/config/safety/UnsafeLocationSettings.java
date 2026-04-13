@@ -1,6 +1,5 @@
 package com.skyblockexp.ezrtp.config.safety;
 
-import java.util.List;
 import org.bukkit.configuration.ConfigurationSection;
 
 /**
@@ -122,102 +121,5 @@ public final class UnsafeLocationSettings {
         }
 
         return new UnsafeLocationSettings(monitoring, logging, metrics, causes);
-    }
-
-    // -------------------------------------------------------------------------
-    // Nested setting classes
-    // -------------------------------------------------------------------------
-
-    public static final class MonitoringSettings {
-        private final boolean enabled;
-
-        public MonitoringSettings(boolean enabled) {
-            this.enabled = enabled;
-        }
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-    }
-
-    public static final class LoggingSettings {
-        private final boolean warnOnUnsafe;
-        private final boolean logToConsole;
-        private final boolean logToFile;
-        private final String filePath;
-        private final double warnThresholdPercent;
-
-        public LoggingSettings(
-                boolean warnOnUnsafe,
-                boolean logToConsole,
-                boolean logToFile,
-                String filePath,
-                double warnThresholdPercent) {
-            this.warnOnUnsafe = warnOnUnsafe;
-            this.logToConsole = logToConsole;
-            this.logToFile = logToFile;
-            this.filePath = filePath != null ? filePath : DEFAULT_LOG_FILE_PATH;
-            this.warnThresholdPercent =
-                    (warnThresholdPercent > 0 && warnThresholdPercent <= 100)
-                            ? warnThresholdPercent
-                            : DEFAULT_WARN_THRESHOLD_PERCENT;
-        }
-
-        public boolean isWarnOnUnsafe() {
-            return warnOnUnsafe;
-        }
-
-        public boolean isLogToConsole() {
-            return logToConsole;
-        }
-
-        public boolean isLogToFile() {
-            return logToFile;
-        }
-
-        public String getFilePath() {
-            return filePath;
-        }
-
-        public double getWarnThresholdPercent() {
-            return warnThresholdPercent;
-        }
-    }
-
-    public static final class MetricsSettings {
-        private final boolean enabled;
-        private final int exportIntervalMinutes;
-        private final String exportPath;
-
-        public MetricsSettings(boolean enabled, int exportIntervalMinutes, String exportPath) {
-            this.enabled = enabled;
-            this.exportIntervalMinutes =
-                    exportIntervalMinutes > 0 ? exportIntervalMinutes : DEFAULT_EXPORT_INTERVAL_MINUTES;
-            this.exportPath = exportPath != null ? exportPath : DEFAULT_EXPORT_PATH;
-        }
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public int getExportIntervalMinutes() {
-            return exportIntervalMinutes;
-        }
-
-        public String getExportPath() {
-            return exportPath;
-        }
-    }
-
-    public static final class CausesSettings {
-        private final boolean track;
-
-        public CausesSettings(boolean track) {
-            this.track = track;
-        }
-
-        public boolean isTrack() {
-            return track;
-        }
     }
 }
