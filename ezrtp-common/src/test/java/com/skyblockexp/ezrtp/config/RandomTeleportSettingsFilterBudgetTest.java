@@ -215,4 +215,66 @@ class RandomTeleportSettingsFilterBudgetTest {
         assertTrue(merged.isBiomeFilteringEnabled(),
             "biomeFilteringEnabled should be overridden when explicitly set in override config");
     }
+
+    // -----------------------------------------------------------------------
+    // biomes.enabled master switch
+    // -----------------------------------------------------------------------
+
+    @Test
+    void biomeSystemEnabled_defaultsToTrue() {
+        YamlConfiguration cfg = new YamlConfiguration();
+
+        RandomTeleportSettings s = RandomTeleportSettings.fromConfiguration(cfg, LOG);
+
+        assertTrue(s.isBiomeSystemEnabled());
+    }
+
+    @Test
+    void biomeSystemEnabled_false_parsedCorrectly() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("biomes.enabled", false);
+
+        RandomTeleportSettings s = RandomTeleportSettings.fromConfiguration(cfg, LOG);
+
+        assertFalse(s.isBiomeSystemEnabled());
+    }
+
+    @Test
+    void biomeSystemEnabled_false_withIncludes_hasBiomeFiltersReturnsFalse() {
+        YamlConfiguration cfg = new YamlConfiguration();
+        cfg.set("biomes.enabled", false);
+        cfg.set("biomes.include", Arrays.asList("PLAINS"));
+
+        RandomTeleportSettings s = RandomTeleportSettings.fromConfiguration(cfg, LOG);
+
+        assertFalse(LocationValidator.hasBiomeFilters(s),
+            "hasBiomeFilters must return false when biomes.enabled is false, even with non-empty include list");
+    }
+
+    @Test
+    void fallbackMerge_biomeSystemEnabled_inheritedWhenNotOverridden() {
+        YamlConfiguration baseCfg = new YamlConfiguration();
+        baseCfg.set("biomes.enabled", false);
+        RandomTeleportSettings base = RandomTeleportSettings.fromConfiguration(baseCfg, LOG);
+
+        YamlConfiguration override = new YamlConfiguration();
+        RandomTeleportSettings merged = RandomTeleportSettings.fromConfiguration(override, LOG, base);
+
+        assertFalse(merged.isBiomeSystemEnabled(),
+            "biomeSystemEnabled should be inherited from fallback when not explicitly set");
+    }
+
+    @Test
+    void fallbackMerge_biomeSystemEnabled_overriddenWhenExplicitlySet() {
+        YamlConfiguration baseCfg = new YamlConfiguration();
+        baseCfg.set("biomes.enabled", false);
+        RandomTeleportSettings base = RandomTeleportSettings.fromConfiguration(baseCfg, LOG);
+
+        YamlConfiguration override = new YamlConfiguration();
+        override.set("biomes.enabled", true);
+        RandomTeleportSettings merged = RandomTeleportSettings.fromConfiguration(override, LOG, base);
+
+        assertTrue(merged.isBiomeSystemEnabled(),
+            "biomeSystemEnabled should be overridden when explicitly set in override config");
+    }
 }
