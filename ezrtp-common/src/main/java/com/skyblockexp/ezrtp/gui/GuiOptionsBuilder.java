@@ -68,7 +68,12 @@ public class GuiOptionsBuilder {
                 continue;
             }
 
-            boolean bypass = hasBypass(player, option.getSettings().getWorldName());
+            // Resolve "auto" to the player's current world for permission and cooldown checks
+            String worldForChecks =
+                    option.getSettings().isAutoWorld()
+                            ? player.getWorld().getName()
+                            : option.getSettings().getWorldName();
+            boolean bypass = hasBypass(player, worldForChecks);
 
             CooldownInfo cooldownInfo = bypass ? CooldownInfo.inactive() : evaluateCooldown(option);
             if (cooldownInfo.active() && !configuration.isAllowGuiDuringCooldown()) {
@@ -94,13 +99,17 @@ public class GuiOptionsBuilder {
     }
 
     private CooldownInfo evaluateCooldown(GuiWorldOption option) {
-        RtpLimitSettings limit = configuration.getLimitSettings(
-                option.getSettings().getWorldName(), null);
+        // Resolve "auto" to the player's current world so storage lookups use the real world key
+        String worldName =
+                option.getSettings().isAutoWorld()
+                        ? player.getWorld().getName()
+                        : option.getSettings().getWorldName();
+        RtpLimitSettings limit = configuration.getLimitSettings(worldName, null);
         if (limit == null || limit.getCooldownSeconds() <= 0) {
             return CooldownInfo.inactive();
         }
 
-        long lastRtp = usageStorage.getLastRtpTime(player.getUniqueId(), option.getSettings().getWorldName());
+        long lastRtp = usageStorage.getLastRtpTime(player.getUniqueId(), worldName);
         if (lastRtp <= 0) {
             return CooldownInfo.inactive();
         }
@@ -134,8 +143,13 @@ public class GuiOptionsBuilder {
             return false;
         }
 
+        // Resolve "auto" to the player's current world for cache lookup
+        String worldName =
+                option.getSettings().isAutoWorld()
+                        ? player.getWorld().getName()
+                        : option.getSettings().getWorldName();
         return biomeCache.getCachedLocationCount(
-                org.bukkit.Bukkit.getWorld(option.getSettings().getWorldName()),
+                org.bukkit.Bukkit.getWorld(worldName),
                 option.getSettings().getBiomeInclude()) >= option.getMinimumCached();
     }
 

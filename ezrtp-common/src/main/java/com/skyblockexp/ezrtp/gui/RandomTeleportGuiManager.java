@@ -228,7 +228,8 @@ public final class RandomTeleportGuiManager implements Listener {
                 return;
             }
 
-            String worldName = settings.getWorldName();
+            // Resolve "auto" to the player's actual current world for limit checking and usage tracking
+            String worldName = settings.isAutoWorld() ? player.getWorld().getName() : settings.getWorldName();
             boolean bypass = player.isOp();
             if (!bypass) {
                 for (String perm : configuration.getBypassPermissions()) {
