@@ -23,8 +23,8 @@
     <maven.compiler.source>25</maven.compiler.source>
     <maven.compiler.target>25</maven.compiler.target>
     <maven.compiler.release>25</maven.compiler.release>
-    <java25.javac>/usr/lib/jvm/java-25-openjdk-amd64/bin/javac</java25.javac>
-    <java25.java>/usr/lib/jvm/java-25-openjdk-amd64/bin/java</java25.java>
+    <java25.javac>${java.home}/bin/javac</java25.javac>
+    <java25.java>${java.home}/bin/java</java25.java>
     <paper.api.version>[26.1.2.build,)</paper.api.version>
     <kyori.version>4.26.1</kyori.version>
     <minimessage.version>4.26.1</minimessage.version>
