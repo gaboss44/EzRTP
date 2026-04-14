@@ -121,7 +121,7 @@ public final class LocationFinder {
         Runtime runtime = Runtime.getRuntime();
         long freeMemoryMb = (runtime.freeMemory() + (runtime.maxMemory() - runtime.totalMemory())) / (1024L * 1024L);
         if (chunkyWarmupCoordinator != null && !chunkyWarmupCoordinator.hasSufficientMemory()) {
-            plugin.getLogger().warning(String.format("[EzRTP] Low memory detected (%dMB free), using cache-only mode", freeMemoryMb));
+            plugin.getLogger().warning(String.format("Low memory detected (%dMB free), using cache-only mode", freeMemoryMb));
             boolean cacheChecked = false;
             // Try cache-only search first
             if (biomeCache.isEnabled() && LocationValidator.hasBiomeFilters(currentSettings)) {
@@ -149,7 +149,7 @@ public final class LocationFinder {
         if (freeMemoryMb < 512) {
             int reducedAttempts = Math.max(8, currentSettings.getMaxAttempts() / 4); // At least 8 attempts, max 1/4 of normal
             if (reducedAttempts < currentSettings.getMaxAttempts()) {
-                plugin.getLogger().info(String.format("[EzRTP] Reducing max attempts from %d to %d due to low memory (%dMB free)",
+                plugin.getLogger().info(String.format("Reducing max attempts from %d to %d due to low memory (%dMB free)",
                     currentSettings.getMaxAttempts(), reducedAttempts, freeMemoryMb));
                 // Create a modified settings object with reduced attempts
                 adjustedSettings = new com.skyblockexp.ezrtp.config.RandomTeleportSettings(
@@ -210,7 +210,7 @@ public final class LocationFinder {
         if (freeMemoryMb < 512) {
             int reducedAttempts = Math.max(4, teleportSettings.getMaxAttempts() / 8); // Even more aggressive for cache generation
             if (reducedAttempts < teleportSettings.getMaxAttempts()) {
-                plugin.getLogger().fine(String.format("[EzRTP] Reducing cache generation attempts from %d to %d due to low memory (%dMB free)",
+                plugin.getLogger().fine(String.format("Reducing cache generation attempts from %d to %d due to low memory (%dMB free)",
                     teleportSettings.getMaxAttempts(), reducedAttempts, freeMemoryMb));
                 adjustedSettings = new com.skyblockexp.ezrtp.config.RandomTeleportSettings(
                     null, // configSection
@@ -415,7 +415,7 @@ public final class LocationFinder {
         if (chunkyAPI != null && currentSettings.getChunkyIntegrationSettings().isEnabled() && currentSettings.getChunkyIntegrationSettings().isAutoPregenerate()) {
             // Check memory safety before starting Chunky tasks
             if (chunkyWarmupCoordinator != null && !chunkyWarmupCoordinator.hasSufficientMemory()) {
-                plugin.getLogger().fine("[EzRTP] Skipping Chunky pregeneration due to low memory");
+                plugin.getLogger().fine("Skipping Chunky pregeneration due to low memory");
             } else {
                 String worldName = world.getName();
                 int centerChunkX = centerX >> 4;

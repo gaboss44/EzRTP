@@ -83,7 +83,7 @@ public final class MySqlHotspotStorage implements HotspotStorage {
              Statement st = conn.createStatement()) {
             st.executeUpdate(CREATE_TABLE);
         } catch (SQLException e) {
-            logger.warning("[EzRTP] Failed to create hotspot table: " + e.getMessage());
+            logger.warning("Failed to create hotspot table: " + e.getMessage());
         }
     }
 
@@ -99,7 +99,7 @@ public final class MySqlHotspotStorage implements HotspotStorage {
             ps.setLong(6, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) {
-            logger.warning("[EzRTP] Failed to save hotspot: " + e.getMessage());
+            logger.warning("Failed to save hotspot: " + e.getMessage());
         }
     }
 
@@ -119,7 +119,7 @@ public final class MySqlHotspotStorage implements HotspotStorage {
                     rs.getLong("timestamp")));
             }
         } catch (SQLException e) {
-            logger.warning("[EzRTP] Failed to load hotspots: " + e.getMessage());
+            logger.warning("Failed to load hotspots: " + e.getMessage());
             return Collections.emptyList();
         }
         return records;

@@ -46,14 +46,14 @@ public final class ChunkyAdapter {
         try {
             try {
                 Method onComplete = chunkyApi.getClass().getMethod("onGenerationComplete", java.util.function.Consumer.class);
-                onComplete.invoke(chunkyApi, (Consumer<Object>) event -> plugin.getLogger().info("[EzRTP] Chunky generation completed"));
+                onComplete.invoke(chunkyApi, (Consumer<Object>) event -> plugin.getLogger().info("Chunky generation completed"));
             } catch (Throwable ignored) {}
             try {
                 Method onProgress = chunkyApi.getClass().getMethod("onGenerationProgress", java.util.function.Consumer.class);
                 onProgress.invoke(chunkyApi, (Consumer<Object>) event -> {});
             } catch (Throwable ignored) {}
         } catch (Throwable t) {
-            plugin.getLogger().warning("[EzRTP] Failed to register Chunky listeners: " + t.getMessage());
+            plugin.getLogger().warning("Failed to register Chunky listeners: " + t.getMessage());
         }
     }
 }

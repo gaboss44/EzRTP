@@ -134,7 +134,7 @@ public final class UnsafeLocationMonitor {
         LoggingSettings logging = settings.getLogging();
         if (logging.isWarnOnUnsafe() && snapshot.getUnsafeRate() * 100 >= logging.getWarnThresholdPercent()) {
             String message = String.format(
-                    "[EzRTP] High unsafe location rejection rate: %.1f%% (%d/%d RTPs) in the last %d minutes",
+                    "High unsafe location rejection rate: %.1f%% (%d/%d RTPs) in the last %d minutes",
                     snapshot.getUnsafeRate() * 100,
                     snapshot.getUnsafeAttempts(),
                     snapshot.getTotalAttempts(),
@@ -197,7 +197,7 @@ public final class UnsafeLocationMonitor {
                     StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             logger.warning(
-                    "[EzRTP] Failed to write unsafe-location metrics to '"
+                    "Failed to write unsafe-location metrics to '"
                             + filePath
                             + "': "
                             + e.getMessage());
@@ -219,7 +219,7 @@ public final class UnsafeLocationMonitor {
                     StandardOpenOption.APPEND);
         } catch (IOException e) {
             logger.warning(
-                    "[EzRTP] Failed to write unsafe-location warning to '"
+                    "Failed to write unsafe-location warning to '"
                             + filePath
                             + "': "
                             + e.getMessage());
