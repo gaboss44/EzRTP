@@ -1,7 +1,7 @@
 name: EzRTPPaperModule
 version: ${project.version}
 main: com.skyblockexp.ezrtp.paper.EzRtpPaperModulePlugin
-api-version: '26.1'
+api-version: '1.21'
 author: SkyblockEXP
 description: Paper platform module for EzRTP runtime adapters.
 folia-supported: true
