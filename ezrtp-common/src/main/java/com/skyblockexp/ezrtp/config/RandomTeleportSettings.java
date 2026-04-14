@@ -156,6 +156,32 @@ public final class RandomTeleportSettings {
         return configSection != null && configSection.getBoolean("heatmap.enabled", false);
     }
 
+    /**
+     * Returns {@code true} when the configured world name is the special sentinel value {@code "auto"},
+     * meaning the player's current world should be used as the teleport destination world.
+     */
+    public boolean isAutoWorld() {
+        return "auto".equalsIgnoreCase(worldName);
+    }
+
+    /**
+     * Returns a new {@link RandomTeleportSettings} identical to this one, except with the given world name.
+     * Used to resolve {@code world: auto} to the player's actual current world at teleport time.
+     */
+    public RandomTeleportSettings withWorldName(String newWorldName) {
+        return new RandomTeleportSettings(
+                configSection, newWorldName, centerX, centerZ, minimumRadius, maximumRadius,
+                maxAttempts, useWorldBorderRadius, unsafeBlocks,
+                messages, particleSettings, onJoinTeleportSettings,
+                countdownBossBarSettings, countdownParticleSettings,
+                teleportCost, countdownSeconds, countdownChatMessagesEnabled, debugRejectionLogging,
+                minY, maxY, biomeInclude, biomeExclude,
+                protectionSettings, preCacheSettings, rareBiomeOptimizationSettings,
+                chunkLoadingSettings, enableFallbackToCache, biomeSearchSettings,
+                biomeFilteringEnabled, biomeSystemEnabled, safetySettings,
+                searchPattern, chunkyIntegrationSettings);
+    }
+
     public static RandomTeleportSettings fromConfiguration(ConfigurationSection section, java.util.logging.Logger logger) {
         if (section == null) {
             return new RandomTeleportSettings(null, "world", 0, 0, 100, 1000, 10, false, java.util.Collections.emptySet(),
