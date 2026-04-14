@@ -1,7 +1,8 @@
 # Force RTP configuration
 # This file controls the behavior of the /forcertp command
 
-# Default world to use when no world is specified
+# Default world to use when no world is specified.
+# Set to a world name (e.g. 'world') or 'auto' to use the target player's current world.
 default-world: world
 
 # Bypass settings for the /forcertp command
