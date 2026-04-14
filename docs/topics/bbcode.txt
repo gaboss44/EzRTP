@@ -1,484 +1,171 @@
-[CENTER][SIZE=6][B]🎯 EzRTP - Advanced Random Teleport Plugin[/B][/SIZE]
-[IMG]https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/minecraft-versions.png[/IMG]
-[IMG]https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/downloads.png[/IMG]
-[IMG]https://ezbanners.org/shields/plugins/e5661a39-5da1-4f4e-aabb-8d93e769b646/server-software.png[/IMG]
+[CENTER][SIZE=6][B]EzRTP - Advanced Random Teleport Plugin[/B][/SIZE]
 [SIZE=3]Production-ready random teleport plugin for modern Minecraft servers[/SIZE]
-[SIZE=2]Latest release: See the GitHub project for current releases and documentation: https://github.com/ez-plugins/EzRTP • Java 17+ • Bukkit API baseline 1.13+ • Bukkit/Paper/Spigot/Purpur support[/SIZE][/CENTER]
+[SIZE=2]Latest release and docs: [URL]https://github.com/ez-plugins/EzRTP[/URL] • Java 17+ • Bukkit/Paper/Spigot/Purpur/Folia support[/SIZE][/CENTER]
 
-[SIZE=4][B]✨ Why Choose EzRTP?[/B][/SIZE]
+[CENTER][URL='https://modrinth.com/plugin/ezplugins-ezrtp']Modrinth[/URL] • [URL='https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/']SpigotMC[/URL] • [URL='https://hangar.papermc.io/EzPlugins/EzRTP']Hangar[/URL] • [URL='https://discord.gg/yWP95XfmBS']Discord[/URL][/CENTER]
+
+[SIZE=4][B]Feature Summary[/B][/SIZE]
 [LIST]
-[*][B]🏠 Safe Random Teleportation[/B] – [icode]/rtp[/icode] finds solid ground within world borders, avoids unsafe blocks, reports coordinates with rich MiniMessage formatting
-[*][B]🌍 Multi-World Support[/B] – Curated destinations for overworld, nether, end, resource worlds with permission-gated GUI selector
-[*][B]🏞️ Advanced Biome Selection[/B] – Target specific biomes or exclude unwanted areas for tailored exploration experiences
-[*][B]👥 Join Protection[/B] – Automatic teleportation on join with configurable delays and bypass permissions
-[*][B]💰 Vault Economy Integration[/B] – Flexible pricing per world/group, automatic refunds, localized messaging
-[*][B]⚡ Performance Queue[/B] – Throttle usage with configurable queues and bypass permissions for fair play
-[*][B]📊 Comprehensive Analytics[/B] – RTP statistics, biome metrics, heatmap visualization, performance monitoring
-[*][B]🎨 Modern GUI System[/B] – Interactive world/biome selector with custom icons and real-time status
-[*][B]🔧 Modular Architecture[/B] – Clean separation of config, commands, and logic for easy customization
+[*]Safe RTP with configurable unsafe-block filtering and recovery behavior
+[*]Biome include/exclude filtering, pre-cache, and rare-biome optimization
+[*]Search pattern control: [icode]random[/icode], [icode]circle[/icode], [icode]square[/icode], [icode]triangle[/icode], [icode]diamond[/icode]
+[*]Per-world/per-group cooldowns, daily/weekly limits, and optional costs
+[*]GUI destination selector with permission-gated entries
+[*]Heatmap generation and PNG export
+[*]Named centers and WorldGuard region command routing
+[*]Optional Chunky pre-generation support
+[*]Optional performance and unsafe-location monitoring exports
+[*]Folia-compatible runtime behavior for modern scheduler environments
 [/LIST]
 
-[SIZE=4][B]🚀 Quick Start Guide[/B][/SIZE]
-[LIST=1]
-[ * ][B]Download[/B] EzRTP.jar from [URL='https://modrinth.com/plugin/ezplugins-ezrtp']Modrinth[/URL], [URL='https://www.spigotmc.org/resources/1-19-1-21-%E2%AC%85%EF%B8%8F-ezrtp-%E2%9E%A1%EF%B8%8F-highly-configurable-rtp-plugin-for-minecraft-servers.129828/']SpigotMC[/URL], [URL='https://hangar.papermc.io/EzPlugins/EzRTP']Hangar[/URL] or the project's [URL='https://github.com/ez-plugins/EzRTP/releases']GitHub Releases[/URL]
-[*][B]Install[/B] by dropping into your [icode]plugins/[/icode] directory
-[*][B]Restart[/B] server to generate configuration files
-[*][B]Configure[/B] [icode]config.yml[/icode] with world settings and preferences
-[*][B]Customize[/B] messages in [icode]messages/{language}.yml[/icode] (for example [icode]messages/en.yml[/icode]) using MiniMessage
-[*][B]Enable[/B] GUI in [icode]gui.yml[/icode] for visual world selection
-[*][B]Test[/B] with [icode]/rtp[/icode] command
-[/LIST]
+[SIZE=4][B]Feature Preview[/B][/SIZE]
 
-[SIZE=3][B]Expansions / Modules[/B]
+[B]Biome Statistics Dashboard[/B]
+[IMG]https://i.ibb.co/YBy2z8vZ/image.png[/IMG]
 
-[LIST]
-[*]EzRTP ships as a core runtime plus optional platform modules and integrations. For production servers:
-[*]Install `EzRTP.jar` (core) plus at most one platform module that matches your server (for example `ezrtp-paper-<version>.jar` for Paper, or `ezrtp-purpur-<version>.jar` for Purpur).
-[*]Do NOT install multiple EzRTP runtime modules simultaneously — this can cause duplicate behavior. Remove legacy or extra module jars if you see duplicate messages or teleports.
-[*]Platform modules and other expansion jars are available from the project's GitHub Releases and the platform package pages listed above. See the module installation notes on GitHub: [URL='https://github.com/ez-plugins/EzRTP/blob/main/docs/overview-installation.md']https://github.com/ez-plugins/EzRTP/blob/main/docs/overview-installation.md[/URL]
-[/LIST]
+[B]Heatmap Visualization[/B]
+[IMG]https://i.ibb.co/wZWfpn7B/image.png[/IMG]
 
-[SIZE=4][B]📋 Commands & Permissions[/B][/SIZE]
-[table]
-[tr][th]Command[/th][th]Permission[/th][th]Default[/th][th]Description[/th][/tr]
-[tr][td][icode]/rtp[/icode][/td][td][icode]ezrtp.use[/icode][/td][td]✅ All[/td][td]Random teleport to safe location[/td][/tr]
-[tr][td][icode]/rtp reload[/icode][/td][td][icode]ezrtp.reload[/icode][/td][td]❌ Ops[/td][td>Reload configuration from disk[/td][/tr]
-[tr][td][icode]/rtp stats[/icode][/td][td][icode]ezrtp.stats[/icode][/td][td]❌ Ops[/td][td>View RTP performance metrics[/td][/tr]
-[tr][td][icode]/rtp stats biomes[/icode][/td][td][icode]ezrtp.stats[/icode][/td][td]❌ Ops[/td][td>Detailed biome statistics[/td][/tr]
-[tr][td][icode]/rtp heatmap [size] [world][/icode][/td][td][icode]ezrtp.heatmap[/icode][/td][td]❌ Ops[/td][td>Generate RTP distribution map[/td][/tr]
-[tr][td][icode]/forcertp <player> [world][/icode][/td][td][icode]ezrtp.forcertp[/icode][/td][td]❌ Ops[/td][td>Admin teleport override[/td][/tr]
-[tr][td][icode]/rtp fake <amount>[/icode][/td][td][icode]ezrtp.heatmap.fake[/icode][/td][td]❌ Ops[/td][td>Simulate teleports for testing[/td][/tr]
-[/table]
-
-[B]Additional Permissions:[/B]
-[LIST]
-[*][icode]ezrtp.queue.bypass[/icode] - Skip teleport queues
-[*][icode]ezrtp.bypass.cooldown[/icode] - Ignore cooldowns
-[*][icode]ezrtp.bypass.limit[/icode] - Unlimited daily/weekly usage
-[*][icode]ezrtp.gui.*[/icode] - Access specific GUI world options
-[/LIST]
-
-[SIZE=3][B]Permissions Reference[/B][/SIZE]
-[LIST]
-[*][icode]ezrtp.use[/icode] - Use `/rtp` (default: all players)
-[*][icode]ezrtp.reload[/icode] - Reload configuration (default: ops)
-[*][icode]ezrtp.stats[/icode] - View RTP statistics (default: ops)
-[*][icode]ezrtp.heatmap[/icode] - Generate heatmaps (default: ops)
-[*][icode]ezrtp.forcertp[/icode] - Force RTP for a player (default: ops)
-[*][icode]ezrtp.heatmap.fake[/icode] - Simulate teleports (default: ops)
-[*][icode]ezrtp.queue.bypass[/icode] - Skip teleport queue (default: false)
-[*][icode]ezrtp.bypass.cooldown[/icode] - Bypass cooldowns (default: false)
-[*][icode]ezrtp.bypass.limit[/icode] - Bypass usage limits (default: false)
-[*][icode]ezrtp.gui.*[/icode] - GUI option access (configure in `gui.yml`)
-[*][icode]ezrtp.admin[/icode] - Admin GUI/cache visibility and advanced actions (default: ops)
-[/LIST]
-
-[SIZE=2]Tip: Add bypass nodes to `rtp-limits.bypass-permissions` in `config.yml` to grant global bypass behavior.[/SIZE]
-
-[SIZE=4][B]🎮 Feature Showcase[/B][/SIZE]
-
-[B]📊 Advanced Analytics & Monitoring[/B]
-
-[table]
-[tr][td][B]Biome Statistics Dashboard[/B][/td][td][B]Heatmap Visualization[/B][/td][/tr]
-[tr][td]View comprehensive biome-specific metrics with [icode]/rtp stats biomes[/icode][/td][td]Generate professional RTP distribution maps with configurable grid sizes[/td][/tr]
-[tr][td][IMG]https://i.ibb.co/YBy2z8vZ/image.png[/IMG][/td][td][IMG]https://i.ibb.co/wZWfpn7B/image.png[/IMG][/td][/tr]
-[tr][td][I]Detailed success rates & timing per biome[/I][/td][td][I]Yellow-to-red gradient • Auto-scaling • 16-4096 block grids[/I][/td][/tr]
-[/table]
-
-[B]Usage Examples:[/B]
-[code=bash]
-/rtp stats              # Overall performance metrics
-/rtp stats biomes       # Per-biome success rates & timing
-/rtp heatmap 64 world   # Generate 64-block grid heatmap
-/rtp fake 1000          # Simulate 1000 teleports for testing
-[/code]
-
-[B]🎨 Interactive GUI System[/B]
-
-[B]World & Biome Selector[/B]
-Permission-gated inventory interface with custom icons and real-time status
-
+[B]World Selector GUI[/B]
 [IMG]https://i.ibb.co/fGCZwJFL/image.png[/IMG]
 
-[I]Custom icons • Permission controls • Real-time cooldown display[/I]
+[SIZE=4][B]Commands and Subcommands[/B][/SIZE]
 
-[B]Configuration:[/B]
-[code=yml]
-gui:
-  enabled: true
-  title: "<gradient:#00b4db:#0083b0><bold>Random Teleport</bold></gradient>"
-  worlds:
-    overworld:
-      slot: 11
-      permission: ""
-      icon:
-        material: GRASS_BLOCK
-        name: "<green>🌍 Overworld</green>"
-[/code]
-
-[B]🛡️ Safety & Performance Features[/B]
-
-[B]Smart Location Validation[/B]
-[LIST]
-[*][B]Block Safety[/B]: Configurable unsafe block filtering
-[*][B]Chunk Management[/B]: Automatic loading/unloading with memory optimization
-[*][B]Biome Awareness[/B]: Include/exclude specific biomes
-[*][B]World Border[/B]: Respects configured borders automatically
-[/LIST]
-
-[B]Intelligent Caching System[/B]
-[LIST]
-[*][B]Biome Pre-caching[/B]: Cache safe locations per biome for instant teleports
-[*][B]Rare Biome Optimization[/B]: Weighted algorithms for efficient rare biome targeting
-[*][B]Hotspot Tracking[/B]: Maintains performance data for optimal search patterns
-[/LIST]
-
-[B]💰 Economy Integration[/B]
-
-[B]Vault-Compatible Pricing[/B]
-[LIST]
-[*][B]Flexible Costs[/B]: Per-world, per-group pricing with overrides
-[*][B]Refund System[/B]: Automatic refunds on teleport failures
-[*][B]Localized Messages[/B]: Multi-language support for economy feedback
-[/LIST]
-
-[B]🌐 Network & Multi-World Support[/B]
-
-[B]BungeeCord/Velocity Integration[/B]
-[LIST]
-[*][B]Server Transfers[/B]: GUI options for cross-server teleports
-[*][B]Status Monitoring[/B]: Real-time ping and player count display
-[*][B]Permission Controls[/B]: Granular access control per server
-[/LIST]
-
-[SIZE=4][B]Quick Start[/B][/SIZE]
-[LIST]
-[*]Drop `[icode]EzRTP.jar[/icode]` into your Paper or Purpur `[icode]plugins/[/icode]` directory and restart the server.
-[*]Edit `[icode]plugins/EzRTP/config.yml[/icode]` to set the target world, teleport center, radius bounds, teleport cost, unsafe block list, particles, and on-join behaviour.
-[*]Localise the MiniMessage output in `[icode]plugins/EzRTP/messages/{language}.yml[/icode]` or drop overrides under `[icode]plugins/EzRTP/messages/[/icode]` (for example `[icode]messages/en.yml[/icode]`) so the searching, success, failure, and queue prompts match your server's style.
-[*]Toggle `[icode]enabled[/icode]` inside `[icode]gui.yml[/icode]` and add world entries to present a permission-aware teleport selector menu.
-[*]Adjust `[icode]queue.yml[/icode]` if you need to throttle teleport requests during peak hours or grant bypass permissions to staff.
-[*]Hook Vault + your economy plugin if you want to charge for teleports; leave `[icode]cost[/icode]` at `[icode]0[/icode]` for free usage.
-[*]Run `[icode]/rtp reload[/icode]` or restart once you finish editing to apply the new settings.
-[/LIST]
-
-[SIZE=4][B]Configuring EzRTP in a Server Network[/B][/SIZE]
-[LIST]
-[*]Install EzRTP on each backend world that should provide random teleports as well as on your lobby if you want the selector GUI to offer server transfers.
-[*]Enable the proxy integration by setting `[icode]enabled: true[/icode]` inside `[icode]network.yml[/icode]` everywhere EzRTP is installed. Leave `[icode]lobby[/icode]` at `[icode]false[/icode]` on gameplay servers so `/rtp` behaves normally.
-[*]On your lobby server, set `[icode]lobby: true[/icode]`. Any configured servers will then fill open slots in the RTP GUI alongside world entries, complete with ping/online status.
-[*]Define each destination under `[icode]servers[/icode]` using the proxy-registered `[icode]bungee-server[/icode]` name, the host/port to ping, desired GUI slot, optional permission, and icon text. Toggle `[icode]hide-when-offline[/icode]` or `[icode]allow-when-offline[/icode]` per server to control visibility and connection attempts.
-[*]Keep your proxy (BungeeCord/Velocity) listing in sync with the `servers` block so EzRTP can connect players using the standard `BungeeCord` plugin message channel. After editing, run `[icode]/rtp reload[/icode]` on each node to pick up the changes.
-[*]Use MiniMessage in `[icode]connect-message[/icode]`, `[icode]offline-message[/icode]`, and icon lore to brand the selector and give players clear network feedback.
-[/LIST]
-
-[B]Commands & Permissions[/B]
+[SIZE=3][B]Main Commands[/B][/SIZE]
 [table]
 [tr][th]Command[/th][th]Description[/th][th]Permission[/th][/tr]
-[tr][td][icode]/rtp[/icode][/td][td]Teleport the executing player to a random safe location.[/td][td][icode]ezrtp.use[/icode] (default: true)[/td][/tr]
-[tr][td][icode]/rtp reload[/icode][/td][td]Reload EzRTP configuration from disk.[/td][td][icode]ezrtp.reload[/icode] (default: op)[/td][/tr]
-[tr][td][icode]/rtp stats[/icode][/td][td]View RTP statistics and performance metrics.[/td][td][icode]ezrtp.stats[/icode] (default: op)[/td][/tr]
-[tr][td][icode]/rtp stats biomes[/icode][/td][td]View detailed biome-specific statistics showing top biomes by activity, success rates, and average teleport times.[/td][td][icode]ezrtp.stats[/icode] (default: op)[/td][/tr]
-[tr][td][icode]/rtp heatmap [gridSize] [world][/icode][/td][td]Visualize cached RTP location distribution with grid-based heatmap analysis. Verify randomness, detect clustering, and troubleshoot imbalances with configurable grid resolution (16-4096 blocks).[/td][td][icode]ezrtp.heatmap[/icode] (default: op)[/td][/tr]
- [tr][td][icode]/forcertp <player> [world][/icode][/td][td]Force random teleportation for a specified player while bypassing cooldowns and limits. Can be executed from console or in-game.[/td][td][icode]ezrtp.forcertp[/icode] (default: op)[/td][/tr]
- [tr][td][icode]/rtp fake <amount>[/icode][/td][td]Simulate a specified number of random teleports for testing, analytics, and heatmap generation.[/td][td][icode]ezrtp.heatmap.fake[/icode] (default: op)[/td][/tr]
+[tr][td][icode]/rtp[/icode][/td][td]Default RTP flow (GUI or direct teleport depending on setup)[/td][td][icode]ezrtp.use[/icode][/td][/tr]
+[tr][td][icode]/forcertp <player> [world][/icode][/td][td]Force RTP for a target player[/td][td][icode]ezrtp.forcertp[/icode][/td][/tr]
 [/table]
 
-[SIZE=2]Grant `[icode]ezrtp.queue.bypass[/icode]` to let trusted players skip the queue, and assign per-option GUI permissions directly in `[icode]gui.yml[/icode]`.[/SIZE]
+[SIZE=3][B]/rtp Subcommands[/B][/SIZE]
+[table]
+[tr][th]Subcommand[/th][th]Usage[/th][th]Permission[/th][th]Notes[/th][/tr]
+[tr][td]reload[/td][td][icode]/rtp reload[/icode][/td][td][icode]ezrtp.reload[/icode][/td][td]Reload configuration[/td][/tr]
+[tr][td]stats[/td][td][icode]/rtp stats[/icode][/td][td][icode]ezrtp.stats[/icode][/td][td]Overall RTP metrics[/td][/tr]
+[tr][td]stats biomes[/td][td][icode]/rtp stats biomes [page][/icode][/td][td][icode]ezrtp.stats[/icode][/td][td]Biome activity stats with paging[/td][/tr]
+[tr][td]stats rare-biomes[/td][td][icode]/rtp stats rare-biomes[/icode][/td][td][icode]ezrtp.stats[/icode][/td][td]Rare-biome optimization stats[/td][/tr]
+[tr][td]stats performance[/td][td][icode]/rtp stats performance[/icode][/td][td][icode]ezrtp.stats[/icode][/td][td]Percentile and timing metrics[/td][/tr]
+[tr][td]unsafe-stats[/td][td][icode]/rtp unsafe-stats[/icode][/td][td][icode]ezrtp.stats[/icode][/td][td]Unsafe rejection breakdown[/td][/tr]
+[tr][td]heatmap[/td][td][icode]/rtp heatmap [biome][/icode][/td][td][icode]ezrtp.heatmap[/icode][/td][td]Creates and gives a heatmap map item[/td][/tr]
+[tr][td]heatmap save[/td][td][icode]/rtp heatmap save[/icode][/td][td][icode]ezrtp.heatmap[/icode][/td][td]Exports heatmap PNG to plugin folder[/td][/tr]
+[tr][td]fake[/td][td][icode]/rtp fake <amount|clear> [world][/icode][/td][td][icode]ezrtp.heatmap.fake[/icode][/td][td]Add or clear simulated samples[/td][/tr]
+[tr][td]setcenter[/td][td][icode]/rtp setcenter <x> <z>[/icode] or [icode]/rtp setcenter <world> <x> <z>[/icode][/td][td][icode]ezrtp.setcenter[/icode][/td][td]Updates center and reloads configuration[/td][/tr]
+[tr][td]addcenter[/td][td][icode]/rtp addcenter <name>[/icode][/td][td][icode]ezrtp.setcenter[/icode][/td][td]Stores named center from player location[/td][/tr]
+[tr][td]pregenerate[/td][td][icode]/rtp pregenerate [world] [radius][/icode][/td][td][icode]ezrtp.pregenerate[/icode][/td][td]Starts Chunky-assisted warmup tasks[/td][/tr]
+[/table]
 
-[SIZE=4][B]Configuration Overview[/B][/SIZE]
+[B]Extra RTP Routing:[/B]
+[LIST]
+[*][icode]/rtp <center-name>[/icode] uses [icode]centers.named.<name>[/icode] from [icode]rtp.yml[/icode]
+[*][icode]/rtp <region-id>[/icode] uses WorldGuard region routing when [icode]worldguard.region-command.enabled: true[/icode]
+[/LIST]
+
+[SIZE=4][B]Permissions[/B][/SIZE]
+
+[SIZE=3][B]Declared in plugin.yml[/B][/SIZE]
+[table]
+[tr][th]Permission[/th][th]Default[/th][th]Purpose[/th][/tr]
+[tr][td][icode]ezrtp.use[/icode][/td][td]true[/td][td]Use [icode]/rtp[/icode][/td][/tr]
+[tr][td][icode]ezrtp.reload[/icode][/td][td]op[/td][td]Use [icode]/rtp reload[/icode][/td][/tr]
+[tr][td][icode]ezrtp.stats[/icode][/td][td]op[/td][td]Use stats and unsafe-stats[/td][/tr]
+[tr][td][icode]ezrtp.heatmap[/icode][/td][td]op[/td][td]Use heatmap commands[/td][/tr]
+[tr][td][icode]ezrtp.heatmap.fake[/icode][/td][td]op[/td][td]Use [icode]/rtp fake[/icode][/td][/tr]
+[tr][td][icode]ezrtp.queue.bypass[/icode][/td][td]op[/td][td]Bypass queue[/td][/tr]
+[tr][td][icode]ezrtp.forcertp[/icode][/td][td]op[/td][td]Use [icode]/forcertp[/icode][/td][/tr]
+[/table]
+
+[SIZE=3][B]Used by Runtime or Config[/B][/SIZE]
+[LIST]
+[*][icode]ezrtp.setcenter[/icode] - required for [icode]/rtp setcenter[/icode] and [icode]/rtp addcenter[/icode]
+[*][icode]ezrtp.pregenerate[/icode] - required for [icode]/rtp pregenerate[/icode]
+[*][icode]ezrtp.bypass.cooldown[/icode] - bypass cooldown checks
+[*][icode]ezrtp.bypass.limit[/icode] - bypass daily/weekly limits
+[*][icode]ezrtp.gui.<name>[/icode] - per-destination GUI permission nodes from [icode]gui.yml[/icode]
+[/LIST]
+
+[SIZE=4][B]Configuration Files[/B][/SIZE]
+
+[table]
+[tr][th]File[/th][th]Scope[/th][th]Key Examples[/th][/tr]
+[tr][td][icode]config.yml[/icode][/td][td]Core plugin/global options[/td][td][icode]message-prefix[/icode], [icode]language[/icode], [icode]enable-bstats[/icode], [icode]worldguard.region-command.*[/icode][/td][/tr]
+[tr][td][icode]rtp.yml[/icode][/td][td]RTP behavior/safety/biomes[/td][td][icode]search-pattern[/icode], [icode]radius.*[/icode], [icode]countdown.*[/icode], [icode]unsafe-blocks[/icode], [icode]biomes.*[/icode], [icode]chunky-integration.*[/icode][/td][/tr]
+[tr][td][icode]limits.yml[/icode][/td][td]Cooldowns, limits, group/world overrides[/td][td][icode]rtp-limits.default[/icode], [icode]rtp-limits.worlds[/icode], [icode]allow-gui-during-cooldown[/icode][/td][/tr]
+[tr][td][icode]storage.yml[/icode][/td][td]Limits storage backend[/td][td][icode]rtp-limits.storage[/icode], [icode]rtp-limits.mysql.*[/icode][/td][/tr]
+[tr][td][icode]gui.yml[/icode][/td][td]GUI layout and entries[/td][td][icode]enabled[/icode], [icode]rows[/icode], [icode]worlds.*[/icode], [icode]rare_biomes.*[/icode][/td][/tr]
+[tr][td][icode]queue.yml[/icode][/td][td]Queue throttling[/td][td][icode]enabled[/icode], [icode]max-size[/icode], [icode]interval-ticks[/icode][/td][/tr]
+[tr][td][icode]network.yml[/icode][/td][td]Proxy/server selector entries[/td][td][icode]enabled[/icode], [icode]lobby[/icode], [icode]servers.<name>.*[/icode][/td][/tr]
+[tr][td][icode]force-rtp.yml[/icode][/td][td]/forcertp behavior[/td][td][icode]default-world[/icode], [icode]bypass.cooldown[/icode], [icode]bypass.permission[/icode], [icode]bypass.safety[/icode][/td][/tr]
+[tr][td][icode]performance.yml[/icode][/td][td]Optional performance monitoring[/td][td][icode]performance.monitoring.enabled[/icode], [icode]warnings.*[/icode], [icode]percentiles.*[/icode][/td][/tr]
+[tr][td][icode]unsafe-location-monitoring.yml[/icode][/td][td]Optional unsafe-location tracking[/td][td][icode]unsafe-location-monitoring.monitoring.enabled[/icode], [icode]logging.*[/icode], [icode]metrics.*[/icode][/td][/tr]
+[tr][td][icode]messages/en.yml[/icode][/td][td]Localizable message templates[/td][td][icode]teleport-*[/icode], [icode]forcertp-*[/icode], [icode]heatmap-*[/icode], [icode]fake-*[/icode], [icode]stats-*[/icode][/td][/tr]
+[/table]
+
+[SIZE=3][B]Selected Current Defaults[/B][/SIZE]
 [spoiler="config.yml"]
 [code=yml]
-# EzRTP teleport configuration
-# Set to true to enable debug logging for rejected random teleport locations (for troubleshooting safe location logic).
-debug-rejection-logging: false
-# Enable or disable bStats metrics (https://bstats.org/plugin/bukkit/EzRTP/27735)
-# These anonymous metrics help track plugin usage and performance across servers.
+message-prefix: "&7[&bEzRTP&7] &r"
+language: en
 enable-bstats: true
-# Optional: restrict random teleport Y-levels (inclusive). If omitted, world min/max height is used.
-# min-y: 64
-# max-y: 120
-world: world
-center:
-  x: 0
-  z: 0
-radius:
-  min: 256
-  # max: 2048
-  use-world-border: true
-max-attempts: 32
-cost: 0.0
-countdown-seconds: 0 # Optional countdown before teleport (0 = disabled)
-countdown:
-  # seconds: 5
-  bossbar:
+worldguard:
+  region-command:
     enabled: false
-    title: "<yellow>Teleporting in <white><seconds></white> seconds...</yellow>"
-    color: YELLOW
-    style: SOLID
-  particles:
-    enabled: true
-    type: ENCHANTMENT_TABLE
-    points: 12
-    radius: 1.2
-    height-offset: 0.8
-    extra: 0.0
-    force: false
-    secondary-particle: PORTAL
-    secondary-count: 6
-    secondary-offset: 0.35
-unsafe-blocks:
-  - WATER
-  - LAVA
-  - MAGMA_BLOCK
-  - POWDER_SNOW
-  - FIRE
-  - CAMPFIRE
-  - SOUL_FIRE
+    autocomplete: false
+[/code]
+[/spoiler]
+
+[spoiler="rtp.yml"]
+[code=yml]
+search-pattern: random
+max-attempts: 16
+countdown-seconds: 5
+heatmap:
+  enabled: false
 biomes:
-  # Optional: list of allowed biomes. Leave empty to allow all.
-  include: []
-  # Optional: list of biomes to avoid.
-  exclude: []
-  # Pre-caching configuration for biome-filtered RTPs
-  # When enabled, the server will pre-generate and cache safe locations for biome filters,
-  # significantly improving RTP success rates and reducing failed attempts.
+  enabled: true
   pre-cache:
-    # Toggle pre-caching on/off. Enabled by default for better RTP performance with biome filters.
-    enabled: true
-    # Maximum number of locations to cache per biome (higher = better hit rate but more memory)
-    max-per-biome: 50
-    # Number of locations to pre-generate during server startup/reload for each configured biome
-    warmup-size: 20
-    # How long (in minutes) cached locations remain valid before expiring
-    expiration-minutes: 10
-  # Rare biome optimization for improved search efficiency
-  # When enabled, uses intelligent strategies to prioritize rare biome hotspots
+    enabled: false
   rare-biome-optimization:
-    # Toggle rare biome optimization on/off
-    enabled: true
-    # Custom list of biomes considered "rare" (leave empty for built-in list)
-    rare-biomes: []
-    # Enable weighted search that favors hotspots for rare biomes
-    use-weighted-search: true
-    # Track and maintain hotspots for rare biomes
-    enable-hotspot-tracking: true
-protection:
-  avoid-claims: false
-  providers:
-    - worldguard
-    - griefprevention
-particles:
+    enabled: false
+chunky-integration:
   enabled: false
-  type: PORTAL
-  count: 40
-  offset:
-    x: 0.5
-    y: 1.0
-    z: 0.5
-  extra: 0.0
-  force: false
-on-join:
-  enabled: false
-  only-first-join: false
-  bypass-permission: ""
-  delay-ticks: 40
-# RTP cooldowns and usage limits
+[/code]
+[/spoiler]
+
+[spoiler="limits.yml"]
+[code=yml]
 rtp-limits:
-  # Allow opening the GUI even if the current world has an active cooldown
-  # When true, GUI opens but worlds with active cooldowns are disabled in the GUI
-  # When false, GUI won't open if any world has an active cooldown (current behavior)
-  allow-gui-during-cooldown: true
   default:
-    cooldown-seconds: 300   # Cooldown in seconds between /rtp uses
-    daily-limit: 10         # Max uses per day
-    weekly-limit: 50        # Max uses per week
-    cost: 0.0               # Optional cost override for this group
-  worlds:
-    world:
-      # Disable daily limit for this world (overrides daily-limit and weekly-limit)
-      disable-daily-limit: false
-      default:
-        cooldown-seconds: 300
-        daily-limit: 10
-        weekly-limit: 50
-        cost: 0.0
-      group.vip:
-        cooldown-seconds: 60
-        daily-limit: 50
-        weekly-limit: 200
-        cost: 0.0
-    world_nether:
-      disable-daily-limit: false
-      default:
-        cooldown-seconds: 600
-        daily-limit: 5
-        weekly-limit: 20
-        cost: 0.0
-      group.staff:
-        cooldown-seconds: 0
-        daily-limit: -1   # -1 = unlimited
-        weekly-limit: -1
-        cost: 0.0
+    cooldown-seconds: 300
+    daily-limit: 10
+    weekly-limit: 50
   bypass-permissions:
     - ezrtp.bypass.cooldown
     - ezrtp.bypass.limit
-  storage: yaml # or mysql
-  mysql:
-    url: jdbc:mysql://localhost:3306/mc
-    user: root
-    password: ""
+  allow-gui-during-cooldown: true
 [/code]
 [/spoiler]
-[spoiler="messages/{language}.yml"]
+
+[spoiler="storage.yml"]
 [code=yml]
-# EzRTP MiniMessage templates
-# Placeholders: <world>, <x>, <z>, <position>, <server>, <cost>, <target-biome>, <cached-locations>
-teleporting: "<gray>Searching for a safe location...</gray>"
-teleport-success: "<green>Teleported to <white><x></white>, <white><z></white> in <white><world></white>.</green>"
-teleport-failed: "<red>Unable to find a safe location. Please try again.</red>"
-teleport-failed-biome: "<red>No valid biome was found. Please try again or try a different biome filter.</red>"
-world-missing: "<red>The configured world '<white><world></white>' is not available.</red>"
-join-searching: "<gray>Finding you a safe place to explore...</gray>"
-insufficient-funds: "<red>You need <white><cost></white> to use random teleport.</red>"
-queue-queued: "<gray>You joined the random teleport queue. Position: <white><position></white>.</gray>"
-queue-full: "<red>The random teleport queue is currently full. Please try again soon.</red>"
-# Cooldown and usage limit messages
-cooldown: "<red>You must wait <white><hours></white> <white><minutes></white> <white><seconds></white> before using /rtp again.</red>"
-limit-daily: "<red>You have reached your daily /rtp limit for this world.</red>"
-limit-weekly: "<red>You have reached your weekly /rtp limit for this world.</red>"
-# Countdown messages
-countdown-start: "<yellow>Teleporting in <white><seconds></white> seconds...</yellow>"
-countdown-tick: "<gray><seconds>...</gray>"
+rtp-limits:
+  storage: yaml # yaml or mysql
 [/code]
 [/spoiler]
-[spoiler="queue.yml"]
-[code=yml]
-# EzRTP teleport queue configuration
-enabled: false
-max-size: 0
-bypass-permission: "ezrtp.queue.bypass"
-start-delay-ticks: 20
-interval-ticks: 40
-[/code]
-[/spoiler]
-[spoiler="gui.yml"]
-[code=yml]
-# EzRTP GUI configuration
-enabled: false
-title: "<gradient:#00b4db:#0083b0><bold>Random Teleport</bold></gradient>"
-rows: 3
-no-permission-message: "<red>You do not have permission to travel there.</red>"
-# Only show cache info (biome counts) to players with ezrtp.admin permission
-admin-only-cache-info: false
-# Disable cache filtering entirely (show all biomes regardless of cache status)
-disable-cache-filtering: true
-# Supports PlaceholderAPI placeholders in item names and lore (e.g., %player_name%)
-filler:
-  enabled: true
-  material: BLACK_STAINED_GLASS_PANE
-  name: "<dark_gray> </dark_gray>"
-worlds:
-  overworld:
-    slot: 13
-    permission: ""
-    icon:
-      material: GRASS_BLOCK
-      name: "<gradient:#7ed957:#2ecc71><bold>Overworld</bold></gradient>"
-      lore:
-        - "<gray>Balanced biomes, safe landings, and</gray>"
-        - "<gray>plenty of room to explore.</gray>"
-        - "<dark_gray>Click to begin your adventure.</dark_gray>"
-    settings:
-      world: world
-      radius:
-        min: 256
-        use-world-border: true
-  nether:
-    slot: 11
-    permission: "ezrtp.gui.nether"
-    icon:
-      material: NETHERRACK
-      name: "<gradient:#ff512f:#dd2476><bold>Nether</bold></gradient>"
-      lore:
-        - "<gray>Warp into the Nether to hunt</gray>"
-        - "<gray>for ancient debris and rare loot.</gray>"
-        - "<dark_gray>Requires Nether access.</dark_gray>"
-    settings:
-      world: world_nether
-  end:
-    slot: 15
-    permission: "ezrtp.gui.end"
-    icon:
-      material: END_STONE
-      name: "<gradient:#a8edea:#fed6e3><bold>The End</bold></gradient>"
-      lore:
-        - "<gray>Teleport to distant End islands</gray>"
-        - "<gray>for chorus fruit and gateways.</gray>"
-        - "<dark_gray>Requires End access.</dark_gray>"
-    settings:
-      world: world_the_end
-  resource:
-    slot: 1
-    permission: "ezrtp.gui.resource"
-    icon:
-      material: IRON_PICKAXE
-      name: "<gold>Resource World</gold>"
-      lore:
-        - "<gray>Gather materials without ruining the main world.</gray>"
-    settings:
-      world: resource
-      radius:
-        min: 512
-        max: 4096
-        use-world-border: false
-[/code]
-[/spoiler]
-[spoiler="network.yml"]
-[code=yml]
-# EzRTP proxy / network configuration
-enabled: false
-lobby: false
-ping-interval-ticks: 200
-ping-timeout-millis: 1500
-servers:
-  skyblock:
-    bungee-server: "skyblock"
-    host: "127.0.0.1"
-    port: 25566
-    slot: 4
-    permission: ""
-    display-name: "Skyblock"
-    hide-when-offline: false
-    allow-when-offline: false
-    connect-message: "<gray>Connecting you to <white><server></white>...</gray>"
-    offline-message: "<red><server></red> is currently unavailable."
-    icon:
-      material: ENDER_PEARL
-      name: "<gold><server></gold>"
-      lore:
-        - "<gray>Status: <status></gray>"
-        - "<gray>Ping: <white><ping></white>ms</gray>"
-[/code]
-[/spoiler]
+
 [SIZE=4][B]Requirements[/B][/SIZE]
 [LIST]
-[*]Java 17 or newer.
-[*]Paper, Purpur, or SpigotMC 1.19+ server build.
-[*]Optional: Vault + an economy plugin if you want to charge for teleports.
-[*]Optional: A permissions plugin (LuckPerms, etc.) if you want granular control over `/rtp reload`, queue bypass, GUI option access, or cost bypasses.
+[*]Java 17 or newer
+[*]Paper, Purpur, Spigot, or Folia 1.7+
+[*]Optional: Vault/EzEconomy for pricing
+[*]Optional: WorldGuard/GriefPrevention for protection-aware behavior
+[*]Optional: Chunky for pre-generation workflows
 [/LIST]
 
-[SIZE=4][B]Support & Links[/B][/SIZE]
+[SIZE=4][B]Support[/B][/SIZE]
 [LIST]
-[*]Need help? [URL='https://discord.gg/yWP95XfmBS']Join our Discord[/URL] and open a ticket under the EzRTP category.
-[*]Share seeds, biome rules, or config presets on the discussion tab so other admins can jumpstart their setup.
-[*]Pair EzRTP with EzSpawners, EzAuction, and the rest of the Ez-series utilities for a cohesive network toolkit.
-[*][URL='https://www.spigotmc.org/resources/1-21-ezeconomy-modern-vault-economy-plugin-for-minecraft-servers.130975/']Get EzEconomy – Modern Vault Economy Plugin[/URL]
+[*][URL='https://discord.gg/yWP95XfmBS']Join our Discord[/URL]
+[*][URL='https://github.com/ez-plugins/EzRTP']GitHub Project and Releases[/URL]
 [/LIST]
 
-[CENTER][SIZE=4][B]Ready to launch players into adventure?[/B]
-Install EzRTP and give explorers a safe, stylish way to discover your world-across every dimension[/SIZE][/CENTER]
-
-[CENTER][URL='https://www.spigotmc.org/resources/authors/shadow48402.25936/'][IMG]https://i.ibb.co/PzfjNjh0/ezplugins-try-other-plugins.png[/IMG][/URL][/CENTER]
+[CENTER][URL='https://modrinth.com/collection/Q98Ov6dA'][IMG]https://i.ibb.co/PzfjNjh0/ezplugins-try-other-plugins.png[/IMG][/URL][/CENTER]
