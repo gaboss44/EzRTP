@@ -108,7 +108,6 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.teleportExecutor = new TeleportExecutor(plugin, platformRuntime.scheduler(), messageProvider, statistics,
                 costCalculator, countdownManager, locationFinder, queueManager, () -> this.settings);
 
-        applyChunkLoadingSettings(this.settings);
         applyRareBiomeSettings(this.settings);
         applyCacheSettings(this.settings);
     }
@@ -123,7 +122,6 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.queueSettings = newQueueSettings != null ? newQueueSettings : TeleportQueueSettings.disabled();
         queueManager.reload(this.queueSettings);
 
-        applyChunkLoadingSettings(newSettings);
         applyRareBiomeSettings(newSettings);
         applyCacheSettings(newSettings);
     }
