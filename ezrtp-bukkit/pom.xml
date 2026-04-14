@@ -215,6 +215,7 @@
               <createDependencyReducedPom>false</createDependencyReducedPom>
               <artifactSet>
                 <includes>
+                  <include>com.skyblockexp:ezrtp-api</include>
                   <include>com.skyblockexp:ezrtp-common</include>
                   <include>org.bstats:bstats-bukkit</include>
                   <include>org.bstats:bstats-base</include>
