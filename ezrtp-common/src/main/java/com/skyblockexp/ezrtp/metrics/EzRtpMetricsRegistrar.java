@@ -94,7 +94,7 @@ public final class EzRtpMetricsRegistrar {
                 return 0;
             }));
 
-            plugin.getLogger().info("bStats metrics enabled. View stats at https://bstats.org/plugin/bukkit/EzRTP/27735");
+            plugin.getLogger().info("Metrics: bStats (https://bstats.org/plugin/bukkit/EzRTP/27735)");
         } catch (Throwable throwable) {
             plugin.getLogger().warning("Failed to start bStats metrics: " + throwable.getMessage());
         }

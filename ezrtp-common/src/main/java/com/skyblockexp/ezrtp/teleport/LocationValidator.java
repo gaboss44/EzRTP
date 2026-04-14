@@ -183,7 +183,7 @@ public final class LocationValidator {
 
     private void debugReject(RandomTeleportSettings settings, Location loc, String reason) {
         if (settings != null && settings.isDebugRejectionLoggingEnabled()) {
-            plugin.getLogger().info("[EzRTP] RTP rejected " + loc + ": " + reason);
+            plugin.getLogger().info("RTP rejected " + loc + ": " + reason);
         }
     }
 

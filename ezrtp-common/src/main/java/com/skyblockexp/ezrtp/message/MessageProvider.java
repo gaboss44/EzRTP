@@ -83,7 +83,7 @@ public class MessageProvider {
                 logger.info("Migrated legacy message key 'forcertp-target-notify' to 'forcertp-target-notification'");
             }
             
-            logger.info("Loaded " + messages.size() + " messages for language: " + language);
+            logger.info("Locale: " + language + " (" + messages.size() + " messages)");
             return new MessageProvider(messages, language, logger);
         } catch (Exception e) {
             logger.severe("Failed to load language file for '" + language + "': " + e.getMessage());

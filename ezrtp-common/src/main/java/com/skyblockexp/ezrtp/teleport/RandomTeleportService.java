@@ -108,7 +108,6 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.teleportExecutor = new TeleportExecutor(plugin, platformRuntime.scheduler(), messageProvider, statistics,
                 costCalculator, countdownManager, locationFinder, queueManager, () -> this.settings);
 
-        applyChunkLoadingSettings(this.settings);
         applyRareBiomeSettings(this.settings);
         applyCacheSettings(this.settings);
     }
@@ -123,7 +122,6 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.queueSettings = newQueueSettings != null ? newQueueSettings : TeleportQueueSettings.disabled();
         queueManager.reload(this.queueSettings);
 
-        applyChunkLoadingSettings(newSettings);
         applyRareBiomeSettings(newSettings);
         applyCacheSettings(newSettings);
     }
@@ -174,7 +172,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
             try {
                 hotspotStorage.close();
             } catch (Exception e) {
-                plugin.getLogger().warning("[EzRTP] Failed to close hotspot storage: " + e.getMessage());
+                plugin.getLogger().warning("Failed to close hotspot storage: " + e.getMessage());
             }
         }
     }
@@ -241,7 +239,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
             if (freeMemoryMb < 512) { // Less than 512MB free memory
                 if (shouldEnable) {
                     plugin.getLogger().warning(String.format(
-                        "[EzRTP] Disabling biome pre-cache due to low memory: %dMB free / %dMB total",
+                        "Disabling biome pre-cache due to low memory: %dMB free / %dMB total",
                         freeMemoryMb, totalMemoryMb
                     ));
                     shouldEnable = false;
@@ -252,20 +250,20 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
                 if (freeMemoryMb >= 512) { // Only auto-enable if we have enough memory
                     shouldEnable = true;
                     plugin.getLogger().info(String.format(
-                        "[EzRTP] Biome filters detected; auto-enabling pre-cache as configured (Memory: %dMB free / %dMB total)",
+                        "Biome filters detected; auto-enabling pre-cache as configured (Memory: %dMB free / %dMB total)",
                         freeMemoryMb, totalMemoryMb
                     ));
                 } else {
                     plugin.getLogger().warning(String.format(
-                        "[EzRTP] Biome filters detected but pre-cache not enabled due to low memory: %dMB free / %dMB total",
+                        "Biome filters detected but pre-cache not enabled due to low memory: %dMB free / %dMB total",
                         freeMemoryMb, totalMemoryMb
                     ));
                 }
             }
 
             if (hasBiomeFilters && !shouldEnable) {
-                plugin.getLogger().warning("[EzRTP] Biome filtering is configured but pre-caching is disabled.");
-                plugin.getLogger().warning("[EzRTP] RECOMMENDATION: Enable 'biomes.pre-cache.enabled: true' in config.yml to improve RTP success rates.");
+                plugin.getLogger().warning("Biome filtering is configured but pre-caching is disabled.");
+                plugin.getLogger().warning("RECOMMENDATION: Enable 'biomes.pre-cache.enabled: true' in config.yml to improve RTP success rates.");
             }
 
             biomeCache.setEnabled(shouldEnable);
@@ -277,7 +275,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
                     if (chunkyAPI != null && currentSettings.getChunkyIntegrationSettings().isEnabled()) {
                         // Check memory safety before starting Chunky tasks
                         if (chunkyWarmupCoordinator != null && !chunkyWarmupCoordinator.hasSufficientMemory()) {
-                            plugin.getLogger().info("[EzRTP] Skipping Chunky pregeneration for biome pre-caching due to low memory");
+                            plugin.getLogger().info("Skipping Chunky pregeneration for biome pre-caching due to low memory");
                         } else {
                             String worldName = world.getName();
                             try {
@@ -285,16 +283,16 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
                                     int radius = Math.max(10000, (int) (world.getWorldBorder().getSize() / 2));
                                     boolean started = chunkyAPI.startTask(worldName, currentSettings.getChunkyIntegrationSettings().getShape(), 0, 0, radius, radius, currentSettings.getChunkyIntegrationSettings().getPattern());
                                     if (started) {
-                                        plugin.getLogger().info("[EzRTP] Started Chunky pregeneration for world '" + worldName + "' to support biome pre-caching.");
+                                        plugin.getLogger().info("Started Chunky pregeneration for world '" + worldName + "' to support biome pre-caching.");
                                     }
                                 }
                             } catch (Throwable t) {
-                                plugin.getLogger().warning("[EzRTP] Failed to interact with Chunky API: " + t.getMessage());
+                                plugin.getLogger().warning("Failed to interact with Chunky API: " + t.getMessage());
                             }
                         }
                     }
                     plugin.getLogger().info(String.format(
-                        "[EzRTP] Starting biome cache warmup for world '%s' (Memory: %dMB free / %dMB total)",
+                        "Starting biome cache warmup for world '%s' (Memory: %dMB free / %dMB total)",
                         world.getName(), freeMemoryMb, totalMemoryMb
                     ));
                     biomeCache.startWarmup(world, currentSettings, this);
@@ -323,7 +321,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
             boolean enabled = rareSettings.isEnabled();
             if (!enabled && hasBiomeFilters && rareSettings.isAutoEnableForFilters()) {
                 enabled = true;
-                plugin.getLogger().info("[EzRTP] Biome filters detected; auto-enabling rare biome optimizations as configured.");
+                plugin.getLogger().info("Biome filters detected; auto-enabling rare biome optimizations as configured.");
             }
             rareBiomeRegistry.setEnabled(enabled && rareSettings.isHotspotTrackingEnabled());
             rareBiomeRegistry.setBackgroundScanningEnabled(enabled && rareSettings.isBackgroundScanningEnabled());
@@ -381,12 +379,11 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
                             .detect(plugin.getClass().getClassLoader())
                             .paperApi()) {
                 plugin.getLogger().warning(
-                        "[EzRTP] chunk-loading.use-paper-async-api is set to 'always' but Paper"
+                        "chunk-loading.use-paper-async-api is set to 'always' but Paper"
                                 + " API was not detected. The async fast-path will still run but"
                                 + " chunk loading will not be genuinely non-blocking.");
             } else {
-                plugin.getLogger().info(
-                        "[EzRTP] Using Paper async chunk loading — legacy throttle bypassed.");
+                plugin.getLogger().info("Chunk loading: Paper async API");
             }
         } else {
             // Legacy path: tick-based throttle queue.
@@ -432,7 +429,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
                 rareSettings.getPersistenceMysqlPassword(),
                 plugin.getLogger());
         } catch (Exception e) {
-            plugin.getLogger().warning("[EzRTP] Failed to initialise MySQL hotspot storage, falling back to in-memory only: " + e.getMessage());
+            plugin.getLogger().warning("Failed to initialise MySQL hotspot storage, falling back to in-memory only: " + e.getMessage());
             return null;
         }
     }

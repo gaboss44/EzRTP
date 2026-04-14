@@ -81,7 +81,7 @@ public final class PerformanceMonitor {
         WarningsSettings warnings = settings.getWarnings();
         if (durationMs >= warnings.getSlowRtpThresholdMs()) {
             String message = String.format(
-                    "[EzRTP] Slow RTP: %dms in world '%s' (threshold %dms)",
+                    "Slow RTP: %dms in world '%s' (threshold %dms)",
                     durationMs, worldName, warnings.getSlowRtpThresholdMs());
             if (warnings.isLogToConsole()) {
                 logger.warning(message);
@@ -200,7 +200,7 @@ public final class PerformanceMonitor {
                     StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {
             logger.warning(
-                    "[EzRTP] Failed to write performance metrics to '" + filePath + "': " + e.getMessage());
+                    "Failed to write performance metrics to '" + filePath + "': " + e.getMessage());
         }
     }
 
@@ -219,7 +219,7 @@ public final class PerformanceMonitor {
                     StandardOpenOption.APPEND);
         } catch (IOException e) {
             logger.warning(
-                    "[EzRTP] Failed to write slow-RTP warning to '" + filePath + "': " + e.getMessage());
+                    "Failed to write slow-RTP warning to '" + filePath + "': " + e.getMessage());
         }
     }
 }

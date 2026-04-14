@@ -74,9 +74,6 @@ public final class PlatformAdapterRegistrar {
         registerOptionalProviders(BUKKIT_GUI_PROVIDERS, PlatformGuiBridgeProvider.class, PlatformGuiBridgeRegistry::registerProvider, logger);
 
         if (!registerOptionalProviders) {
-            if (logger != null) {
-                logger.info("Detected external EzRTP platform module plugin(s); skipping bootstrap optional provider registration to avoid duplicate registrations.");
-            }
             return;
         }
 

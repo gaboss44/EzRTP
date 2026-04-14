@@ -32,7 +32,7 @@ public final class EconomyCoordinator {
         }
 
         VaultEconomyService vaultEconomy = new VaultEconomyService(registration.getProvider(), plugin.getLogger());
-        plugin.getLogger().info("Using Vault economy provider: " + vaultEconomy.getProviderName());
+        plugin.getLogger().info("Economy: " + vaultEconomy.getProviderName() + " (Vault)");
         return vaultEconomy;
     }
 }

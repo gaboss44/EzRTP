@@ -40,9 +40,9 @@ public final class UsageResetScheduler {
         try {
             usageStorage.resetUsage(null, null, "daily");
             usageStorage.save();
-            plugin.getLogger().info("[EzRTP] Daily RTP usage counts reset.");
+            plugin.getLogger().info("Daily RTP usage counts reset.");
         } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "[EzRTP] Failed to reset daily RTP usage counts", e);
+            plugin.getLogger().log(Level.WARNING, "Failed to reset daily RTP usage counts", e);
         }
     }
 
@@ -50,9 +50,9 @@ public final class UsageResetScheduler {
         try {
             usageStorage.resetUsage(null, null, "weekly");
             usageStorage.save();
-            plugin.getLogger().info("[EzRTP] Weekly RTP usage counts reset.");
+            plugin.getLogger().info("Weekly RTP usage counts reset.");
         } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "[EzRTP] Failed to reset weekly RTP usage counts", e);
+            plugin.getLogger().log(Level.WARNING, "Failed to reset weekly RTP usage counts", e);
         }
     }
 

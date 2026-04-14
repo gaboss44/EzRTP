@@ -127,19 +127,14 @@ public final class EzRtpPluginBootstrap {
         registerCommand();
         initializeMetrics();
         new SpigotUpdateChecker(plugin, SPIGOT_RESOURCE_ID).checkForUpdates();
-        plugin.getLogger().info("EzRTP plugin enabled.");
+        plugin.getLogger().info("Ready.");
     }
 
     private void logRuntimeArtifactSummary(RuntimeArtifactStatus status) {
-        String installed = status.installedArtifacts().isEmpty() ? "<none>" : String.join(", ", status.installedArtifacts());
         if (status.hasSupportedRuntimeModule()) {
-            plugin.getLogger().info("Detected EzRTP artifacts: " + installed + ".");
-            plugin.getLogger().info("Supported combination: EzRTP + one runtime module (for example EzRTPPaperModule).");
-            plugin.getLogger().info("If you observe duplicate messages or duplicate teleports, remove extra/legacy EzRTP module jars so only one runtime module remains.");
+            plugin.getLogger().info("Runtime module: " + String.join(", ", status.supportedRuntimeModules()));
         } else {
-            plugin.getLogger().warning("Detected EzRTP artifacts: " + installed + ".");
-            plugin.getLogger().warning("Running EzRTP without a runtime module is supported with safe fallbacks, but advanced Paper-specific adapters may be unavailable.");
-            plugin.getLogger().warning("If you observe duplicate messages or duplicate teleports, verify there is only one EzRTP core jar and no legacy EzRTP runtime module jars.");
+            plugin.getLogger().warning("No runtime module installed; using built-in Bukkit adapters.");
         }
     }
 
@@ -260,9 +255,8 @@ public final class EzRtpPluginBootstrap {
             if (chunkySettings.isMemorySafetyEnabled()) {
                 Runtime runtime = Runtime.getRuntime();
                 long freeMemoryMb = (runtime.freeMemory() + (runtime.maxMemory() - runtime.totalMemory())) / (1024L * 1024L);
-                long maxMemoryMb = runtime.maxMemory() / (1024L * 1024L);
-                plugin.getLogger().info(String.format("[EzRTP] Chunky memory safety enabled: %dMB free / %dMB max, threshold: %dMB",
-                    freeMemoryMb, maxMemoryMb, chunkySettings.getMinFreeMemoryMb()));
+                plugin.getLogger().info(String.format("Chunky: memory safety enabled (%dMB free, threshold %dMB)",
+                    freeMemoryMb, chunkySettings.getMinFreeMemoryMb()));
             }
         }
 
@@ -358,12 +352,12 @@ public final class EzRtpPluginBootstrap {
         var messageService = com.skyblockexp.ezrtp.platform.PlatformMessageServiceRegistry.get();
         var senderBridge = com.skyblockexp.ezrtp.platform.PlatformSenderBridgeRegistry.get();
 
-        plugin.getLogger().info("Platform runtime: " + runtime.getClass().getName());
-        plugin.getLogger().info("Platform scheduler: " + scheduler.getClass().getName());
-        plugin.getLogger().info("Chunk load strategy: " + strategy.getClass().getName());
-        plugin.getLogger().info("GUI bridge: " + guiBridge.getClass().getName());
-        plugin.getLogger().info("Message service: " + (messageService != null ? messageService.getClass().getName() : "<none>"));
-        plugin.getLogger().info("Sender bridge: " + (senderBridge != null ? senderBridge.getClass().getName() : "<none>"));
+        plugin.getLogger().info("Platform: " + runtime.getClass().getSimpleName()
+                + " | " + scheduler.getClass().getSimpleName()
+                + " | " + strategy.getClass().getSimpleName());
+        plugin.getLogger().info("Adapters: GUI=" + guiBridge.getClass().getSimpleName()
+                + " | Messages=" + (messageService != null ? messageService.getClass().getSimpleName() : "<none>")
+                + " | Sender=" + (senderBridge != null ? senderBridge.getClass().getSimpleName() : "<none>"));
     }
 
     private RtpUsageStorage createUsageStorage() {

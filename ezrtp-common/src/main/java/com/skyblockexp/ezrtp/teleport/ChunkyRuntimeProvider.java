@@ -58,7 +58,7 @@ public final class ChunkyRuntimeProvider implements ChunkyProvider {
         try {
             try {
                 var m = impl.getClass().getMethod("onGenerationComplete", java.util.function.Consumer.class);
-                m.invoke(impl, (java.util.function.Consumer<Object>) (event -> plugin.getLogger().info("[EzRTP] Chunky generation completed")));
+                m.invoke(impl, (java.util.function.Consumer<Object>) (event -> plugin.getLogger().info("Chunky generation completed")));
             } catch (Throwable ignored) {}
             try {
                 var m2 = impl.getClass().getMethod("onGenerationProgress", java.util.function.Consumer.class);

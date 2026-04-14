@@ -353,7 +353,7 @@ public final class ChunkLoadQueue {
         enabled = false;
         processing.set(false);
         if (schedulerFallbackLogged.compareAndSet(false, true)) {
-            plugin.getLogger().warning("[EzRTP] Chunk load queue fallback engaged; using immediate synchronous loading. Reason: " + reason);
+            plugin.getLogger().warning("Chunk load queue fallback engaged; using immediate synchronous loading. Reason: " + reason);
         }
         ChunkLoadRequest request;
         while ((request = queue.poll()) != null) {

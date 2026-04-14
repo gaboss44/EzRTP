@@ -45,7 +45,7 @@ public final class TeleportPreCheckHandler {
                     Map.of("world", "Server memory too low for teleport"), player));
                 if (callback != null) callback.accept(false);
             }, 20L); // Delay message to avoid spam
-            plugin.getLogger().warning(String.format("[EzRTP] Teleport cancelled due to critically low memory: %dMB free / %dMB total",
+            plugin.getLogger().warning(String.format("Teleport cancelled due to critically low memory: %dMB free / %dMB total",
                 freeMemoryMb, totalMemoryMb));
             return false;
         }

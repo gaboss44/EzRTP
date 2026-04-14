@@ -84,7 +84,7 @@ public final class ChunkyWarmupCoordinator {
             cleanupTask = plugin.getServer().getScheduler().runTaskTimerAsynchronously(
                 plugin, this::purgeOldEntries, 20L * 60L, 20L * 60L);
         } catch (Throwable t) {
-            plugin.getLogger().warning("[EzRTP] Failed to schedule ChunkyWarmupCoordinator cleanup: " + t.getMessage());
+            plugin.getLogger().warning("Failed to schedule ChunkyWarmupCoordinator cleanup: " + t.getMessage());
         }
     }
 
