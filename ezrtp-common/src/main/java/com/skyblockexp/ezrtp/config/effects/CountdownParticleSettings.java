@@ -79,7 +79,7 @@ public final class CountdownParticleSettings {
         }
         boolean enabled = section.getBoolean("enabled", false);
         Particle particle = parseParticle(section.getString("particle",
-            section.getString("type", "ENCHANTMENT_TABLE")), logger, Particle.ENCHANTMENT_TABLE);
+            section.getString("type", "ENCHANT")), logger, Particle.ENCHANT);
         int points = Math.max(1, section.getInt("points", 12));
         double radius = section.getDouble("radius", 1.2D);
         double heightOffset = section.getDouble("height-offset", 0.8D);
@@ -96,7 +96,7 @@ public final class CountdownParticleSettings {
     }
 
     public static CountdownParticleSettings disabled() {
-        return new CountdownParticleSettings(false, Particle.ENCHANTMENT_TABLE, 12,
+        return new CountdownParticleSettings(false, Particle.ENCHANT, 12,
                 1.2D, 0.8D, 0.0D, false, null, 0, 0.35D);
     }
 

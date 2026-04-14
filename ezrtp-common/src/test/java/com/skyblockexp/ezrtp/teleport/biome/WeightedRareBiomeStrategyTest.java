@@ -9,7 +9,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.skyblockexp.ezrtp.teleport.search.BiomeSearchStrategy;
 
-import java.util.EnumSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -33,7 +32,7 @@ class WeightedRareBiomeStrategyTest {
     @Test
     void delegatesToProvidedFallbackWhenTargetsAreNotRare() {
         WeightedRareBiomeStrategy strategy = new WeightedRareBiomeStrategy(fallbackStrategy);
-        Set<Biome> targets = EnumSet.of(Biome.PLAINS);
+        Set<Biome> targets = Set.of(Biome.PLAINS);
 
         when(registry.isRareBiome(any(Biome.class))).thenReturn(false);
         int[] expected = new int[]{25, -64};
