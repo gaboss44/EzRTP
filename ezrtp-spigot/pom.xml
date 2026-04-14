@@ -5,13 +5,13 @@
   <parent>
     <groupId>com.skyblockexp</groupId>
     <artifactId>ezrtp-parent</artifactId>
-    <version>2.1.0</version>
+    <version>3.0.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.skyblockexp</groupId>
   <artifactId>ezrtp-spigot</artifactId>
-  <version>2.1.0</version>
+  <version>3.0.0</version>
   <packaging>jar</packaging>
   <name>EzRTP (Spigot)</name>
   <description>Spigot-optimized module for EzRTP</description>
@@ -20,13 +20,13 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.20-R0.1-SNAPSHOT</version>
+      <version>26.1.2-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.skyblockexp</groupId>
       <artifactId>ezrtp-common</artifactId>
-      <version>2.1.0</version>
+      <version>3.0.0</version>
     </dependency>
   </dependencies>
 
