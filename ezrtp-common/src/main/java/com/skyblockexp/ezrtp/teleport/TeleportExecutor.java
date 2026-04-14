@@ -180,10 +180,13 @@ public final class TeleportExecutor {
                                  TeleportReason reason,
                                  Consumer<Boolean> callback,
                                  Runnable completionHook) {
-        World world = plugin.getServer().getWorld(teleportSettings.getWorldName());
+        final RandomTeleportSettings effectiveSettings = teleportSettings.isAutoWorld()
+                ? teleportSettings.withWorldName(player.getWorld().getName())
+                : teleportSettings;
+        World world = plugin.getServer().getWorld(effectiveSettings.getWorldName());
         if (world == null) {
             com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.WORLD_MISSING,
-                Map.of("world", teleportSettings.getWorldName()), player));
+                Map.of("world", effectiveSettings.getWorldName()), player));
             if (callback != null) callback.accept(false);
             if (completionHook != null) completionHook.run();
             return;
@@ -196,9 +199,9 @@ public final class TeleportExecutor {
         }
 
         long startTime = System.currentTimeMillis();
-        CompletableFuture<SearchResult> locationSearchFuture = locationFinder.findSafeLocationAsync(world, teleportSettings);
-        boolean rareSearch = locationFinder.isRareSearch(teleportSettings);
-        long searchTimeoutMillis = resolveSearchTimeoutMillis(teleportSettings, rareSearch);
+        CompletableFuture<SearchResult> locationSearchFuture = locationFinder.findSafeLocationAsync(world, effectiveSettings);
+        boolean rareSearch = locationFinder.isRareSearch(effectiveSettings);
+        long searchTimeoutMillis = resolveSearchTimeoutMillis(effectiveSettings, rareSearch);
         CompletableFuture<SearchResult> completionFuture = locationSearchFuture;
         if (searchTimeoutMillis > 0) {
             completionFuture = locationSearchFuture.orTimeout(searchTimeoutMillis, TimeUnit.MILLISECONDS);
@@ -215,13 +218,13 @@ public final class TeleportExecutor {
 
                 try {
                     if (throwable != null || result == null || result.location().isEmpty()) {
-                        if (throwable != null && teleportSettings.isDebugRejectionLoggingEnabled()) {
+                        if (throwable != null && effectiveSettings.isDebugRejectionLoggingEnabled()) {
                             plugin.getLogger().warning("EzRTP debug: location search failed for player '"
                                     + player.getName() + "' in world '" + world.getName() + "' after "
                                     + duration + "ms: " + throwable.getClass().getSimpleName() + " - "
                                     + throwable.getMessage());
                         }
-                        resultHandler.handleFailure(player, teleportSettings, result, duration, biome, cacheHit, cacheChecked);
+                        resultHandler.handleFailure(player, effectiveSettings, result, duration, biome, cacheHit, cacheChecked);
                         if (callback != null) callback.accept(false);
                         return;
                     }
@@ -229,7 +232,7 @@ public final class TeleportExecutor {
                     validLocation = result.location().get();
 
                     if (!player.isOnline()) {
-                        locationFinder.cacheValidLocation(validLocation, teleportSettings);
+                        locationFinder.cacheValidLocation(validLocation, effectiveSettings);
                         statistics.recordPlayerOfflineOrCancelledFailure();
                         statistics.recordAttempt(false, duration, biome, cacheHit, cacheChecked);
                         if (callback != null) callback.accept(false);
@@ -248,15 +251,15 @@ public final class TeleportExecutor {
                         return;
                     }
 
-                    Location destination = TeleportDestinationAdjuster.adjustForSafety(validLocation, teleportSettings);
+                    Location destination = TeleportDestinationAdjuster.adjustForSafety(validLocation, effectiveSettings);
                     biome = destination.getBlock().getBiome();
                     Location oldLocation = player.getLocation(); // Store old location before teleport
                     success = player.teleport(destination);
 
                     if (success) {
-                        resultHandler.handleSuccess(player, destination, result, teleportSettings, duration, biome, cacheHit, cacheChecked, validLocation);
+                        resultHandler.handleSuccess(player, destination, result, effectiveSettings, duration, biome, cacheHit, cacheChecked, validLocation);
                     } else {
-                        locationFinder.cacheValidLocation(validLocation, teleportSettings);
+                        locationFinder.cacheValidLocation(validLocation, effectiveSettings);
                         com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED, player));
                         statistics.recordTeleportApiFailure();
                         statistics.recordAttempt(false, duration, biome, cacheHit, cacheChecked);

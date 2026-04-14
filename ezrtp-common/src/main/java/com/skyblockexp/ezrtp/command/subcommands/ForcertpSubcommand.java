@@ -58,11 +58,20 @@ public class ForcertpSubcommand extends Subcommand {
         // Parse optional world argument
         String worldName = args.length >= 2 ? args[1] : null;
 
+        // Resolve "auto" to the target player's current world
+        if ("auto".equalsIgnoreCase(worldName)) {
+            worldName = target.getWorld().getName();
+        }
+
         EzRtpConfiguration configuration = configurationSupplier.get();
         RandomTeleportSettings settings = configuration != null ? configuration.getSettingsForWorld(worldName) : null;
         if (settings == null) {
             MessageUtil.send(sender, plugin.getMessageProvider().format(MessageKey.FORCERTP_WORLD_MISSING, Map.of("world", worldName != null ? worldName : "default")));
             return false;
+        }
+        // If getSettingsForWorld returned fallback defaults for a different world, override the world name
+        if (worldName != null && !worldName.equals(settings.getWorldName())) {
+            settings = settings.withWorldName(worldName);
         }
 
         RandomTeleportService service = teleportServiceSupplier.get();
@@ -97,8 +106,9 @@ public class ForcertpSubcommand extends Subcommand {
         }
 
         if (args.length == 2) {
-            // Suggest world names
+            // Suggest world names and the special "auto" sentinel
             List<String> suggestions = new ArrayList<>();
+            suggestions.add("auto");
             for (org.bukkit.World world : Bukkit.getWorlds()) {
                 suggestions.add(world.getName());
             }

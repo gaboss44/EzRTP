@@ -33,6 +33,20 @@ filler:
   material: GLASS_PANE
   name: "<dark_gray> </dark_gray>"
 worlds:
+  # "Current world" option — teleports the player within whichever world they are currently in.
+  # Useful on multi-world servers so a single button always works regardless of where the player is.
+  # Uncomment and adjust the slot/icon to add it to your GUI.
+  # current-world:
+  #   slot: 13
+  #   permission: ""
+  #   icon:
+  #     material: COMPASS
+  #     name: "<aqua><bold>Current World</bold></aqua>"
+  #     lore:
+  #       - "<gray>Teleport randomly within</gray>"
+  #       - "<gray>your current world.</gray>"
+  #   settings:
+  #     world: auto
   overworld:
     # Slot within the GUI (0-53). When omitted entries are placed in order.
     slot: 22
