@@ -2,7 +2,7 @@ name: EzRTP
 main: com.skyblockexp.ezrtp.EzRtpPlugin
 version: ${project.version}
 description: Random teleport command and join handler for survival networks.
-api-version: '1.21'
+api-version: '26.1.2'
 folia-supported: true
 softdepend:
   - Vault
