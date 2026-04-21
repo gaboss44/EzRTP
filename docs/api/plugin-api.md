@@ -1,58 +1,237 @@
-# EzRTP Plugin API
+---
+title: Developer API
+nav_order: 10
+---
 
-Purpose: Expose a small helper API for other plugins to trigger random teleports (RTP) programmatically.
+# Developer API
 
-Usage:
+EzRTP exposes a small public API so other plugins can trigger random teleports
+programmatically — including custom destinations, radius overrides, and
+success/failure callbacks.
 
-- Simple RTP: Calls the plugin's default RTP flow (uses configured settings, costs, cooldowns, etc.)
+---
 
-Example:
+## Adding the dependency
+
+The API is published as a separate lightweight artifact (`ezrtp-api`) that
+contains only the classes you need. You do **not** need to depend on the full
+plugin jar.
+
+### Maven
+
+```xml
+<dependency>
+  <groupId>com.skyblockexp</groupId>
+  <artifactId>ezrtp-api</artifactId>
+  <version>3.0.1</version>
+  <scope>provided</scope>
+</dependency>
+```
+
+### Gradle
+
+```groovy
+compileOnly 'com.skyblockexp:ezrtp-api:3.0.1'
+```
+
+Declare EzRTP as a soft or hard dependency in your `plugin.yml` so Bukkit
+loads it before your plugin:
+
+```yml
+# hard dependency — your plugin will not load if EzRTP is absent
+depend: [EzRTP]
+
+# soft dependency — your plugin loads with or without EzRTP
+softdepend: [EzRTP]
+```
+
+---
+
+## Quick start
 
 ```java
 import com.skyblockexp.ezrtp.api.EzRtpAPI;
 
-// RTP with default settings
+// Check that EzRTP is running before calling anything
+if (EzRtpAPI.isAvailable()) {
+    EzRtpAPI.rtpPlayer(player);
+}
+```
+
+That's it for the simplest case. The teleport uses all settings from the
+server's `rtp.yml`, charges any configured cost, and respects cooldowns.
+
+---
+
+## API reference
+
+All methods are static on `EzRtpAPI`.
+
+### `isAvailable()`
+
+```java
+boolean available = EzRtpAPI.isAvailable();
+```
+
+Returns `true` if EzRTP is loaded and its service is registered. Call this
+before any other method if EzRTP is a soft dependency.
+
+---
+
+### `rtpPlayer(Player player)`
+
+Teleport a player using the server's default RTP settings.
+
+```java
 EzRtpAPI.rtpPlayer(player);
 ```
 
-- RTP with custom settings: Use an instance of `RandomTeleportSettings`.
+- Uses `TeleportReason.COMMAND` — cooldowns, costs, and limits apply normally.
+- Fire-and-forget. No way to know if it succeeded.
 
-Example:
+---
+
+### `rtpPlayer(Player player, Object settings)`
+
+Teleport with custom settings (e.g. a different world or radius).
 
 ```java
-import com.skyblockexp.ezrtp.api.EzRtpAPI;
 import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
+import org.bukkit.configuration.file.YamlConfiguration;
 
-RandomTeleportSettings settings = ...; // build or obtain from config
+YamlConfiguration cfg = new YamlConfiguration();
+cfg.set("world", "world_the_end");
+cfg.set("radius.min", 1000);
+cfg.set("radius.max", 5000);
+
+RandomTeleportSettings settings = RandomTeleportSettings.fromConfiguration(cfg, getLogger());
+EzRtpAPI.rtpPlayer(player, settings);
+```
+
+`RandomTeleportSettings.fromConfiguration()` reads a `ConfigurationSection`
+exactly like EzRTP reads `rtp.yml`. Any key you omit uses the built-in default.
+
+---
+
+### `rtpPlayer(Player player, Object settings, Consumer<Boolean> callback)`
+
+Teleport with custom settings **and** a callback that fires when the teleport
+completes or fails.
+
+```java
 EzRtpAPI.rtpPlayer(player, settings, success -> {
     if (success) {
-        // do something on success
+        player.sendMessage("You were teleported!");
+    } else {
+        player.sendMessage("No safe location found.");
     }
 });
 ```
 
-Notes:
+The `Boolean` passed to the callback is:
+- `true` — teleport completed successfully.
+- `false` — teleport failed (no valid location found, player moved during countdown, etc.).
 
-- If EzRTP is not present or not enabled, the API will log a warning and the call will be ignored.
-- The API helpers default to using `TeleportReason.COMMAND` for cost/cooldown resolution.
+The callback is invoked on the main server thread.
 
-Where to find the code:
+---
 
-- API helper: [ezrtp-common/src/main/java/com/skyblockexp/ezrtp/api/EzRtpAPI.java](ezrtp-common/src/main/java/com/skyblockexp/ezrtp/api/EzRtpAPI.java#L1-L200)
-- Plugin accessor: [ezrtp-common/src/main/java/com/skyblockexp/ezrtp/EzRtpPlugin.java](ezrtp-common/src/main/java/com/skyblockexp/ezrtp/EzRtpPlugin.java#L1-L200)
+### `getTeleportService()`
 
-This repository includes a lightweight API helper designed for ease-of-use by other plugins. It does not introduce a formal service registry; instead it locates the running EzRTP plugin via the server plugin manager and delegates to the running `RandomTeleportService`.
-
-If you need a more advanced integration (for example, to run teleports using a specific teleport reason, or to integrate with economy providers in a custom way), obtain the `RandomTeleportService` directly:
+Returns the raw `TeleportService` instance for advanced use cases.
 
 ```java
-import com.skyblockexp.ezrtp.api.EzRtpAPI;
-import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
+import com.skyblockexp.ezrtp.api.TeleportService;
+import com.skyblockexp.ezrtp.teleport.TeleportReason;
 
-RandomTeleportService service = EzRtpAPI.getTeleportService();
+TeleportService service = EzRtpAPI.getTeleportService();
 if (service != null) {
-    // call service.teleportPlayer(...) variants directly
+    service.teleportPlayer(player, TeleportReason.JOIN);
 }
 ```
 
-The API is intentionally minimal to avoid tight coupling; it is safe to call from other plugins during runtime, but callers should handle the case where EzRTP is not present or not yet enabled.
+Use this when you need to pass a specific `TeleportReason` or call a variant
+not exposed by the static helpers.
+
+---
+
+## `TeleportReason` enum
+
+`TeleportReason` tells EzRTP why the teleport is happening. This affects which
+cost and cooldown rules are applied.
+
+| Value | When to use |
+|:------|:------------|
+| `COMMAND` | Player triggered the teleport via a command or button. Cooldowns and costs apply. |
+| `JOIN` | Player joined the server and was auto-teleported. Uses the `on-join` cost/cooldown rules. |
+
+---
+
+## `TeleportService` interface
+
+The full interface for advanced callers:
+
+```java
+public interface TeleportService {
+    // Simple teleport, no callback
+    void teleportPlayer(Player player, TeleportReason reason);
+
+    // Custom settings, no callback
+    void teleportPlayer(Player player, Object settings, TeleportReason reason);
+
+    // Simple teleport with callback
+    void teleportPlayer(Player player, TeleportReason reason, Consumer<Boolean> callback);
+
+    // Custom settings with callback
+    void teleportPlayer(Player player, Object settings, TeleportReason reason, Consumer<Boolean> callback);
+}
+```
+
+---
+
+## `RandomTeleportSettings` — full YAML reference
+
+`RandomTeleportSettings.fromConfiguration(ConfigurationSection, Logger)` reads
+any YAML section. Below are the keys you can set:
+
+| Key | Type | Example | Description |
+|:----|:-----|:--------|:------------|
+| `world` | String | `world_the_end` | World to teleport into. `auto` = player's current world. |
+| `center.x` / `center.z` | int | `0` | Search centre coordinates. |
+| `radius.min` | int | `500` | Minimum distance from centre. |
+| `radius.max` | int | `3000` | Maximum distance from centre. |
+| `radius.use-world-border` | bool | `true` | Use world border edge as the maximum radius. |
+| `min-y` / `max-y` | int | `54` / `320` | Vertical bounds for destinations. |
+| `max-attempts` | int | `20` | Candidate attempts before failing. |
+| `cost` | double | `5.0` | Economy cost per teleport (Vault). |
+| `countdown-seconds` | int | `3` | Countdown before teleport. `0` = instant. |
+| `search-pattern` | String | `circle` | Coordinate search shape. See [Search Patterns](../config/search-patterns). |
+| `biomes.include` | list | `[FOREST, PLAINS]` | Require one of these biomes. |
+| `biomes.exclude` | list | `[OCEAN]` | Reject these biomes. |
+| `protection.avoid-claims` | bool | `true` | Skip locations inside protected claims. |
+
+```java
+YamlConfiguration cfg = new YamlConfiguration();
+cfg.set("world", "world");
+cfg.set("radius.min", 2000);
+cfg.set("radius.max", 8000);
+cfg.set("search-pattern", "circle");
+cfg.set("biomes.include", List.of("FOREST", "BIRCH_FOREST"));
+cfg.set("cost", 10.0);
+
+RandomTeleportSettings settings = RandomTeleportSettings.fromConfiguration(cfg, getLogger());
+EzRtpAPI.rtpPlayer(player, settings, success -> {
+    if (!success) player.sendMessage("Could not find a forest location. Try again.");
+});
+```
+
+---
+
+## Null safety
+
+- If EzRTP is not installed or not yet enabled, `getTeleportService()` returns
+  `null` and all `rtpPlayer` helpers silently do nothing (or invoke the callback
+  with `false`).
+- Always guard with `EzRtpAPI.isAvailable()` when EzRTP is a soft dependency.
+- The API is safe to call from any thread; EzRTP handles its own async/sync
+  boundaries internally.
