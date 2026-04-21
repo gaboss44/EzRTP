@@ -110,7 +110,7 @@ public final class EzRtpPluginBootstrap {
         }
 
         logRuntimeArtifactSummary(runtimeArtifactStatus);
-        PlatformAdapterRegistrar.registerKnownProviders(plugin.getLogger(), !runtimeArtifactStatus.hasSupportedRuntimeModule());
+        PlatformAdapterRegistrar.registerKnownProviders(plugin.getLogger());
         ChunkLoadStrategyRegistry.loadAndRegister(plugin, plugin.getLogger());
         PlatformRuntimeRegistry.loadAndRegister(plugin, plugin.getLogger());
         PlatformGuiBridgeRegistry.loadAndRegister(plugin, plugin.getLogger());
