@@ -1,3 +1,9 @@
+---
+title: Purpur
+nav_order: 4
+parent: Platform Modules
+---
+
 # Purpur Module Installation
 
 ## Required jar(s)

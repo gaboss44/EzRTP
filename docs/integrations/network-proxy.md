@@ -1,3 +1,9 @@
+---
+title: Network & Proxy
+nav_order: 5
+parent: Integrations
+---
+
 # Network / Proxy Integration (BungeeCord/Velocity-style server selector)
 
 Use this integration when your `/rtp` GUI should also present cross-server destinations.

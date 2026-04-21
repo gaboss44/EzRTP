@@ -1,4 +1,9 @@
-# Development & Collaboration Guide
+---
+title: Developer Guide
+nav_order: 11
+---
+
+# Developer Guide
 
 This guide is for contributors working on EzRTP source code, reviews, and releases.
 

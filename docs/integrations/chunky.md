@@ -1,3 +1,9 @@
+---
+title: Chunky
+nav_order: 3
+parent: Integrations
+---
+
 # Chunky Integration (World Pre-Generation)
 
 Use this integration when you want faster/more reliable RTP in large unexplored worlds by pre-generating terrain.

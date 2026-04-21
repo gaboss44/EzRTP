@@ -1,3 +1,9 @@
+---
+title: Paper
+nav_order: 3
+parent: Platform Modules
+---
+
 # Paper Module Installation
 
 ## Required jar(s)

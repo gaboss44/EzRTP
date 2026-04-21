@@ -1,4 +1,9 @@
-# EzRTP Overview & Installation
+---
+title: Getting Started
+nav_order: 2
+---
+
+# Getting Started
 
 ## What EzRTP does
 

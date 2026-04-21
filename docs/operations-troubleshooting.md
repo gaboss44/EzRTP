@@ -1,4 +1,9 @@
-# EzRTP Operations, Tuning, and Troubleshooting
+---
+title: Operations & Troubleshooting
+nav_order: 6
+---
+
+# Operations, Tuning, and Troubleshooting
 
 ## Runtime behavior notes
 

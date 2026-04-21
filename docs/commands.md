@@ -1,8 +1,11 @@
-# EzRTP Commands & Permissions
+---
+title: Commands
+nav_order: 3
+---
 
-## Commands
+# Commands
 
-### Player command
+## Player command
 
 - `/rtp`
   - Opens GUI when GUI is enabled.
@@ -11,7 +14,7 @@
   - Teleports using the named center configured under `centers.named` in `rtp.yml`.
   - Named center is applied as a center override only; the world's normal RTP settings still apply.
 
-### RTP subcommands
+## RTP subcommands
 
 - `/rtp reload`
 - `/rtp stats [page]`
@@ -26,34 +29,18 @@
 - `/rtp addcenter <name>`
 - `/rtp pregenerate [world] [radius]`
 
-### Force command
+## Force command
 
 - `/forcertp <player> [world]`
   - If world is omitted, EzRTP uses `force-rtp.yml` `default-world`.
 
-### WorldGuard region mode (optional)
+## WorldGuard region mode (optional)
 
 When enabled:
 
 - `/rtp <regionId>`
 
 This centers RTP around the specified WorldGuard region and can apply per-region overrides.
-
-## Declared permissions
-
-- `ezrtp.use` (default `true`)
-- `ezrtp.reload` (default `op`)
-- `ezrtp.stats` (default `op`)
-- `ezrtp.heatmap` (default `op`)
-- `ezrtp.heatmap.fake` (default `op`)
-- `ezrtp.queue.bypass` (default `op`)
-- `ezrtp.forcertp` (default `op`)
-
-## Additional permission usage
-
-- `ezrtp.setcenter` is used by `/rtp setcenter` and `/rtp addcenter`.
-- `queue.yml` controls queue bypass permission path.
-- `gui.yml` and `network.yml` entries can require per-option permissions.
 
 ## Quick admin cheatsheet
 

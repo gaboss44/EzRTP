@@ -1,3 +1,9 @@
+---
+title: Vault / Economy
+nav_order: 1
+parent: Integrations
+---
+
 # Vault / Economy Integration
 
 Use this integration when you want RTP to cost money (for economy sinks, progression pacing, or VIP balancing).
