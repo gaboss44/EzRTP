@@ -13,6 +13,7 @@ Use this integration when you want dynamic values (player name, rank, stats, etc
 EzRTP resolves PlaceholderAPI placeholders in GUI icon names and lore when PlaceholderAPI is installed.
 
 Typical examples:
+
 - `%player_name%`
 - `%vault_eco_balance_formatted%`
 - placeholders from your rank/stats plugins

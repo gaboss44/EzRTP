@@ -13,6 +13,7 @@ Use this integration when you want EzRTP to avoid protected regions/claims.
 When enabled, EzRTP validates candidate RTP locations against configured protection providers and rejects protected points.
 
 Supported provider names in config:
+
 - `worldguard`
 - `griefprevention`
 

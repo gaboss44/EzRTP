@@ -129,6 +129,7 @@ EzRtpAPI.rtpPlayer(player, settings, success -> {
 ```
 
 The `Boolean` passed to the callback is:
+
 - `true` — teleport completed successfully.
 - `false` — teleport failed (no valid location found, player moved during countdown, etc.).
 
