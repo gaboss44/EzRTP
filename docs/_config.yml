@@ -9,13 +9,11 @@ description: >-
 url: "https://ez-plugins.github.io"
 baseurl: "/EzRTP"
 
-# ── Appearance
-────────────────────────────────────────────────────────────────
+# ── Appearance ─────────────────────────────────────────────────────────────────
 color_scheme: ezrtp
 heading_anchors: true
 
-# ── Header links
-──────────────────────────────────────────────────────────────
+# ── Header links ────────────────────────────────────────────────────────────────
 aux_links:
   "GitHub":
     - "https://github.com/ez-plugins/EzRTP"
@@ -23,16 +21,14 @@ aux_links:
     - "https://modrinth.com/plugin/ezplugins-ezrtp"
 aux_links_new_tab: true
 
-# ── Navigation
-────────────────────────────────────────────────────────────────
+# ── Navigation ──────────────────────────────────────────────────────────────────
 nav_sort: case_insensitive
 nav_external_links:
   - title: Changelog
     url: "https://github.com/ez-plugins/EzRTP/releases"
     hide_icon: false
 
-# ── Search
-────────────────────────────────────────────────────────────────────
+# ── Search ──────────────────────────────────────────────────────────────────────
 search_enabled: true
 search:
   heading_level:        2
@@ -41,8 +37,7 @@ search:
   preview_words_after:  10
   tokenizer_separator: /[\s/]+/
 
-# ── Footer
-────────────────────────────────────────────────────────────────────
+# ── Footer ──────────────────────────────────────────────────────────────────────
 back_to_top:     true
 back_to_top_text: "Back to top"
 
@@ -51,21 +46,18 @@ footer_content: >-
   Distributed under the
   <a href="https://github.com/ez-plugins/EzRTP/blob/main/LICENSE">MIT License</a>.
 
-# ── Kramdown
-──────────────────────────────────────────────────────────────────
+# ── Kramdown ────────────────────────────────────────────────────────────────────
 kramdown:
   syntax_highlighter_opts:
     block:
       line_numbers: false
 
-# ── Plugins
-───────────────────────────────────────────────────────────────────
+# ── Plugins ─────────────────────────────────────────────────────────────────────
 plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
 
-# ── Build exclusions
-──────────────────────────────────────────────────────────
+# ── Build exclusions ────────────────────────────────────────────────────────────
 exclude:
   - Gemfile
   - Gemfile.lock
