@@ -1,3 +1,9 @@
+---
+title: Spigot
+nav_order: 2
+parent: Platform Modules
+---
+
 # Spigot Module Installation
 
 ## Required jar(s)

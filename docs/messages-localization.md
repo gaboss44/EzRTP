@@ -1,4 +1,9 @@
-# EzRTP Messages & Localization
+---
+title: Messages & Localization
+nav_order: 5
+---
+
+# Messages & Localization
 
 EzRTP messages are controlled by `messages/<language>.yml`.
 

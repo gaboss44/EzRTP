@@ -1,3 +1,9 @@
+---
+title: PlaceholderAPI
+nav_order: 2
+parent: Integrations
+---
+
 # PlaceholderAPI Integration
 
 Use this integration when you want dynamic values (player name, rank, stats, etc.) in GUI icon text.

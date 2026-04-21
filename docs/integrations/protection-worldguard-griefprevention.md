@@ -1,3 +1,9 @@
+---
+title: WorldGuard & GriefPrevention
+nav_order: 4
+parent: Integrations
+---
+
 # WorldGuard / GriefPrevention Protection Integration
 
 Use this integration when you want EzRTP to avoid protected regions/claims.

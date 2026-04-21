@@ -1,3 +1,9 @@
+---
+title: Bukkit
+nav_order: 1
+parent: Platform Modules
+---
+
 # Bukkit / CraftBukkit Module Installation
 
 ## Required jar(s)
