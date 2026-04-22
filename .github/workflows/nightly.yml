@@ -21,8 +21,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # Only proceed when there are real (non-bot) commits since the last tag
-      # (stable or nightly). This prevents a duplicate nightly when only the
-      # automated version-bump commit is present.
+      # (stable or nightly). This prevents duplicate nightlies on days with no new work.
       - name: Check for unreleased changes since last tag
         id: changes
         run: |
@@ -54,12 +53,9 @@ jobs:
           java-version: '25'
           cache: maven
 
-      # Compute two versions:
-      #   nightly  – used for the JAR, Modrinth release, and git tag
-      #              e.g. 3.0.1-nightly.20260422
-      #   next     – bumped patch version committed back to main
-      #              e.g. 3.0.2  (pom.xml stays at this for the next cycle)
-      - name: Compute nightly and next versions
+      # Compute the nightly version used for the JAR, Modrinth release, and git tag.
+      # e.g. 3.0.1-nightly.20260422
+      - name: Compute nightly version
         if: steps.changes.outputs.has_changes == 'true'
         id: version
         run: |
@@ -135,7 +131,7 @@ jobs:
 
           {
             printf '\n#### Notes\n\n'
-            printf '> 🌙 Automated nightly beta build from `main` (%s).\n' "$DATE_DISPLAY"
+            printf '> 🌙 Automated nightly beta build from `v3.x` (%s).\n' "$DATE_DISPLAY"
             printf '>\n'
             printf '> Built from [`%s`](https://github.com/%s/commit/%s)\n' \
               "$SHORT_SHA" "$REPO" "${{ github.sha }}"
