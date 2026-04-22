@@ -100,10 +100,6 @@ jobs:
           SHORT_SHA="${GITHUB_SHA:0:7}"
           REPO="${{ github.repository }}"
 
-          {
-            printf '## 🌙 Nightly Beta — %s\n\n' "$DATE_DISPLAY"
-          } > changelog.md
-
           # Fetch merged PRs via the GitHub CLI since the last release tag.
           # Falls back to a commit list when no PRs are found (direct pushes, etc.)
           if [ -n "$LAST_TAG" ]; then
@@ -126,15 +122,13 @@ jobs:
 
           if [ -n "$PR_LIST" ]; then
             {
-              printf '### Merged Pull Requests\n\n'
+              printf '#### What changed\n\n'
               printf '%s\n' "$PR_LIST"
-            } >> changelog.md
+            } > changelog.md
           else
             # Fallback: list non-bot commits since the last tag
             {
-              printf '### Commits\n\n'
-              REF="${LAST_TAG:+${LAST_TAG}..}HEAD"
-              LIMIT="${LAST_TAG:+}${LAST_TAG:-"-10"}"
+              printf '#### What changed\n\n'
               git log ${LAST_TAG:+"${LAST_TAG}..HEAD"} ${LAST_TAG:-"-10"} \
                 --format="%an%x09%H%x09%s" \
               | while IFS=$'\t' read -r author sha subject; do
@@ -143,12 +137,14 @@ jobs:
                   printf "- %s ([%s](https://github.com/%s/commit/%s))\n" \
                     "$subject" "$short" "$REPO" "$sha"
                 done
-            } >> changelog.md
+            } > changelog.md
           fi
 
           {
-            printf '\n---\n'
-            printf 'Built from [`%s`](https://github.com/%s/commit/%s)\n' \
+            printf '\n#### Notes\n\n'
+            printf '> 🌙 Automated nightly beta build from `main` (%s).\n' "$DATE_DISPLAY"
+            printf '>\n'
+            printf '> Built from [`%s`](https://github.com/%s/commit/%s)\n' \
               "$SHORT_SHA" "$REPO" "${{ github.sha }}"
           } >> changelog.md
 
