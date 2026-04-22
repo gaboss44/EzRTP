@@ -19,17 +19,22 @@ public final class SpigotUpdateChecker {
 
     public void checkForUpdates() {
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            String currentVersion = plugin.getPluginMeta().getVersion();
+            if (currentVersion != null && currentVersion.contains("-nightly.")) {
+                plugin.getLogger()
+                        .info("Running a nightly build (" + currentVersion
+                                + "); skipping update check. Check Modrinth for the latest stable release.");
+                return;
+            }
             try {
                 String latestVersion = fetchLatestVersion();
                 if (latestVersion == null || latestVersion.isBlank()) {
                     plugin.getLogger().warning("SpigotMC update check returned an empty response.");
                     return;
                 }
-                String currentVersion = plugin.getPluginMeta().getVersion();
                 if (!latestVersion.equalsIgnoreCase(currentVersion)) {
                     plugin.getLogger().info("A new EzRTP version is available: " + latestVersion
-                            + " (current: " + currentVersion + "). Download: https://www.spigotmc.org/resources/"
-                            + resourceId + "/");
+                            + " (current: " + currentVersion + "). Download: https://modrinth.com/plugin/ezplugins-ezrtp");
                 } else {
                     plugin.getLogger().info("EzRTP is up to date.");
                 }
