@@ -66,16 +66,10 @@ jobs:
           CURRENT=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           # Strip any existing pre-release suffix so re-runs start from a clean base
           BASE=$(echo "$CURRENT" | sed 's/-.*//')
-          MAJOR=$(echo "$BASE" | cut -d. -f1)
-          MINOR=$(echo "$BASE" | cut -d. -f2)
-          PATCH=$(echo "$BASE" | cut -d. -f3)
           DATE=$(date -u '+%Y%m%d')
           NIGHTLY="${BASE}-nightly.${DATE}"
-          NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
           echo "nightly=${NIGHTLY}" >> "$GITHUB_OUTPUT"
-          echo "next=${NEXT}"       >> "$GITHUB_OUTPUT"
           echo "Nightly version : $NIGHTLY"
-          echo "Next base version: $NEXT"
 
       - name: Set nightly version in all POMs
         if: steps.changes.outputs.has_changes == 'true'
@@ -176,34 +170,13 @@ jobs:
             folia
           changelog-file: changelog.md
 
-      # After the upload, bump all POMs to the next clean patch version so that
-      # tomorrow's nightly (and any manual release) starts from the right base.
-      - name: Set next base version in all POMs
+      - name: Create and push nightly tag
         if: steps.changes.outputs.has_changes == 'true'
         run: |
-          mvn -B -ntp versions:set \
-            -DnewVersion="${{ steps.version.outputs.next }}" \
-            -DprocessAllModules \
-            -DgenerateBackupPoms=false
-
-      # [skip ci] tells GitHub Actions not to run push-triggered workflows for
-      # this commit. The scheduled nightly still runs as normal the next day.
-      - name: Commit version bump and push tag
-        if: steps.changes.outputs.has_changes == 'true'
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pom.xml \
-                  ezrtp-api/pom.xml \
-                  ezrtp-common/pom.xml \
-                  ezrtp-bukkit/pom.xml \
-                  ezrtp-paper/pom.xml \
-                  ezrtp-spigot/pom.xml \
-                  ezrtp-purpur/pom.xml
-          git commit -m "chore(release): bump version to ${{ steps.version.outputs.next }} [skip ci]"
-          git tag "${{ steps.version.outputs.nightly }}"
-          git push origin HEAD:v3.x
-          git push origin "${{ steps.version.outputs.nightly }}"
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "${{ steps.version.outputs.nightly }}"
+            git push origin "${{ steps.version.outputs.nightly }}"
 
       - name: Create GitHub Release
         if: steps.changes.outputs.has_changes == 'true'
