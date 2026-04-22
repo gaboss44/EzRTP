@@ -26,8 +26,8 @@ jobs:
       - name: Check for unreleased changes since last tag
         id: changes
         run: |
-          # Matches both stable tags (v3.0.1) and nightly tags (v3.0.1-nightly.*)
-          LAST_TAG=$(git tag --sort=-creatordate --list 'v*' | head -n 1)
+          # Matches both stable tags (3.0.1) and nightly tags (3.0.1-nightly.*)
+          LAST_TAG=$(git tag --sort=-creatordate | head -n 1)
           echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
           if [ -z "$LAST_TAG" ]; then
             echo "No release tags found; first nightly will proceed."
@@ -160,7 +160,11 @@ jobs:
           name: "EzRTP ${{ steps.version.outputs.nightly }}"
           version: "${{ steps.version.outputs.nightly }}"
           version-type: beta
-          files: "ezrtp-bukkit/target/EzRTP-${{ steps.version.outputs.nightly }}.jar"
+          files: |
+            ezrtp-bukkit/target/EzRTP-${{ steps.version.outputs.nightly }}.jar
+            ezrtp-paper/target/ezrtp-paper-${{ steps.version.outputs.nightly }}.jar
+            ezrtp-spigot/target/ezrtp-spigot-${{ steps.version.outputs.nightly }}.jar
+            ezrtp-purpur/target/ezrtp-purpur-${{ steps.version.outputs.nightly }}.jar
           game-versions: |
             1.21
             1.21.1
@@ -198,6 +202,20 @@ jobs:
                   ezrtp-spigot/pom.xml \
                   ezrtp-purpur/pom.xml
           git commit -m "chore(release): bump version to ${{ steps.version.outputs.next }} [skip ci]"
-          git tag "v${{ steps.version.outputs.nightly }}"
+          git tag "${{ steps.version.outputs.nightly }}"
           git push origin HEAD:main
-          git push origin "v${{ steps.version.outputs.nightly }}"
+          git push origin "${{ steps.version.outputs.nightly }}"
+
+      - name: Create GitHub Release
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.nightly }}" \
+            --title "EzRTP ${{ steps.version.outputs.nightly }}" \
+            --notes-file changelog.md \
+            --prerelease \
+            "ezrtp-bukkit/target/EzRTP-${{ steps.version.outputs.nightly }}.jar" \
+            "ezrtp-paper/target/ezrtp-paper-${{ steps.version.outputs.nightly }}.jar" \
+            "ezrtp-spigot/target/ezrtp-spigot-${{ steps.version.outputs.nightly }}.jar" \
+            "ezrtp-purpur/target/ezrtp-purpur-${{ steps.version.outputs.nightly }}.jar"
