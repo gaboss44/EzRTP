@@ -1,0 +1,207 @@
+name: Nightly Beta Release
+
+# Fires at 04:00 UTC every day. Can also be triggered manually.
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  nightly-beta:
+    name: Nightly Beta Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for pushing the version bump and creating tags
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Full history needed for tag-based change detection
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Only proceed when there are real (non-bot) commits since the last tag
+      # (stable or nightly). This prevents a duplicate nightly when only the
+      # automated version-bump commit is present.
+      - name: Check for unreleased changes since last tag
+        id: changes
+        run: |
+          # Matches both stable tags (v3.0.1) and nightly tags (v3.0.1-nightly.*)
+          LAST_TAG=$(git tag --sort=-creatordate --list 'v*' | head -n 1)
+          echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+          if [ -z "$LAST_TAG" ]; then
+            echo "No release tags found; first nightly will proceed."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Last release tag: $LAST_TAG"
+            TOTAL=$(git log "${LAST_TAG}..HEAD" --oneline | wc -l)
+            BOT=$(git log "${LAST_TAG}..HEAD" --oneline --author='github-actions\[bot\]' | wc -l)
+            COUNT=$((TOTAL - BOT))
+            if [ "$COUNT" -gt 0 ]; then
+              echo "$COUNT non-bot commit(s) since $LAST_TAG; proceeding with nightly."
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "No new commits since $LAST_TAG; skipping nightly release."
+              echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Set up JDK 25
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      # Compute two versions:
+      #   nightly  – used for the JAR, Modrinth release, and git tag
+      #              e.g. 3.0.1-nightly.20260422
+      #   next     – bumped patch version committed back to main
+      #              e.g. 3.0.2  (pom.xml stays at this for the next cycle)
+      - name: Compute nightly and next versions
+        if: steps.changes.outputs.has_changes == 'true'
+        id: version
+        run: |
+          CURRENT=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          # Strip any existing pre-release suffix so re-runs start from a clean base
+          BASE=$(echo "$CURRENT" | sed 's/-.*//')
+          MAJOR=$(echo "$BASE" | cut -d. -f1)
+          MINOR=$(echo "$BASE" | cut -d. -f2)
+          PATCH=$(echo "$BASE" | cut -d. -f3)
+          DATE=$(date -u '+%Y%m%d')
+          NIGHTLY="${BASE}-nightly.${DATE}"
+          NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          echo "nightly=${NIGHTLY}" >> "$GITHUB_OUTPUT"
+          echo "next=${NEXT}"       >> "$GITHUB_OUTPUT"
+          echo "Nightly version : $NIGHTLY"
+          echo "Next base version: $NEXT"
+
+      - name: Set nightly version in all POMs
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          mvn -B -ntp versions:set \
+            -DnewVersion="${{ steps.version.outputs.nightly }}" \
+            -DprocessAllModules \
+            -DgenerateBackupPoms=false
+
+      - name: Build
+        if: steps.changes.outputs.has_changes == 'true'
+        run: mvn -B -ntp -DskipTests -Dspotless.check.skip=true package
+
+      - name: Build changelog
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Reuse the tag resolved in the changes step so both steps are consistent
+          LAST_TAG="${{ steps.changes.outputs.last_tag }}"
+          DATE_DISPLAY=$(date -u '+%B %d, %Y')
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          REPO="${{ github.repository }}"
+
+          {
+            printf '## 🌙 Nightly Beta — %s\n\n' "$DATE_DISPLAY"
+          } > changelog.md
+
+          # Fetch merged PRs via the GitHub CLI since the last release tag.
+          # Falls back to a commit list when no PRs are found (direct pushes, etc.)
+          if [ -n "$LAST_TAG" ]; then
+            SINCE=$(git log -1 --format=%aI "${LAST_TAG}")
+            PR_LIST=$(gh pr list \
+              --state merged \
+              --base main \
+              --search "merged:>=${SINCE}" \
+              --json number,title,author,url \
+              --jq '.[] | "- **\(.title)** [#\(.number)](\(.url)) — @\(.author.login)"' \
+              2>/dev/null || true)
+          else
+            PR_LIST=$(gh pr list \
+              --state merged \
+              --base main \
+              --json number,title,author,url \
+              --jq '.[] | "- **\(.title)** [#\(.number)](\(.url)) — @\(.author.login)"' \
+              2>/dev/null || true)
+          fi
+
+          if [ -n "$PR_LIST" ]; then
+            {
+              printf '### Merged Pull Requests\n\n'
+              printf '%s\n' "$PR_LIST"
+            } >> changelog.md
+          else
+            # Fallback: list non-bot commits since the last tag
+            {
+              printf '### Commits\n\n'
+              REF="${LAST_TAG:+${LAST_TAG}..}HEAD"
+              LIMIT="${LAST_TAG:+}${LAST_TAG:-"-10"}"
+              git log ${LAST_TAG:+"${LAST_TAG}..HEAD"} ${LAST_TAG:-"-10"} \
+                --format="%an%x09%H%x09%s" \
+              | while IFS=$'\t' read -r author sha subject; do
+                  [[ "$author" == "github-actions[bot]" ]] && continue
+                  short="${sha:0:7}"
+                  printf "- %s ([%s](https://github.com/%s/commit/%s))\n" \
+                    "$subject" "$short" "$REPO" "$sha"
+                done
+            } >> changelog.md
+          fi
+
+          {
+            printf '\n---\n'
+            printf 'Built from [`%s`](https://github.com/%s/commit/%s)\n' \
+              "$SHORT_SHA" "$REPO" "${{ github.sha }}"
+          } >> changelog.md
+
+          echo "=== Changelog preview ===" && cat changelog.md
+
+      - name: Release to Modrinth (beta)
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ezplugins-ezrtp
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: true
+          name: "EzRTP ${{ steps.version.outputs.nightly }}"
+          version: "${{ steps.version.outputs.nightly }}"
+          version-type: beta
+          files: "ezrtp-bukkit/target/EzRTP-${{ steps.version.outputs.nightly }}.jar"
+          game-versions: |
+            1.21
+            1.21.1
+            1.21.2
+          loaders: |
+            bukkit
+            spigot
+            paper
+            purpur
+            folia
+          changelog-file: changelog.md
+
+      # After the upload, bump all POMs to the next clean patch version so that
+      # tomorrow's nightly (and any manual release) starts from the right base.
+      - name: Set next base version in all POMs
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          mvn -B -ntp versions:set \
+            -DnewVersion="${{ steps.version.outputs.next }}" \
+            -DprocessAllModules \
+            -DgenerateBackupPoms=false
+
+      # [skip ci] tells GitHub Actions not to run push-triggered workflows for
+      # this commit. The scheduled nightly still runs as normal the next day.
+      - name: Commit version bump and push tag
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pom.xml \
+                  ezrtp-api/pom.xml \
+                  ezrtp-common/pom.xml \
+                  ezrtp-bukkit/pom.xml \
+                  ezrtp-paper/pom.xml \
+                  ezrtp-spigot/pom.xml \
+                  ezrtp-purpur/pom.xml
+          git commit -m "chore(release): bump version to ${{ steps.version.outputs.next }} [skip ci]"
+          git tag "v${{ steps.version.outputs.nightly }}"
+          git push origin HEAD:main
+          git push origin "v${{ steps.version.outputs.nightly }}"
