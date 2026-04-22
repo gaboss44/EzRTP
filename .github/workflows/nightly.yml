@@ -134,8 +134,7 @@ jobs:
               | while IFS=$'\t' read -r author sha subject; do
                   [[ "$author" == "github-actions[bot]" ]] && continue
                   short="${sha:0:7}"
-                  printf "- %s ([%s](https://github.com/%s/commit/%s))\n" \
-                    "$subject" "$short" "$REPO" "$sha"
+                  printf '%s\n' "- ${subject} ([${short}](https://github.com/${REPO}/commit/${sha}))"
                 done
             } > changelog.md
           fi
