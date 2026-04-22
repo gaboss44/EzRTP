@@ -165,9 +165,9 @@ jobs:
             ezrtp-spigot/target/ezrtp-spigot-${{ steps.version.outputs.nightly }}.jar
             ezrtp-purpur/target/ezrtp-purpur-${{ steps.version.outputs.nightly }}.jar
           game-versions: |
-            1.21
-            1.21.1
-            1.21.2
+            26.1
+            26.1.1
+            26.1.2
           loaders: |
             bukkit
             spigot
