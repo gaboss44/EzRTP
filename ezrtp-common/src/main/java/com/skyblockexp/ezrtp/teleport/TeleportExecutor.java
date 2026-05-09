@@ -185,17 +185,21 @@ public final class TeleportExecutor {
                 : teleportSettings;
         World world = plugin.getServer().getWorld(effectiveSettings.getWorldName());
         if (world == null) {
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.WORLD_MISSING,
-                Map.of("world", effectiveSettings.getWorldName()), player));
+            if (!effectiveSettings.isSuppressPlayerMessages()) {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.WORLD_MISSING,
+                    Map.of("world", effectiveSettings.getWorldName()), player));
+            }
             if (callback != null) callback.accept(false);
             if (completionHook != null) completionHook.run();
             return;
         }
 
-        if (reason == TeleportReason.JOIN) {
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.JOIN_SEARCHING, player));
-        } else {
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORTING, player));
+        if (!effectiveSettings.isSuppressPlayerMessages()) {
+            if (reason == TeleportReason.JOIN) {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.JOIN_SEARCHING, player));
+            } else {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORTING, player));
+            }
         }
 
         long startTime = System.currentTimeMillis();
@@ -244,8 +248,10 @@ public final class TeleportExecutor {
                     if (costCalculator.requiresPayment(reason, resolvedCost)
                             && !costCalculator.withdraw(player, resolvedCost)) {
                         locationFinder.cacheValidLocation(validLocation, teleportSettings);
-                        com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.INSUFFICIENT_FUNDS,
-                            Map.of("cost", String.format(java.util.Locale.US, "%.2f", resolvedCost)), player));
+                        if (!effectiveSettings.isSuppressPlayerMessages()) {
+                            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.INSUFFICIENT_FUNDS,
+                                Map.of("cost", String.format(java.util.Locale.US, "%.2f", resolvedCost)), player));
+                        }
                         statistics.recordEconomyFailure();
                         statistics.recordAttempt(false, duration, biome, cacheHit, cacheChecked);
                         if (callback != null) callback.accept(false);
@@ -271,8 +277,10 @@ public final class TeleportExecutor {
                                     finalDuration, finalBiome, finalCacheHit, finalCacheChecked, finalValidLocation);
                         } else {
                             locationFinder.cacheValidLocation(finalValidLocation, effectiveSettings);
-                            com.skyblockexp.ezrtp.util.MessageUtil.send(player,
-                                    messageProvider.format(MessageKey.TELEPORT_FAILED, player));
+                            if (!effectiveSettings.isSuppressPlayerMessages()) {
+                                com.skyblockexp.ezrtp.util.MessageUtil.send(player,
+                                        messageProvider.format(MessageKey.TELEPORT_FAILED, player));
+                            }
                             statistics.recordTeleportApiFailure();
                             statistics.recordAttempt(false, finalDuration, finalBiome, finalCacheHit, finalCacheChecked);
                         }

@@ -41,11 +41,14 @@ public final class EzRtpConfiguration {
     private final boolean allowGuiDuringCooldown;
     private final boolean humanReadableCooldown;
     private final Map<String, NamedCenter> namedCenters;
+    private final boolean suppressPlayerMessages;
+    private final boolean suppressConsoleMessages;
 
     private EzRtpConfiguration(RandomTeleportSettings defaultSettings, GuiSettings guiSettings,
                                TeleportQueueSettings queueSettings, NetworkConfiguration networkConfiguration,
                                boolean allowGuiDuringCooldown, boolean humanReadableCooldown,
-                               Map<String, NamedCenter> namedCenters) {
+                               Map<String, NamedCenter> namedCenters,
+                               boolean suppressPlayerMessages, boolean suppressConsoleMessages) {
         this.defaultSettings = defaultSettings;
         this.guiSettings = guiSettings;
         this.queueSettings = queueSettings;
@@ -53,6 +56,8 @@ public final class EzRtpConfiguration {
         this.allowGuiDuringCooldown = allowGuiDuringCooldown;
         this.humanReadableCooldown = humanReadableCooldown;
         this.namedCenters = namedCenters;
+        this.suppressPlayerMessages = suppressPlayerMessages;
+        this.suppressConsoleMessages = suppressConsoleMessages;
             // Parse rtp-limits from config
             ConfigurationSection config = defaultSettings.getConfigSection().getRoot();
             ConfigurationSection rtpLimits = config.getConfigurationSection("rtp-limits");
@@ -173,7 +178,7 @@ public final class EzRtpConfiguration {
         }
 
     public RandomTeleportSettings getDefaultSettings() {
-        return defaultSettings;
+        return suppressPlayerMessages ? defaultSettings.withSuppressPlayerMessages(true) : defaultSettings;
     }
 
     /**
@@ -185,18 +190,19 @@ public final class EzRtpConfiguration {
      */
     public RandomTeleportSettings getSettingsForWorld(String worldName) {
         if (worldName == null || worldName.isEmpty()) {
-            return defaultSettings;
+            return getDefaultSettings();
         }
 
         // Look through GUI world options for matching world
         for (GuiWorldOption option : guiSettings.getWorldOptions()) {
             if (worldName.equals(option.getSettings().getWorldName())) {
-                return option.getSettings();
+                RandomTeleportSettings s = option.getSettings();
+                return suppressPlayerMessages ? s.withSuppressPlayerMessages(true) : s;
             }
         }
 
         // Fall back to default settings if world not found
-        return defaultSettings;
+        return getDefaultSettings();
     }
 
     public GuiSettings getGuiSettings() {
@@ -225,6 +231,10 @@ public final class EzRtpConfiguration {
      */
     public boolean isHumanReadableCooldown() {
         return humanReadableCooldown;
+    }
+
+    public boolean isSuppressConsoleMessages() {
+        return suppressConsoleMessages;
     }
 
     public List<String> getNamedCenterNames() {
@@ -271,9 +281,11 @@ public final class EzRtpConfiguration {
         boolean allowGuiDuringCooldown = baseConfiguration != null && baseConfiguration.getBoolean("rtp-limits.allow-gui-during-cooldown", true);
         boolean humanReadableCooldown = baseConfiguration != null && baseConfiguration.getBoolean("rtp.human-readable-cooldown", true);
         Map<String, NamedCenter> namedCenters = parseNamedCenters(baseConfiguration, logger);
+        boolean suppressPlayerMessages = baseConfiguration != null && baseConfiguration.getBoolean("messages.suppress-player", false);
+        boolean suppressConsoleMessages = baseConfiguration != null && baseConfiguration.getBoolean("messages.suppress-console", false);
         
         return new EzRtpConfiguration(defaultSettings, guiSettings, queueSettings, networkConfig,
-                allowGuiDuringCooldown, humanReadableCooldown, namedCenters);
+                allowGuiDuringCooldown, humanReadableCooldown, namedCenters, suppressPlayerMessages, suppressConsoleMessages);
     }
 
     private static void copySection(ConfigurationSection source, ConfigurationSection target) {
@@ -300,7 +312,7 @@ public final class EzRtpConfiguration {
                                TeleportQueueSettings queueSettings,
                                NetworkConfiguration networkConfiguration) {
         this(defaultSettings, guiSettings, queueSettings, networkConfiguration, true, true,
-                Collections.emptyMap());
+                Collections.emptyMap(), false, false);
     }
 
     private static boolean isSectionPopulated(ConfigurationSection section) {

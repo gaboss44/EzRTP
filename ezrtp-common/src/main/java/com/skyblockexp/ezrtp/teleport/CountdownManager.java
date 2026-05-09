@@ -52,7 +52,7 @@ public final class CountdownManager {
         }
 
         // Show countdown start message
-        if (teleportSettings.isCountdownChatMessagesEnabled()) {
+        if (teleportSettings.isCountdownChatMessagesEnabled() && !teleportSettings.isSuppressPlayerMessages()) {
             com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.COUNTDOWN_START,
                 Map.of("seconds", String.valueOf(countdown)), player));
         }
@@ -76,7 +76,7 @@ public final class CountdownManager {
         }
 
         // Show countdown tick message
-        if (teleportSettings.isCountdownChatMessagesEnabled()) {
+        if (teleportSettings.isCountdownChatMessagesEnabled() && !teleportSettings.isSuppressPlayerMessages()) {
             com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.COUNTDOWN_TICK,
                 Map.of("seconds", String.valueOf(seconds)), player));
         }

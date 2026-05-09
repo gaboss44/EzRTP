@@ -43,6 +43,18 @@ public class ForcertpSubcommand extends Subcommand {
             return true;
         }
 
+        // Strip --skip-message flag from args before normal processing
+        boolean skipMessage = false;
+        java.util.List<String> filteredArgs = new java.util.ArrayList<>();
+        for (String arg : args) {
+            if ("--skip-message".equalsIgnoreCase(arg)) {
+                skipMessage = true;
+            } else {
+                filteredArgs.add(arg);
+            }
+        }
+        args = filteredArgs.toArray(new String[0]);
+
         if (args.length < 1) {
             MessageUtil.send(sender, plugin.getMessageProvider().format(MessageKey.FORCERTP_INVALID_USAGE));
             return true;
@@ -73,6 +85,9 @@ public class ForcertpSubcommand extends Subcommand {
         if (worldName != null && !worldName.equals(settings.getWorldName())) {
             settings = settings.withWorldName(worldName);
         }
+        if (skipMessage) {
+            settings = settings.withSuppressPlayerMessages(true);
+        }
 
         RandomTeleportService service = teleportServiceSupplier.get();
         if (service == null) {
@@ -80,9 +95,14 @@ public class ForcertpSubcommand extends Subcommand {
             return false;
         }
 
+        boolean suppressConsole = skipMessage || (configuration != null && configuration.isSuppressConsoleMessages());
         // Notify executor and target
-        MessageUtil.send(sender, plugin.getMessageProvider().format(MessageKey.FORCERTP_EXECUTOR_NOTIFICATION, Map.of("player", target.getName())));
-        MessageUtil.send(target, plugin.getMessageProvider().format(MessageKey.FORCERTP_TARGET_NOTIFICATION, target));
+        if (!suppressConsole) {
+            MessageUtil.send(sender, plugin.getMessageProvider().format(MessageKey.FORCERTP_EXECUTOR_NOTIFICATION, Map.of("player", target.getName())));
+        }
+        if (!settings.isSuppressPlayerMessages()) {
+            MessageUtil.send(target, plugin.getMessageProvider().format(MessageKey.FORCERTP_TARGET_NOTIFICATION, target));
+        }
 
         // Teleport instantly, bypassing GUI and limits
         service.teleportPlayer(target, settings, TeleportReason.COMMAND);
@@ -106,11 +126,20 @@ public class ForcertpSubcommand extends Subcommand {
         }
 
         if (args.length == 2) {
-            // Suggest world names and the special "auto" sentinel
+            // Suggest world names, the special "auto" sentinel, and the --skip-message flag
             List<String> suggestions = new ArrayList<>();
             suggestions.add("auto");
+            suggestions.add("--skip-message");
             for (org.bukkit.World world : Bukkit.getWorlds()) {
                 suggestions.add(world.getName());
+            }
+            return suggestions;
+        }
+
+        if (args.length == 3) {
+            List<String> suggestions = new ArrayList<>();
+            if (!java.util.Arrays.asList(args).contains("--skip-message")) {
+                suggestions.add("--skip-message");
             }
             return suggestions;
         }

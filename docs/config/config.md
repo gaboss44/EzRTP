@@ -17,6 +17,8 @@ their own dedicated files.
 | `message-prefix` | `"&7[&bEzRTP&7] &r"` | Text prepended to every chat message the plugin sends. Supports `&` color codes and MiniMessage. |
 | `language` | `en` | Selects which file under `messages/` is used for player-facing text. Example: `en` loads `messages/en.yml`. |
 | `messages.force-legacy-colors` | `false` | Set to `true` on servers running very old clients that do not understand MiniMessage formatting. Converts all output to legacy `§` color codes. |
+| `messages.suppress-player` | `false` | When `true`, suppresses all teleport-related messages sent to players globally (searching, countdown, success, failure, queue). Useful for automation or silent teleports. |
+| `messages.suppress-console` | `false` | When `true`, suppresses the executor notification that admin commands (e.g. `/forcertp`) normally send to the command sender. |
 | `worldguard.region-command.enabled` | `false` | Allows `/rtp <regionId>` to teleport players randomly **inside** a named WorldGuard region. Requires WorldGuard. |
 | `worldguard.region-command.autocomplete` | `false` | When enabled, tab-completing `/rtp` will suggest WorldGuard region names. |
 | `world` | `world` | Fallback world name used by utility commands (e.g. `/rtp pregenerate`). Does not affect normal RTP — that is set in `rtp.yml`. |
@@ -31,6 +33,8 @@ language: en
 
 messages:
   force-legacy-colors: false
+  suppress-player: false   # suppress all teleport-related messages to players
+  suppress-console: false  # suppress executor notifications for admin commands
 
 worldguard:
   region-command:
