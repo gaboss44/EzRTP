@@ -23,6 +23,7 @@ import com.skyblockexp.ezrtp.message.MessageProvider;
 import com.skyblockexp.ezrtp.metrics.EzRtpMetricsRegistrar;
 import com.skyblockexp.ezrtp.platform.ChunkLoadStrategyRegistry;
 import com.skyblockexp.ezrtp.platform.PlatformGuiBridgeRegistry;
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeCapabilitiesDetector;
 import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
 import com.skyblockexp.ezrtp.protection.ProtectionRegistry;
 import com.skyblockexp.ezrtp.storage.MySqlRtpUsageStorage;
@@ -180,7 +181,10 @@ public final class EzRtpPluginBootstrap {
     }
 
     public void disable() {
-        plugin.getServer().getScheduler().cancelTasks(plugin);
+        // cancelTasks is not supported on Folia (regionised scheduler); skip it there.
+        if (!PlatformRuntimeCapabilitiesDetector.detect(plugin).regionizedRuntime()) {
+            plugin.getServer().getScheduler().cancelTasks(plugin);
+        }
         if (unsafeLocationMonitor != null) {
             unsafeLocationMonitor.shutdown();
             unsafeLocationMonitor = null;

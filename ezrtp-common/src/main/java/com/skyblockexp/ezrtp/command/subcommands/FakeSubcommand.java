@@ -183,7 +183,7 @@ public class FakeSubcommand extends Subcommand {
             final CommandSender senderFinal = sender;
 
             // Compute integer coordinates asynchronously to avoid blocking server thread
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            PlatformRuntimeRegistry.get().scheduler().executeAsync(() -> {
                 final java.util.List<int[]> coords = new java.util.ArrayList<>(amount);
                 for (int i = 0; i < amount; i++) {
                     int[] c = strategyFinal.generateCandidateCoordinates(targetWorldFinal, centerXFinal, centerZFinal, minRadiusFinal, maxRadiusFinal, settingsFinal.getBiomeInclude(), null);

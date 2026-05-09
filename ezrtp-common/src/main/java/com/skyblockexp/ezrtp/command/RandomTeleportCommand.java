@@ -10,6 +10,7 @@ import com.skyblockexp.ezrtp.config.RandomTeleportSettings;
 import com.skyblockexp.ezrtp.gui.RandomTeleportGuiManager;
 import com.skyblockexp.ezrtp.protection.ProtectionRegistry;
 import com.skyblockexp.ezrtp.protection.WorldGuardProtectionProvider;
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
 import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
 import com.skyblockexp.ezrtp.teleport.TeleportReason;
@@ -305,7 +306,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
                     usageStorage.incrementUsage(player.getUniqueId(), world, "daily");
                     usageStorage.incrementUsage(player.getUniqueId(), world, "weekly");
                     // Save asynchronously to avoid blocking main thread
-                    plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> usageStorage.save());
+                    PlatformRuntimeRegistry.get().scheduler().executeAsync(() -> usageStorage.save());
                 }
             });
         }

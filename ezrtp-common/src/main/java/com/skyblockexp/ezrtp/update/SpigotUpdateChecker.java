@@ -18,7 +18,7 @@ public final class SpigotUpdateChecker {
     }
 
     public void checkForUpdates() {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        Thread thread = new Thread(() -> {
             String currentVersion = plugin.getPluginMeta().getVersion();
             if (currentVersion != null && currentVersion.contains("-nightly.")) {
                 plugin.getLogger()
@@ -41,7 +41,9 @@ public final class SpigotUpdateChecker {
             } catch (Exception ex) {
                 plugin.getLogger().warning("Failed to check for EzRTP updates: " + ex.getMessage());
             }
-        });
+        }, "ezrtp-update-checker");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private String fetchLatestVersion() throws Exception {

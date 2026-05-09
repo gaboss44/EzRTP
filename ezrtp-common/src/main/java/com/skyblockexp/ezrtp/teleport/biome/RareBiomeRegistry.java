@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
 import com.skyblockexp.ezrtp.storage.HotspotStorage;
 
 import java.util.*;
@@ -167,7 +168,7 @@ public final class RareBiomeRegistry {
                 final double fx = location.getX(), fy = location.getY(), fz = location.getZ();
                 final String wn = worldName;
                 final String biomeName = biome.name();
-                Bukkit.getScheduler().runTaskAsynchronously(plugin,
+                PlatformRuntimeRegistry.get().scheduler().executeAsync(
                     () -> s.saveHotspot(wn, biomeName, fx, fy, fz));
             }
         }
