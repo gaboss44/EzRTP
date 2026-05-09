@@ -20,7 +20,7 @@ Default language file:
 
 - Teleport lifecycle (`teleporting`, `teleport-success`, `teleport-failed`, fallback variants)
 - Queue (`queue-queued`, `queue-full`)
-- Countdown (`countdown-start`, `countdown-tick`)
+- Countdown (`countdown-start`, `countdown-tick`, `countdown-move-warn`, `countdown-move-cancel`)
 - Limits/cooldown (`cooldown`, `limit-daily`, `limit-weekly`)
 - GUI (`gui-cache-filter-info`, `gui-no-destinations`, `gui-cooldown`)
 - Network (`network-service-unavailable`, `network-server-offline`)

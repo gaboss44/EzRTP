@@ -61,13 +61,15 @@ and per-group cost overrides go in `limits.yml`.
 
 ## Countdown
 
-A countdown timer that shows before the teleport happens. Players who move or
-take damage during the countdown can have their teleport cancelled (configure
-that in `limits.yml`).
+A countdown timer that shows before the teleport happens. Players who move too
+far during the countdown will have their teleport cancelled.
 
 | Key | Default | Description |
 | :--- | :--- | :--- |
 | `countdown-seconds` | `5` | How many seconds to count down. `0` disables the countdown entirely. |
+| `countdown.cancel-on-move` | `true` | Cancel the teleport if the player moves beyond `cancel-distance` during the countdown. |
+| `countdown.cancel-distance` | `2.0` | Distance in blocks from the starting position that triggers cancellation. |
+| `countdown.warn-distance` | `1.0` | Distance in blocks that sends a one-time warning before cancellation. Set to `0` to disable the warning. |
 | `countdown.bossbar.enabled` | `true` | Shows a bossbar with the countdown. |
 | `countdown.bossbar.title` | *(see below)* | MiniMessage text shown in the bossbar. `<seconds>` is replaced with the remaining time. |
 | `countdown.particles.enabled` | `true` | Plays a particle effect around the player during countdown. |
@@ -76,6 +78,9 @@ that in `limits.yml`).
 ```yml
 countdown-seconds: 5
 countdown:
+  cancel-on-move: true
+  cancel-distance: 2.0
+  warn-distance: 1.0
   bossbar:
     enabled: true
     title: "<yellow>Teleporting in <white><seconds></white> seconds...</yellow>"
