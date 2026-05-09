@@ -154,7 +154,7 @@ jobs:
             ezrtp-paper/target/ezrtp-paper-${{ steps.version.outputs.nightly }}.jar
             ezrtp-spigot/target/ezrtp-spigot-${{ steps.version.outputs.nightly }}.jar
             ezrtp-purpur/target/ezrtp-purpur-${{ steps.version.outputs.nightly }}.jar
-          game-versions: ">=26.1"
+          game-versions: ">=1.13"
           game-versions-filter: release
           loaders: |
             bukkit

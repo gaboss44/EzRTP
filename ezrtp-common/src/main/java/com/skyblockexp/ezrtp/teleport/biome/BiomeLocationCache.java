@@ -5,6 +5,7 @@ import com.skyblockexp.ezrtp.teleport.ChunkyWarmupCoordinator;
 import com.skyblockexp.ezrtp.platform.PlatformScheduler;
 import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
 import com.skyblockexp.ezrtp.platform.PlatformTask;
+import com.skyblockexp.ezrtp.util.compat.BiomeCompat;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -206,7 +207,7 @@ public final class BiomeLocationCache {
         long freeMemoryMb = (runtime.freeMemory() + (runtime.maxMemory() - runtime.totalMemory())) / (1024L * 1024L);
         plugin.getLogger().fine(String.format(
             "[BiomeCache] Cached location for %s in world '%s' (total: %d, Memory: %dMB free)",
-            biome.name(), worldName, locations.size(), freeMemoryMb
+            BiomeCompat.safeName(biome), worldName, locations.size(), freeMemoryMb
         ));
     }
     
