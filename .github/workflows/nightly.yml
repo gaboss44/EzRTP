@@ -134,6 +134,7 @@ jobs:
             placeholderapi | optional
             chunky | optional
             worldguard | optional
+            ezcountdown | optional
 
       - name: Create and push nightly tag
         if: steps.changes.outputs.has_changes == 'true'
