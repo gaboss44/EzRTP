@@ -156,6 +156,7 @@ jobs:
             chunky | optional
             worldguard | optional
             ezcountdown | optional
+            ezeconomy | optional
 
       # ──────────────────────────────────────────────────────────────────────
       #  8. DISCORD NOTIFICATION
