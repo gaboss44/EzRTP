@@ -81,61 +81,28 @@ jobs:
 
       - name: Build changelog
         if: steps.changes.outputs.has_changes == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Reuse the tag resolved in the changes step so both steps are consistent
-          LAST_TAG="${{ steps.changes.outputs.last_tag }}"
           DATE_DISPLAY=$(date -u '+%B %d, %Y')
           SHORT_SHA="${GITHUB_SHA:0:7}"
           REPO="${{ github.repository }}"
 
-          # Fetch merged PRs via the GitHub CLI since the last release tag.
-          # Falls back to a commit list when no PRs are found (direct pushes, etc.)
-          if [ -n "$LAST_TAG" ]; then
-            SINCE=$(git log -1 --format=%aI "${LAST_TAG}")
-            PR_LIST=$(gh pr list \
-              --state merged \
-              --base v3.x \
-              --search "merged:>=${SINCE}" \
-              --json number,title,author,url \
-              --jq '.[] | "- **\(.title)** [#\(.number)](\(.url)) — @\(.author.login)"' \
-              2>/dev/null || true)
-          else
-            PR_LIST=$(gh pr list \
-              --state merged \
-              --base v3.x \
-              --json number,title,author,url \
-              --jq '.[] | "- **\(.title)** [#\(.number)](\(.url)) — @\(.author.login)"' \
-              2>/dev/null || true)
-          fi
-
-          if [ -n "$PR_LIST" ]; then
-            {
-              printf '#### What changed\n\n'
-              printf '%s\n' "$PR_LIST"
-            } > changelog.md
-          else
-            # Fallback: list non-bot commits since the last tag
-            {
-              printf '#### What changed\n\n'
-              git log ${LAST_TAG:+"${LAST_TAG}..HEAD"} ${LAST_TAG:-"-10"} \
-                --format="%an%x09%H%x09%s" \
-              | while IFS=$'\t' read -r author sha subject; do
-                  [[ "$author" == "github-actions[bot]" ]] && continue
-                  short="${sha:0:7}"
-                  printf '%s\n' "- ${subject} ([${short}](https://github.com/${REPO}/commit/${sha}))"
-                done
-            } > changelog.md
-          fi
+          # Extract the [Unreleased] section from CHANGELOG.md as the primary changelog.
+          UNRELEASED=$(awk \
+            '/^## \[Unreleased\]/ { p=1; next }
+             /^## \[/ && p { exit }
+             p { print }' \
+            CHANGELOG.md | sed '/^[[:space:]]*$/d')
 
           {
-            printf '\n#### Notes\n\n'
+            if [ -n "$UNRELEASED" ]; then
+              printf '%s\n\n' "$UNRELEASED"
+            fi
+            printf '#### Notes\n\n'
             printf '> 🌙 Automated nightly beta build from `v3.x` (%s).\n' "$DATE_DISPLAY"
             printf '>\n'
             printf '> Built from [`%s`](https://github.com/%s/commit/%s)\n' \
               "$SHORT_SHA" "$REPO" "${{ github.sha }}"
-          } >> changelog.md
+          } > changelog.md
 
           echo "=== Changelog preview ===" && cat changelog.md
 

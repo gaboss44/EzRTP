@@ -12,12 +12,6 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 
 ### Added
 
-- **Movement-cancel during countdown**: if a player moves too far from their starting position while a countdown is running, the teleport is cancelled.
-  - `countdown.cancel-on-move` (default `true`) — enable or disable the feature.
-  - `countdown.cancel-distance` (default `2.0`) — distance in blocks that triggers cancellation.
-  - `countdown.warn-distance` (default `1.0`) — distance in blocks that sends a one-time warning before cancellation. Set to `0` to disable the warning.
-  - Two new message keys: `countdown-move-warn` and `countdown-move-cancel` (configurable in `messages/en.yml`).
-
 ### Changed
 
 ### Fixed
@@ -34,6 +28,24 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
   - `messages.suppress-player`: when `true`, silences all teleport-related messages to players globally (searching, countdown, queue position, success, failure, cost).
   - `messages.suppress-console`: when `true`, silences the executor notification that `/forcertp` sends to the command sender globally.
 - **`--skip-message` command flag**: can be appended to `/rtp`, `/rtp <center|region>`, `/forcertp <player> [world]`, and `/rtp forcertp <player> [world]` to suppress both player-facing and executor messages for that single invocation. Tab-completion suggests the flag.
+- **`BiomeCompat` utility** (`ezrtp-common`): reflection-based `safeName(Biome)` and `safeValueOf(String)` helpers that work correctly whether `org.bukkit.block.Biome` is an enum (Spigot/Bukkit ≤ Paper 25) or an interface (Paper 26+), preventing `IncompatibleClassChangeError` at runtime.
+- **Movement-cancel during countdown**: if a player moves too far from their starting position while a countdown is running, the teleport is cancelled.
+  - `countdown.cancel-on-move` (default `true`) — enable or disable the feature.
+  - `countdown.cancel-distance` (default `2.0`) — distance in blocks that triggers cancellation.
+  - `countdown.warn-distance` (default `1.0`) — distance in blocks that sends a one-time warning before cancellation. Set to `0` to disable the warning.
+  - Two new message keys: `countdown-move-warn` and `countdown-move-cancel` (configurable in `messages/en.yml`).
+
+### Changed
+
+- **Minecraft version support expanded to 1.13+**: `api-version` in `plugin.yml` lowered from `1.21` to `1.13`; plugin will now load on any server from MC 1.13 onwards.
+- **Java 17 output bytecode**: `maven.compiler.release` changed from `25` to `17` so the built JARs run on Java 17+ hosts. The build toolchain still requires JDK 25 to compile against `paper-api`.
+- **Modrinth `game-versions` broadened to `>=1.13`** in release and nightly workflows (was `>=26.1`).
+- **`RareBiomeRegistry.getDefaultRareBiomes()`**: replaced a single try/catch wrapping all `Biome.valueOf()` calls with per-biome `BiomeCompat.safeValueOf()` guards, so a biome absent on the running server version (e.g. `MODIFIED_JUNGLE` removed in 1.18, `DEEP_DARK` added in 1.19) no longer silently prevents the remaining biomes from being registered.
+- All `biome.name()` call sites replaced with `BiomeCompat.safeName(biome)` across `RareBiomeRegistry`, `GuiSettings`, `BiomeLocationCache`, `StatsSubcommand`, and `HeatmapSubcommand`.
+
+### Fixed
+
+- Stale `<fork>`, `<executable>`, and `<jvm>` references to deleted `java25.javac` / `java25.java` properties removed from root `pom.xml` compiler and Surefire plugin configuration.
 
 ---
 
