@@ -12,6 +12,12 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 
 ### Added
 
+- **Movement-cancel during countdown**: if a player moves too far from their starting position while a countdown is running, the teleport is cancelled.
+  - `countdown.cancel-on-move` (default `true`) — enable or disable the feature.
+  - `countdown.cancel-distance` (default `2.0`) — distance in blocks that triggers cancellation.
+  - `countdown.warn-distance` (default `1.0`) — distance in blocks that sends a one-time warning before cancellation. Set to `0` to disable the warning.
+  - Two new message keys: `countdown-move-warn` and `countdown-move-cancel` (configurable in `messages/en.yml`).
+
 ### Changed
 
 ### Fixed
