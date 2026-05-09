@@ -101,10 +101,10 @@ jobs:
             '/^## \[/ && p { exit }
              index($0, hdr) == 1 { p=1; next }
              p { print }' \
-            CHANGELOG.md | sed '/^[[:space:]]*$/d')
+            CHANGELOG.md)
 
           if [[ -z "$NOTES" ]]; then
-            NOTES="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ steps.meta.outputs.ref }}/CHANGELOG.md) for details."
+            NOTES="No changelog entry found for ${VERSION}."
           fi
 
           printf '%s\n' "$NOTES" > release-notes.md
