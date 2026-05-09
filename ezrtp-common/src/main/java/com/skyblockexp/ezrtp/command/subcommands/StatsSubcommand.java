@@ -10,6 +10,7 @@ import com.skyblockexp.ezrtp.teleport.biome.BiomeLocationCache;
 import com.skyblockexp.ezrtp.teleport.biome.RareBiomeRegistry;
 import com.skyblockexp.ezrtp.teleport.queue.ChunkLoadQueue;
 import com.skyblockexp.ezrtp.util.MessageUtil;
+import com.skyblockexp.ezrtp.util.compat.BiomeCompat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -602,7 +603,7 @@ public class StatsSubcommand extends Subcommand {
      * Formats a biome name for display (converts DARK_FOREST to "Dark Forest").
      */
     private String formatBiomeName(org.bukkit.block.Biome biome) {
-        String name = biome.name().replace("_", " ");
+        String name = BiomeCompat.safeName(biome).replace("_", " ");
         String[] words = name.toLowerCase(Locale.ROOT).split(" ");
         StringBuilder formatted = new StringBuilder();
 

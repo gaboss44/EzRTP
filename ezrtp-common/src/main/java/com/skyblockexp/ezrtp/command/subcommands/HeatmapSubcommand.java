@@ -13,6 +13,7 @@ import com.skyblockexp.ezrtp.teleport.search.UniformSearchStrategy;
 import com.skyblockexp.ezrtp.teleport.heatmap.HeatmapGenerator;
 import com.skyblockexp.ezrtp.teleport.heatmap.HeatmapMapService;
 import com.skyblockexp.ezrtp.teleport.heatmap.HeatmapSimulationStore;
+import com.skyblockexp.ezrtp.util.compat.BiomeCompat;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -113,7 +114,7 @@ public class HeatmapSubcommand extends Subcommand {
             suggestions.add(SAVE_SUBCOMMAND);
             // Add biome names
             for (Biome biome : Biome.values()) {
-                suggestions.add(biome.name().toLowerCase());
+                suggestions.add(BiomeCompat.safeName(biome).toLowerCase());
             }
             return suggestions;
         }
@@ -251,7 +252,7 @@ public class HeatmapSubcommand extends Subcommand {
      * Formats a biome name for display.
      */
     private String formatBiomeName(Biome biome) {
-        String name = biome.name().replace("_", " ");
+        String name = BiomeCompat.safeName(biome).replace("_", " ");
         String[] words = name.toLowerCase().split(" ");
         StringBuilder formatted = new StringBuilder();
 

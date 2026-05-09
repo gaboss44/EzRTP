@@ -13,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
 import com.skyblockexp.ezrtp.storage.HotspotStorage;
+import com.skyblockexp.ezrtp.util.compat.BiomeCompat;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,22 +58,26 @@ public final class RareBiomeRegistry {
      */
     private static Set<Biome> getDefaultRareBiomes() {
         Set<Biome> rare = new HashSet<>();
-        // Rare biomes that are typically hard to find
-        try {
-            rare.add(Biome.valueOf("MUSHROOM_FIELDS"));
-            rare.add(Biome.valueOf("JUNGLE"));
-            rare.add(Biome.valueOf("BAMBOO_JUNGLE"));
-            rare.add(Biome.valueOf("BADLANDS"));
-            rare.add(Biome.valueOf("ERODED_BADLANDS"));
-            rare.add(Biome.valueOf("WOODED_BADLANDS"));
-            rare.add(Biome.valueOf("ICE_SPIKES"));
-            rare.add(Biome.valueOf("SUNFLOWER_PLAINS"));
-            rare.add(Biome.valueOf("FLOWER_FOREST"));
-            rare.add(Biome.valueOf("MODIFIED_JUNGLE"));
-            rare.add(Biome.valueOf("MODIFIED_JUNGLE_EDGE"));
-            rare.add(Biome.valueOf("DEEP_DARK"));
-        } catch (IllegalArgumentException e) {
-            // Some biomes might not exist in all versions
+        // Rare biomes that are typically hard to find.
+        // Each entry is guarded individually so a biome absent on the running
+        // server version (e.g. MODIFIED_JUNGLE removed in 1.18, DEEP_DARK added
+        // in 1.19) does not prevent the remaining biomes from being registered.
+        for (String name : new String[] {
+            "MUSHROOM_FIELDS",
+            "JUNGLE",
+            "BAMBOO_JUNGLE",
+            "BADLANDS",
+            "ERODED_BADLANDS",
+            "WOODED_BADLANDS",
+            "ICE_SPIKES",
+            "SUNFLOWER_PLAINS",
+            "FLOWER_FOREST",
+            "MODIFIED_JUNGLE",
+            "MODIFIED_JUNGLE_EDGE",
+            "DEEP_DARK"
+        }) {
+            Biome b = BiomeCompat.safeValueOf(name);
+            if (b != null) rare.add(b);
         }
         return rare;
     }
@@ -167,7 +172,7 @@ public final class RareBiomeRegistry {
                 final HotspotStorage s = storage;
                 final double fx = location.getX(), fy = location.getY(), fz = location.getZ();
                 final String wn = worldName;
-                final String biomeName = biome.name();
+                final String biomeName = BiomeCompat.safeName(biome);
                 PlatformRuntimeRegistry.get().scheduler().executeAsync(
                     () -> s.saveHotspot(wn, biomeName, fx, fy, fz));
             }

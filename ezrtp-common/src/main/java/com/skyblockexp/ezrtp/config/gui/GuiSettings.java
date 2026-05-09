@@ -5,6 +5,7 @@ import com.skyblockexp.ezrtp.config.biome.RareBiomeOptimizationSettings;
 import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
 import com.skyblockexp.ezrtp.util.ItemFlagUtil;
 import com.skyblockexp.ezrtp.util.MessageUtil;
+import com.skyblockexp.ezrtp.util.compat.BiomeCompat;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
@@ -326,7 +327,7 @@ public final class GuiSettings {
 
         if (rareBiomeOptimization != null && rareBiomeOptimization.getRareBiomes() != null) {
             for (Biome biome : rareBiomeOptimization.getRareBiomes()) {
-                rareBiomes.add(biome.name().toUpperCase(Locale.ROOT));
+                rareBiomes.add(BiomeCompat.safeName(biome).toUpperCase(Locale.ROOT));
             }
         }
 
@@ -458,7 +459,7 @@ public final class GuiSettings {
         if (includeBiomes.isEmpty()) {
             return false;
         }
-        return includeBiomes.stream().anyMatch(biome -> rareBiomesConfig.isRareBiome(biome.name()));
+        return includeBiomes.stream().anyMatch(biome -> rareBiomesConfig.isRareBiome(BiomeCompat.safeName(biome)));
     }
 
     private static List<GuiServerOption> parseServerOptions(
