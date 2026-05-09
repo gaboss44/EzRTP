@@ -58,6 +58,9 @@ public final class RandomTeleportSettings {
     private final SearchPattern searchPattern;
     private final ChunkyIntegrationSettings chunkyIntegrationSettings;
     private final boolean suppressPlayerMessages;
+    private final boolean cancelOnMove;
+    private final double cancelDistance;
+    private final double warnDistance;
 
     public RandomTeleportSettings(ConfigurationSection configSection,
                                  String worldName, int centerX, int centerZ, int minimumRadius, int maximumRadius,
@@ -89,7 +92,7 @@ public final class RandomTeleportSettings {
                 minY, maxY, biomeInclude, biomeExclude, protectionSettings, preCacheSettings,
                 rareBiomeOptimizationSettings, chunkLoadingSettings, enableFallbackToCache,
                 biomeSearchSettings, biomeFilteringEnabled, biomeSystemEnabled, safetySettings,
-                searchPattern, chunkyIntegrationSettings, false);
+                searchPattern, chunkyIntegrationSettings, false, true, 2.0, 1.0);
     }
 
     public RandomTeleportSettings(ConfigurationSection configSection,
@@ -116,6 +119,43 @@ public final class RandomTeleportSettings {
                                  SearchPattern searchPattern,
                                  ChunkyIntegrationSettings chunkyIntegrationSettings,
                                  boolean suppressPlayerMessages) {
+        this(configSection, worldName, centerX, centerZ, minimumRadius, maximumRadius,
+                maxAttempts, useWorldBorderRadius, unsafeBlocks, messages, particleSettings,
+                onJoinTeleportSettings, countdownBossBarSettings, countdownParticleSettings,
+                teleportCost, countdownSeconds, countdownChatMessagesEnabled, debugRejectionLogging,
+                minY, maxY, biomeInclude, biomeExclude, protectionSettings, preCacheSettings,
+                rareBiomeOptimizationSettings, chunkLoadingSettings, enableFallbackToCache,
+                biomeSearchSettings, biomeFilteringEnabled, biomeSystemEnabled, safetySettings,
+                searchPattern, chunkyIntegrationSettings, suppressPlayerMessages, true, 2.0, 1.0);
+    }
+
+    public RandomTeleportSettings(ConfigurationSection configSection,
+                                 String worldName, int centerX, int centerZ, int minimumRadius, int maximumRadius,
+                                 int maxAttempts, boolean useWorldBorderRadius, Set<Material> unsafeBlocks,
+                                 TeleportMessages messages, ParticleSettings particleSettings,
+                                 OnJoinTeleportSettings onJoinTeleportSettings,
+                                 CountdownBossBarSettings countdownBossBarSettings,
+                                 CountdownParticleSettings countdownParticleSettings,
+                                 double teleportCost,
+                                 int countdownSeconds, boolean countdownChatMessagesEnabled, boolean debugRejectionLogging,
+                                 Integer minY, Integer maxY,
+                                 Set<Biome> biomeInclude,
+                                 Set<Biome> biomeExclude,
+                                 ProtectionSettings protectionSettings,
+                                 BiomePreCacheSettings preCacheSettings,
+                                 RareBiomeOptimizationSettings rareBiomeOptimizationSettings,
+                                 ChunkLoadingSettings chunkLoadingSettings,
+                                 boolean enableFallbackToCache,
+                                 BiomeSearchSettings biomeSearchSettings,
+                                 boolean biomeFilteringEnabled,
+                                 boolean biomeSystemEnabled,
+                                 SafetySettings safetySettings,
+                                 SearchPattern searchPattern,
+                                 ChunkyIntegrationSettings chunkyIntegrationSettings,
+                                 boolean suppressPlayerMessages,
+                                 boolean cancelOnMove,
+                                 double cancelDistance,
+                                 double warnDistance) {
         this.configSection = configSection;
         this.worldName = worldName;
         this.centerX = centerX;
@@ -150,6 +190,9 @@ public final class RandomTeleportSettings {
         this.searchPattern = searchPattern != null ? searchPattern : SearchPattern.RANDOM;
         this.chunkyIntegrationSettings = chunkyIntegrationSettings != null ? chunkyIntegrationSettings : ChunkyIntegrationSettings.defaults();
         this.suppressPlayerMessages = suppressPlayerMessages;
+        this.cancelOnMove = cancelOnMove;
+        this.cancelDistance = Math.max(0.0, cancelDistance);
+        this.warnDistance = Math.max(0.0, warnDistance);
     }
         public Integer getMinY() { return minY; }
         public Integer getMaxY() { return maxY; }
@@ -167,6 +210,9 @@ public final class RandomTeleportSettings {
     public SafetySettings getSafetySettings() { return safetySettings; }
     public SearchPattern getSearchPattern() { return searchPattern; }
     public boolean isSuppressPlayerMessages() { return suppressPlayerMessages; }
+    public boolean isCancelOnMove() { return cancelOnMove; }
+    public double getCancelDistance() { return cancelDistance; }
+    public double getWarnDistance() { return warnDistance; }
 
     public String getWorldName() { return worldName; }
     public int getCenterX() { return centerX; }
@@ -216,7 +262,8 @@ public final class RandomTeleportSettings {
                 protectionSettings, preCacheSettings, rareBiomeOptimizationSettings,
                 chunkLoadingSettings, enableFallbackToCache, biomeSearchSettings,
                 biomeFilteringEnabled, biomeSystemEnabled, safetySettings,
-                searchPattern, chunkyIntegrationSettings, suppressPlayerMessages);
+                searchPattern, chunkyIntegrationSettings, suppressPlayerMessages,
+                cancelOnMove, cancelDistance, warnDistance);
     }
 
     public RandomTeleportSettings withSuppressPlayerMessages(boolean suppress) {
@@ -230,7 +277,8 @@ public final class RandomTeleportSettings {
                 protectionSettings, preCacheSettings, rareBiomeOptimizationSettings,
                 chunkLoadingSettings, enableFallbackToCache, biomeSearchSettings,
                 biomeFilteringEnabled, biomeSystemEnabled, safetySettings,
-                searchPattern, chunkyIntegrationSettings, suppress);
+                searchPattern, chunkyIntegrationSettings, suppress,
+                cancelOnMove, cancelDistance, warnDistance);
     }
 
     public static RandomTeleportSettings fromConfiguration(ConfigurationSection section, java.util.logging.Logger logger) {
@@ -254,7 +302,11 @@ public final class RandomTeleportSettings {
                 true,
                 SafetySettings.defaults(),
                 SearchPattern.RANDOM,
-                ChunkyIntegrationSettings.defaults());
+                ChunkyIntegrationSettings.defaults(),
+                false,
+                true,
+                2.0,
+                1.0);
         }
 
         String worldName = section.getString("world", "world");
@@ -362,6 +414,17 @@ public final class RandomTeleportSettings {
         ConfigurationSection rtpSection = section.getConfigurationSection("rtp");
         boolean enableFallbackToCache = rtpSection != null ? rtpSection.getBoolean("enable_fallback_to_cache", true) : true;
 
+        // Parse countdown cancel-on-move settings
+        boolean cancelOnMove = countdownSection != null
+                ? countdownSection.getBoolean("cancel-on-move", true)
+                : true;
+        double cancelDistance = countdownSection != null
+                ? countdownSection.getDouble("cancel-distance", 2.0)
+                : 2.0;
+        double warnDistance = countdownSection != null
+                ? countdownSection.getDouble("warn-distance", 1.0)
+                : 1.0;
+
         return new RandomTeleportSettings(section, worldName, centerX, centerZ, minRadius, maxRadius, maxAttempts, useWorldBorder, unsafeBlocks,
             messages, particleSettings, onJoinTeleportSettings, countdownBossBarSettings, countdownParticleSettings,
             teleportCost, countdownSeconds, countdownChatMessagesEnabled, debugRejectionLogging, minY, maxY,
@@ -376,7 +439,11 @@ public final class RandomTeleportSettings {
             biomeSystemEnabled,
             safetySettings,
             searchPattern,
-            chunkyIntegrationSettings);
+            chunkyIntegrationSettings,
+            false,
+            cancelOnMove,
+            cancelDistance,
+            warnDistance);
     }
 
     public static RandomTeleportSettings fromConfiguration(ConfigurationSection section, java.util.logging.Logger logger, RandomTeleportSettings fallback) {
@@ -519,6 +586,17 @@ public final class RandomTeleportSettings {
                 ? rtpSection.getBoolean("enable_fallback_to_cache", fallback != null ? fallback.isEnableFallbackToCache() : true)
                 : (fallback != null ? fallback.isEnableFallbackToCache() : true);
 
+        // Parse countdown cancel-on-move settings
+        boolean cancelOnMove = countdownSection != null && countdownSection.isSet("cancel-on-move")
+                ? countdownSection.getBoolean("cancel-on-move", true)
+                : (fallback != null ? fallback.isCancelOnMove() : true);
+        double cancelDistance = countdownSection != null && countdownSection.isSet("cancel-distance")
+                ? countdownSection.getDouble("cancel-distance", 2.0)
+                : (fallback != null ? fallback.getCancelDistance() : 2.0);
+        double warnDistance = countdownSection != null && countdownSection.isSet("warn-distance")
+                ? countdownSection.getDouble("warn-distance", 1.0)
+                : (fallback != null ? fallback.getWarnDistance() : 1.0);
+
         return new RandomTeleportSettings(section, worldName, centerX, centerZ, minRadius, maxRadius, maxAttempts,
                 useWorldBorder, unsafeBlocks, messages, particleSettings, onJoinTeleportSettings, countdownBossBarSettings,
                 countdownParticleSettings, teleportCost, countdownSeconds, countdownChatMessagesEnabled, debugRejectionLogging, minY, maxY,
@@ -533,7 +611,11 @@ public final class RandomTeleportSettings {
                 biomeSystemEnabled,
                 safetySettings,
                 searchPattern,
-                chunkyIntegrationSettings);
+                chunkyIntegrationSettings,
+                fallback != null && fallback.isSuppressPlayerMessages(),
+                cancelOnMove,
+                cancelDistance,
+                warnDistance);
     }
     public int getCountdownSeconds() {
         return countdownSeconds;

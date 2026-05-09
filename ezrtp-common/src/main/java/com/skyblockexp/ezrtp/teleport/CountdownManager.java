@@ -57,12 +57,14 @@ public final class CountdownManager {
                 Map.of("seconds", String.valueOf(countdown)), player));
         }
 
-        runCountdown(player, teleportSettings, callback, countdown, countdown, onComplete);
+        Location startLocation = player.getLocation().clone();
+        boolean[] warningSent = {false};
+        runCountdown(player, teleportSettings, callback, countdown, countdown, onComplete, startLocation, warningSent);
     }
 
     private void runCountdown(Player player, RandomTeleportSettings teleportSettings,
                              Consumer<Boolean> callback, int seconds, int totalSeconds,
-                             Runnable onComplete) {
+                             Runnable onComplete, Location startLocation, boolean[] warningSent) {
         if (seconds <= 0) {
             clearCountdownBossBar(player.getUniqueId());
             onComplete.run();
@@ -73,6 +75,29 @@ public final class CountdownManager {
             clearCountdownBossBar(player.getUniqueId());
             if (callback != null) callback.accept(false);
             return;
+        }
+
+        // Movement cancellation check
+        if (teleportSettings.isCancelOnMove() && teleportSettings.getCountdownSeconds() > 0) {
+            double movedDistanceSq = player.getLocation().distanceSquared(startLocation);
+            double cancelDistanceSq = teleportSettings.getCancelDistance() * teleportSettings.getCancelDistance();
+            double warnDistanceSq = teleportSettings.getWarnDistance() * teleportSettings.getWarnDistance();
+            if (movedDistanceSq >= cancelDistanceSq) {
+                clearCountdownBossBar(player.getUniqueId());
+                if (!teleportSettings.isSuppressPlayerMessages()) {
+                    com.skyblockexp.ezrtp.util.MessageUtil.send(player,
+                            messageProvider.format(MessageKey.COUNTDOWN_MOVE_CANCEL, player));
+                }
+                if (callback != null) callback.accept(false);
+                return;
+            }
+            if (!warningSent[0] && warnDistanceSq > 0 && movedDistanceSq >= warnDistanceSq) {
+                warningSent[0] = true;
+                if (!teleportSettings.isSuppressPlayerMessages()) {
+                    com.skyblockexp.ezrtp.util.MessageUtil.send(player,
+                            messageProvider.format(MessageKey.COUNTDOWN_MOVE_WARN, player));
+                }
+            }
         }
 
         // Show countdown tick message
@@ -87,7 +112,7 @@ public final class CountdownManager {
 
         // Schedule next tick
         scheduler.executeGlobalDelayed(() ->
-            runCountdown(player, teleportSettings, callback, seconds - 1, totalSeconds, onComplete), 20L);
+            runCountdown(player, teleportSettings, callback, seconds - 1, totalSeconds, onComplete, startLocation, warningSent), 20L);
     }
 
     private void updateCountdownBossBar(Player player, RandomTeleportSettings teleportSettings,

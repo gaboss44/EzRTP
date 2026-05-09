@@ -42,6 +42,13 @@ countdown-seconds: 5
 countdown:
   # Optional: override countdown seconds here instead of countdown-seconds.
   # seconds: 5
+  # Cancel the teleport if the player moves too far from their starting position.
+  # Set to false to disable.
+  cancel-on-move: true
+  # Minimum distance (in blocks) the player must move to cancel the teleport.
+  cancel-distance: 2.0
+  # Distance (in blocks) at which a warning is sent. Set to 0 to disable warnings.
+  warn-distance: 1.0
   bossbar:
     enabled: true
     title: "<yellow>Teleporting in <white><seconds></white> seconds...</yellow>"

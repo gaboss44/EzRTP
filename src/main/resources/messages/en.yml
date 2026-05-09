@@ -23,6 +23,8 @@ queue-full: "<red>The random teleport queue is currently full. Please try again 
 # Countdown messages
 countdown-start: "<yellow>Teleporting in <white><seconds></white> seconds...</yellow>"
 countdown-tick: "<gray><seconds>...</gray>"
+countdown-move-warn: "<yellow>Stop moving or your teleport will be cancelled!</yellow>"
+countdown-move-cancel: "<red>Teleport cancelled because you moved.</red>"
 
 # Cooldown and usage limit messages
 cooldown: "<red>You must wait <white><seconds></white> seconds before using /rtp again.</red>"
@@ -82,6 +84,8 @@ queue-full: "<red>The random teleport queue is currently full. Please try again 
 # Placeholders: <seconds>
 countdown-start: "<yellow>Teleporting in <white><seconds></white> seconds...</yellow>"
 countdown-tick: "<gray><seconds>...</gray>"
+countdown-move-warn: "<yellow>Stop moving or your teleport will be cancelled!</yellow>"
+countdown-move-cancel: "<red>Teleport cancelled because you moved.</red>"
 
 # Cooldown and usage limit messages
 # Placeholders: <seconds>
