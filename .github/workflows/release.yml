@@ -43,7 +43,26 @@ jobs:
           echo "Releasing version: ${VERSION}"
 
       # ──────────────────────────────────────────────────────────────────────
-      #  3. BUILD
+      #  3. CREATE TAG (if it doesn't exist yet)
+      #
+      #  When triggered via workflow_dispatch the tag may not exist yet.
+      #  This step creates and pushes it so the GitHub Release can reference it.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Create and push tag if missing
+        run: |
+          REF="${{ steps.meta.outputs.ref }}"
+          if git rev-parse --verify --quiet "refs/tags/${REF}" > /dev/null; then
+            echo "Tag ${REF} already exists; skipping creation."
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag "${REF}"
+            git push origin "${REF}"
+            echo "Created and pushed tag ${REF}."
+          fi
+
+      # ──────────────────────────────────────────────────────────────────────
+      #  4. BUILD & VERSION
       # ──────────────────────────────────────────────────────────────────────
       - name: Set up JDK 25
         uses: actions/setup-java@v5
@@ -63,7 +82,7 @@ jobs:
         run: mvn -B -ntp -DskipTests -Dspotless.check.skip=true package
 
       # ──────────────────────────────────────────────────────────────────────
-      #  4. EXTRACT CHANGELOG
+      #  5. EXTRACT CHANGELOG
       #
       #  Reads the section for this version from CHANGELOG.md.
       #  Falls back to a link to the file when the section is missing.
@@ -90,7 +109,7 @@ jobs:
           echo "=== Release notes preview ===" && cat release-notes.md
 
       # ──────────────────────────────────────────────────────────────────────
-      #  5. GITHUB RELEASE
+      #  6. GITHUB RELEASE
       # ──────────────────────────────────────────────────────────────────────
       - name: Create GitHub Release
         env:
@@ -105,7 +124,7 @@ jobs:
             "ezrtp-purpur/target/ezrtp-purpur-${{ steps.meta.outputs.version }}.jar"
 
       # ──────────────────────────────────────────────────────────────────────
-      #  6. MODRINTH RELEASE
+      #  7. MODRINTH RELEASE
       # ──────────────────────────────────────────────────────────────────────
       - name: Release to Modrinth (stable)
         uses: Kir-Antipov/mc-publish@v3.3
@@ -136,7 +155,7 @@ jobs:
             worldguard | optional
 
       # ──────────────────────────────────────────────────────────────────────
-      #  7. DISCORD NOTIFICATION
+      #  8. DISCORD NOTIFICATION
       # ──────────────────────────────────────────────────────────────────────
       - name: Post Discord notification
         env:
