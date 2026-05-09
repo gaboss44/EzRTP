@@ -16,7 +16,7 @@ The `rtp-limits.default` block applies to all players and worlds unless a more
 specific override exists.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `cooldown-seconds` | `300` | Seconds a player must wait between teleports. `0` = no cooldown. |
 | `daily-limit` | `10` | Maximum number of RTP uses per calendar day. `-1` = unlimited. |
 | `weekly-limit` | `50` | Maximum number of RTP uses per calendar week. `-1` = unlimited. |
@@ -77,7 +77,7 @@ rtp-limits:
 ## Other settings
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `allow-gui-during-cooldown` | `true` | When `true`, players on cooldown can still open the destination GUI — they just cannot confirm a teleport until the cooldown expires. Set to `false` to hide the GUI entirely. |
 
 ## Storage backend

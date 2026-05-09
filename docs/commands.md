@@ -13,6 +13,9 @@ nav_order: 3
 - `/rtp <centerName>`
   - Teleports using the named center configured under `centers.named` in `rtp.yml`.
   - Named center is applied as a center override only; the world's normal RTP settings still apply.
+- `/rtp [centerName|regionId] --skip-message`
+  - Suppresses all teleport-related messages to the player for this invocation.
+  - Can be combined with a named center or WorldGuard region argument.
 
 ## RTP subcommands
 
@@ -31,8 +34,9 @@ nav_order: 3
 
 ## Force command
 
-- `/forcertp <player> [world]`
+- `/forcertp <player> [world] [--skip-message]`
   - If world is omitted, EzRTP uses `force-rtp.yml` `default-world`.
+  - `--skip-message`: suppresses the executor notification and all player-facing teleport messages for this invocation. The flag may appear anywhere in the argument list.
 
 ## WorldGuard region mode (optional)
 

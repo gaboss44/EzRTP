@@ -19,6 +19,14 @@ messages:
   # Convert MiniMessage output to legacy colors before sending (for legacy client compatibility).
   force-legacy-colors: false
 
+  # Suppress all teleport-related messages sent to players (searching, success, failure, countdown,
+  # queue position). Useful for automation or when another plugin handles feedback.
+  suppress-player: false
+
+  # Suppress messages sent to the command executor for admin commands such as /forcertp.
+  # Does not affect error messages that require a response (e.g. invalid usage).
+  suppress-console: false
+
 # WorldGuard region command support.
 # Kept in config.yml for command-layer compatibility.
 worldguard:

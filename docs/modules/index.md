@@ -10,7 +10,7 @@ EzRTP ships a base plugin jar plus optional platform modules. Install the
 module that matches your server software.
 
 | Server | Required jars |
-|:-------|:--------------|
+| :--- | :--- |
 | Bukkit / CraftBukkit | `EzRTP-<version>.jar` |
 | Spigot | `EzRTP-<version>.jar` |
 | Paper | `EzRTP-<version>.jar` + `ezrtp-paper-<version>.jar` |

@@ -59,8 +59,10 @@ public final class TeleportPreCheckHandler {
         double resolvedCost = costCalculator.calculateCost(player, teleportSettings);
         if (costCalculator.requiresPayment(reason, resolvedCost)
             && !costCalculator.hasBalance(player, resolvedCost)) {
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.INSUFFICIENT_FUNDS,
-                Map.of("cost", String.format(java.util.Locale.US, "%.2f", resolvedCost)), player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.INSUFFICIENT_FUNDS,
+                    Map.of("cost", String.format(java.util.Locale.US, "%.2f", resolvedCost)), player));
+            }
             return false;
         }
         return true;

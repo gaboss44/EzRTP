@@ -85,6 +85,18 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        // Strip --skip-message flag before normal dispatch
+        boolean skipMessage = false;
+        List<String> filteredArgsList = new ArrayList<>();
+        for (String arg : args) {
+            if ("--skip-message".equalsIgnoreCase(arg)) {
+                skipMessage = true;
+            } else {
+                filteredArgsList.add(arg);
+            }
+        }
+        args = filteredArgsList.toArray(new String[0]);
+
         if (args.length > 0) {
             Subcommand subcommand = subcommands.get(args[0].toLowerCase());
             if (subcommand != null) {
@@ -93,20 +105,20 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
                 return subcommand.execute(sender, subArgs);
             }
             if (args.length == 1) {
-                if (handleWorldGuardRegionTeleport(sender, args[0])) {
+                if (handleWorldGuardRegionTeleport(sender, args[0], skipMessage)) {
                     return true;
                 }
-                if (handleNamedCenterTeleport(sender, args[0])) {
+                if (handleNamedCenterTeleport(sender, args[0], skipMessage)) {
                     return true;
                 }
             }
         }
 
         // Default RTP command - open GUI or teleport directly
-        return handleDefaultRtp(sender);
+        return handleDefaultRtp(sender, skipMessage);
     }
 
-    private boolean handleNamedCenterTeleport(CommandSender sender, String centerName) {
+    private boolean handleNamedCenterTeleport(CommandSender sender, String centerName, boolean skipMessage) {
         if (!(sender instanceof Player player)) {
             return false;
         }
@@ -134,6 +146,9 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
         centerOverride.set("center.z", namedCenter.z());
         RandomTeleportSettings centerSettings = RandomTeleportSettings.fromConfiguration(centerOverride,
                 plugin.getLogger(), baseSettings);
+        if (skipMessage) {
+            centerSettings = centerSettings.withSuppressPlayerMessages(true);
+        }
 
         RandomTeleportService service = teleportServiceSupplier.get();
         if (service == null) {
@@ -144,7 +159,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
         return true;
     }
 
-    private boolean handleWorldGuardRegionTeleport(CommandSender sender, String regionId) {
+    private boolean handleWorldGuardRegionTeleport(CommandSender sender, String regionId, boolean skipMessage) {
         if (!(sender instanceof Player player)) {
             return false;
         }
@@ -179,6 +194,9 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
         }
 
         RandomTeleportSettings regionSettings = resolveRegionSettings(player, normalizedRegionId, baseSettings, boundsOptional.get());
+        if (skipMessage) {
+            regionSettings = regionSettings.withSuppressPlayerMessages(true);
+        }
         RandomTeleportService service = teleportServiceSupplier.get();
         if (service == null) {
             MessageUtil.send(player, "<red>Teleport service is not available right now.</red>");
@@ -234,7 +252,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
     /**
      * Handles the default /rtp command (no subcommands).
      */
-    private boolean handleDefaultRtp(CommandSender sender) {
+    private boolean handleDefaultRtp(CommandSender sender, boolean skipMessage) {
         if (!(sender instanceof Player player)) {
             MessageUtil.send(sender, "<red>This command may only be used by players.</red>");
             return true;
@@ -260,6 +278,10 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
                 }
             }
         }
+        if (skipMessage) {
+            settings = settings.withSuppressPlayerMessages(true);
+        }
+
         if (hasBypass) {
             // Bypass all limits
             if (guiManager != null && guiManager.openSelection(player)) {
@@ -267,7 +289,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
             }
             RandomTeleportService service = teleportServiceSupplier.get();
             if (service != null) {
-                service.teleportPlayer(player, TeleportReason.COMMAND);
+                service.teleportPlayer(player, settings, TeleportReason.COMMAND);
             }
             return true;
         }
@@ -300,7 +322,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
         RandomTeleportService service = teleportServiceSupplier.get();
         if (service != null) {
             // Only increment usage/cooldown after a successful teleport
-            service.teleportPlayer(player, TeleportReason.COMMAND, success -> {
+            service.teleportPlayer(player, settings, TeleportReason.COMMAND, success -> {
                 if (success) {
                     usageStorage.setLastRtpTime(player.getUniqueId(), world, System.currentTimeMillis());
                     usageStorage.incrementUsage(player.getUniqueId(), world, "daily");
@@ -325,6 +347,7 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
             }
             completions.addAll(getWorldGuardRegionCompletions(sender, args[0]));
             completions.addAll(getNamedCenterCompletions(args[0]));
+            completions.add("--skip-message");
             return completions;
         } else if (args.length > 1) {
             Subcommand subcommand = subcommands.get(args[0].toLowerCase());
@@ -332,6 +355,10 @@ public final class RandomTeleportCommand implements CommandExecutor, TabComplete
                 String[] subArgs = new String[args.length - 1];
                 System.arraycopy(args, 1, subArgs, 0, subArgs.length);
                 return subcommand.tabComplete(sender, subArgs);
+            }
+            // For non-subcommand paths, suggest --skip-message if not yet present
+            if (!java.util.Arrays.asList(args).contains("--skip-message")) {
+                return java.util.Collections.singletonList("--skip-message");
             }
         }
         return java.util.Collections.emptyList();

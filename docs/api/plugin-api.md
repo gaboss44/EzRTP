@@ -162,7 +162,7 @@ not exposed by the static helpers.
 cost and cooldown rules are applied.
 
 | Value | When to use |
-|:------|:------------|
+| :--- | :--- |
 | `COMMAND` | Player triggered the teleport via a command or button. Cooldowns and costs apply. |
 | `JOIN` | Player joined the server and was auto-teleported. Uses the `on-join` cost/cooldown rules. |
 
@@ -196,7 +196,7 @@ public interface TeleportService {
 any YAML section. Below are the keys you can set:
 
 | Key | Type | Example | Description |
-|:----|:-----|:--------|:------------|
+| :--- | :--- | :--- | :--- |
 | `world` | String | `world_the_end` | World to teleport into. `auto` = player's current world. |
 | `center.x` / `center.z` | int | `0` | Search centre coordinates. |
 | `radius.min` | int | `500` | Minimum distance from centre. |

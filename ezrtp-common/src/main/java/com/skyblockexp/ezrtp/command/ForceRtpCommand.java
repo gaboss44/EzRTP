@@ -51,6 +51,18 @@ public final class ForceRtpCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Strip --skip-message flag from args before normal processing
+        boolean skipMessage = false;
+        List<String> filteredArgs = new ArrayList<>();
+        for (String arg : args) {
+            if ("--skip-message".equalsIgnoreCase(arg)) {
+                skipMessage = true;
+            } else {
+                filteredArgs.add(arg);
+            }
+        }
+        args = filteredArgs.toArray(new String[0]);
+
         if (args.length < 1) {
             com.skyblockexp.ezrtp.util.MessageUtil.send(sender, plugin.getMessageProvider().format(MessageKey.FORCERTP_INVALID_USAGE));
             return true;
@@ -86,6 +98,9 @@ public final class ForceRtpCommand implements CommandExecutor, TabCompleter {
         if (!worldName.equals(settings.getWorldName())) {
             settings = settings.withWorldName(worldName);
         }
+        if (skipMessage) {
+            settings = settings.withSuppressPlayerMessages(true);
+        }
 
         RandomTeleportService service = teleportServiceSupplier.get();
         if (service == null) {
@@ -93,14 +108,19 @@ public final class ForceRtpCommand implements CommandExecutor, TabCompleter {
             return false;
         }
 
+        boolean suppressConsole = skipMessage || (configuration != null && configuration.isSuppressConsoleMessages());
         // Notify executor and target
-        com.skyblockexp.ezrtp.util.MessageUtil.send(sender, plugin.getMessageProvider().format(MessageKey.FORCERTP_EXECUTOR_NOTIFICATION, Map.of("player", target.getName())));
+        if (!suppressConsole) {
+            com.skyblockexp.ezrtp.util.MessageUtil.send(sender, plugin.getMessageProvider().format(MessageKey.FORCERTP_EXECUTOR_NOTIFICATION, Map.of("player", target.getName())));
+        }
         // Provide the target message with the 'world' placeholder so messages
         // like "You are being teleported to <world>..." are resolved.
-        com.skyblockexp.ezrtp.util.MessageUtil.send(target, plugin.getMessageProvider().format(
-            MessageKey.FORCERTP_TARGET_NOTIFICATION,
-            Map.of("world", worldName != null ? worldName : target.getWorld().getName()),
-            target));
+        if (!settings.isSuppressPlayerMessages()) {
+            com.skyblockexp.ezrtp.util.MessageUtil.send(target, plugin.getMessageProvider().format(
+                MessageKey.FORCERTP_TARGET_NOTIFICATION,
+                Map.of("world", worldName != null ? worldName : target.getWorld().getName()),
+                target));
+        }
 
         // Teleport instantly, bypassing configured restrictions
         service.teleportPlayer(target, settings, TeleportReason.COMMAND);
@@ -123,11 +143,20 @@ public final class ForceRtpCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 2) {
-            // Suggest world names and the special "auto" sentinel
+            // Suggest world names, the special "auto" sentinel, and the --skip-message flag
             List<String> suggestions = new ArrayList<>();
             suggestions.add("auto");
+            suggestions.add("--skip-message");
             for (org.bukkit.World world : Bukkit.getWorlds()) {
                 suggestions.add(world.getName());
+            }
+            return suggestions;
+        }
+
+        if (args.length == 3) {
+            List<String> suggestions = new ArrayList<>();
+            if (!java.util.Arrays.asList(args).contains("--skip-message")) {
+                suggestions.add("--skip-message");
             }
             return suggestions;
         }

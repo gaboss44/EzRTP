@@ -61,25 +61,33 @@ public final class TeleportQueueManager {
 
         UUID playerId = player.getUniqueId();
         if (activeTeleportPlayer != null && activeTeleportPlayer.equals(playerId)) {
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORTING, player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORTING, player));
+            }
             return true;
         }
 
         int existingPosition = findQueuePosition(playerId);
         if (existingPosition >= 0) {
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.QUEUE_QUEUED,
-                Map.of("position", String.valueOf(existingPosition + 1)), player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.QUEUE_QUEUED,
+                    Map.of("position", String.valueOf(existingPosition + 1)), player));
+            }
             return true;
         }
 
         if (queueSettings.getMaxSize() > 0 && teleportQueue.size() >= queueSettings.getMaxSize()) {
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.QUEUE_FULL, player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.QUEUE_FULL, player));
+            }
             return true;
         }
 
         teleportQueue.addLast(new QueuedTeleport(playerId, teleportSettings, reason));
-        com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.QUEUE_QUEUED,
-            Map.of("position", String.valueOf(teleportQueue.size())), player));
+        if (!teleportSettings.isSuppressPlayerMessages()) {
+            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.QUEUE_QUEUED,
+                Map.of("position", String.valueOf(teleportQueue.size())), player));
+        }
 
         if (!queueProcessing) {
             queueProcessing = true;

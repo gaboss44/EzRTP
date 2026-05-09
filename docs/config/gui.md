@@ -15,7 +15,7 @@ inventory.
 ## Top-level settings
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `enabled` | `true` | Set to `false` to disable the GUI entirely. Players use `/rtp` only as a plain command. |
 | `title` | `<dark_aqua><bold>Random Teleport</bold></dark_aqua>` | Title shown at the top of the inventory. Supports MiniMessage formatting. |
 | `rows` | `5` | Number of rows in the chest GUI (1–6). Each row has 9 slots, so 5 rows = 45 slots total (0–44). |
@@ -66,7 +66,7 @@ worlds:
 ### Entry fields
 
 | Field | Description |
-|:------|:------------|
+| :--- | :--- |
 | `slot` | Inventory slot (0–53). Omit to place entries in order. |
 | `permission` | Permission node required to click. Leave blank for no restriction. |
 | `icon.material` | Any valid Bukkit/Minecraft item ID (e.g. `GRASS_BLOCK`, `NETHERRACK`). |
@@ -133,7 +133,7 @@ pre-cached locations ready, so players are never shown an option that would make
 them wait.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `disable-cache-filtering` | `false` | Set to `true` to always show all destinations regardless of cache state. |
 | `admin-only-cache-info` | `false` | When `true`, the “only showing cached options” notice is only shown to players with admin permissions. |
 | `rare_biomes.enabled` | `true` | Apply stricter cache requirements to rare biomes listed in `rtp.yml`. |

@@ -20,9 +20,10 @@ This document defines repository-wide guidance for contributors and coding agent
 ## Build & test expectations
 - Java version: **17**.
 - Preferred verification flow before submitting:
-  1. `mvn -q -DskipTests compile`
+  1. `mvn -q -DskipTests package`
   2. `mvn -q test`
   3. `mvn spotless:check` — if violations are reported, run `mvn spotless:apply` to fix them, then re-run the check.
+  4. run markdownlint and fix issues.
 - If a full test run is too expensive, run targeted tests for touched areas and explicitly note what was skipped.
 - After editing any `pom.xml` or Java source file, run `mvn spotless:check` (or `mvn spotless:apply`) to ensure formatting is clean before committing.
 

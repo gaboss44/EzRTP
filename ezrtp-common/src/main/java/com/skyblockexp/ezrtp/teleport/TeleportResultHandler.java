@@ -45,7 +45,9 @@ public final class TeleportResultHandler {
     public void handleSuccess(Player player, Location destination, SearchResult result,
                              RandomTeleportSettings teleportSettings, long duration,
                              org.bukkit.block.Biome biome, boolean cacheHit, boolean cacheChecked, Location validLocation) {
-        sendSuccessMessage(player, destination, result);
+        if (!teleportSettings.isSuppressPlayerMessages()) {
+            sendSuccessMessage(player, destination, result);
+        }
         playParticles(destination, teleportSettings.getParticleSettings());
         statistics.recordAttempt(true, duration, biome, cacheHit, cacheChecked);
         if (!cacheHit && validLocation != null) {
@@ -69,30 +71,38 @@ public final class TeleportResultHandler {
 
         if (cacheFallbackFailure) {
             reasonClass = "CACHE_FALLBACK_NO_CACHE";
-            com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FALLBACK_NO_CACHE, player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FALLBACK_NO_CACHE, player));
+            }
             triggerCacheWarmup(teleportSettings);
             statistics.recordGenericSearchErrorFailure();
         } else if (limitType != SearchLimitType.NONE && limitType != SearchLimitType.BIOME_REJECTIONS) {
             reasonClass = "SEARCH_LIMIT_" + limitType.name();
-            switch (teleportSettings.getBiomeSearchSettings().getFailoverMode()) {
-                case ABORT -> com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED, player));
-                default -> com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_SEARCH, player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                switch (teleportSettings.getBiomeSearchSettings().getFailoverMode()) {
+                    case ABORT -> com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED, player));
+                    default -> com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_SEARCH, player));
+                }
             }
             statistics.recordTimeoutFailure();
         } else if (result != null && result.noValidBiome()) {
             reasonClass = "NO_VALID_BIOME";
-            if (!teleportSettings.isEnableFallbackToCache()) {
-                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_SEARCH, player));
-            } else {
-                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_BIOME, player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                if (!teleportSettings.isEnableFallbackToCache()) {
+                    com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_SEARCH, player));
+                } else {
+                    com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_BIOME, player));
+                }
             }
             statistics.recordBiomeFailure(null);
         } else {
             reasonClass = "SEARCH_EXHAUSTED_OR_GENERIC";
-            if (!teleportSettings.isEnableFallbackToCache()) {
-                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_SEARCH, player));
-            } else {
-                com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED, player));
+            if (!teleportSettings.isSuppressPlayerMessages()) {
+                if (!teleportSettings.isEnableFallbackToCache()) {
+                    com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED_SEARCH, player));
+                } else {
+                    com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED, player));
+                }
             }
             statistics.recordGenericSearchErrorFailure();
         }
