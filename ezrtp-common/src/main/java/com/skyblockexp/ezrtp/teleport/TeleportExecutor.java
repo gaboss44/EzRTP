@@ -215,6 +215,7 @@ public final class TeleportExecutor {
                 boolean cacheHit = result != null && result.cacheHit();
                 boolean cacheChecked = result != null && result.cacheChecked();
                 Location validLocation = null;
+                boolean asyncTeleportStarted = false;
 
                 try {
                     if (throwable != null || result == null || result.location().isEmpty()) {
@@ -252,28 +253,44 @@ public final class TeleportExecutor {
                     }
 
                     Location destination = TeleportDestinationAdjuster.adjustForSafety(validLocation, effectiveSettings);
-                    biome = destination.getBlock().getBiome();
-                    Location oldLocation = player.getLocation(); // Store old location before teleport
-                    success = player.teleport(destination);
+                    final org.bukkit.block.Biome finalBiome = destination.getBlock().getBiome();
+                    biome = finalBiome;
 
-                    if (success) {
-                        resultHandler.handleSuccess(player, destination, result, effectiveSettings, duration, biome, cacheHit, cacheChecked, validLocation);
-                    } else {
-                        locationFinder.cacheValidLocation(validLocation, effectiveSettings);
-                        com.skyblockexp.ezrtp.util.MessageUtil.send(player, messageProvider.format(MessageKey.TELEPORT_FAILED, player));
-                        statistics.recordTeleportApiFailure();
-                        statistics.recordAttempt(false, duration, biome, cacheHit, cacheChecked);
-                    }
+                    // Capture effectively-final locals for the async completion handler.
+                    final Location finalDestination = destination;
+                    final long finalDuration = duration;
+                    final boolean finalCacheHit = cacheHit;
+                    final boolean finalCacheChecked = cacheChecked;
+                    final Location finalValidLocation = validLocation;
+
+                    asyncTeleportStarted = true;
+                    scheduler.teleportAsync(player, destination).whenComplete((tpSuccess, tpErr) -> {
+                        boolean tpResult = Boolean.TRUE.equals(tpSuccess) && tpErr == null;
+                        if (tpResult) {
+                            resultHandler.handleSuccess(player, finalDestination, result, effectiveSettings,
+                                    finalDuration, finalBiome, finalCacheHit, finalCacheChecked, finalValidLocation);
+                        } else {
+                            locationFinder.cacheValidLocation(finalValidLocation, effectiveSettings);
+                            com.skyblockexp.ezrtp.util.MessageUtil.send(player,
+                                    messageProvider.format(MessageKey.TELEPORT_FAILED, player));
+                            statistics.recordTeleportApiFailure();
+                            statistics.recordAttempt(false, finalDuration, finalBiome, finalCacheHit, finalCacheChecked);
+                        }
+                        if (callback != null) callback.accept(tpResult);
+                        if (completionHook != null) completionHook.run();
+                        PerformanceMonitor pm = performanceMonitor;
+                        if (pm != null) pm.afterOperation(finalDuration, world.getName());
+                    });
+
                 } finally {
-                    if (callback != null) {
-                        callback.accept(success);
-                    }
-                    if (completionHook != null) {
-                        completionHook.run();
-                    }
-                    PerformanceMonitor pm = performanceMonitor;
-                    if (pm != null) {
-                        pm.afterOperation(duration, world.getName());
+                    // Only run cleanup for pre-teleport failures. When asyncTeleportStarted
+                    // is true the whenComplete handler above is responsible for invoking
+                    // the callback, completionHook, and performance monitor.
+                    if (!asyncTeleportStarted) {
+                        if (callback != null) callback.accept(success);
+                        if (completionHook != null) completionHook.run();
+                        PerformanceMonitor pm = performanceMonitor;
+                        if (pm != null) pm.afterOperation(duration, world.getName());
                     }
                 }
             };
