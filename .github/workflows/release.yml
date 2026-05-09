@@ -25,9 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          # For workflow_dispatch: check out the provided tag.
-          # For push:tags: github.ref points to the tag directly.
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          # For push:tags: github.ref is the tag ref (e.g. refs/tags/v3.0.3).
+          # For workflow_dispatch: github.ref is the branch (e.g. refs/heads/main).
+          # We never use the tag input here because the tag may not exist yet —
+          # it is created in a later step.
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       # ──────────────────────────────────────────────────────────────────────
