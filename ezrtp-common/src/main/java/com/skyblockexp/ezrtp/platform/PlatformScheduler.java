@@ -1,6 +1,10 @@
 package com.skyblockexp.ezrtp.platform;
 
+import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
+
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Scheduler bridge that can route work to async execution and world-region main-thread execution.
@@ -33,4 +37,18 @@ public interface PlatformScheduler {
      * On non-regionised platforms the region context is ignored and a plain delayed task is used.
      */
     void executeRegionDelayed(World world, int chunkX, int chunkZ, Runnable task, long delayTicks);
+
+    /**
+     * Teleport {@code player} to {@code destination}.
+     *
+     * <p>On region-threaded platforms (Folia) this must use
+     * {@code Player.teleportAsync} — calling the synchronous
+     * {@code Player.teleport} from a region thread throws
+     * "Must use teleportAsync while in region threading".
+     * The default implementation wraps the synchronous call for
+     * non-regionised platforms (Bukkit, Spigot).
+     */
+    default CompletableFuture<Boolean> teleportAsync(Player player, Location destination) {
+        return CompletableFuture.completedFuture(player.teleport(destination));
+    }
 }

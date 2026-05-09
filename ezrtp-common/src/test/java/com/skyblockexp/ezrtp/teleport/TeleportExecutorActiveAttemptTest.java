@@ -73,6 +73,8 @@ class TeleportExecutorActiveAttemptTest {
         when(queueManager.enqueueIfNeeded(eq(player), any(RandomTeleportSettings.class), eq(TeleportReason.COMMAND))).thenReturn(false);
         when(messageProvider.format(any(MessageKey.class), any())).thenReturn(Component.text("msg"));
         when(messageProvider.format(any(MessageKey.class), any(), any())).thenReturn(Component.text("msg"));
+        when(platformScheduler.teleportAsync(any(Player.class), any(Location.class)))
+                .thenReturn(CompletableFuture.completedFuture(true));
 
         // executeRegion runs the task immediately (simulates Folia/Bukkit region thread)
         doAnswer(invocation -> {
@@ -151,7 +153,7 @@ class TeleportExecutorActiveAttemptTest {
 
         verify(locationFinder, times(1)).findSafeLocationAsync(any(World.class), any(RandomTeleportSettings.class));
         verify(messageProvider, times(1)).format(eq(MessageKey.TELEPORTING), eq(player));
-        verify(player, times(1)).teleport(any(Location.class));
+        verify(platformScheduler, times(1)).teleportAsync(any(Player.class), any(Location.class));
         verify(messageProvider, never()).format(eq(MessageKey.TELEPORT_FAILED), eq(player));
     }
 
