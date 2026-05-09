@@ -93,7 +93,7 @@ public final class RandomTeleportService implements com.skyblockexp.ezrtp.api.Te
         this.hotspotStorage = createHotspotStorage(rareSettings);
         this.rareBiomeRegistry = new RareBiomeRegistry(plugin, rareSettings != null ? rareSettings.getRareBiomes() : null, hotspotStorage);
         if (hotspotStorage != null) {
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> rareBiomeRegistry.loadFromStorage(hotspotStorage));
+            platformRuntime.scheduler().executeAsync(() -> rareBiomeRegistry.loadFromStorage(hotspotStorage));
         }
         this.chunkLoadQueue = new ChunkLoadQueue(plugin, chunkLoadStrategy, platformRuntime.scheduler());
         this.chunkLoadQueue.setStatistics(statistics);

@@ -10,6 +10,7 @@ import com.skyblockexp.ezrtp.config.gui.GuiWorldOption;
 import com.skyblockexp.ezrtp.config.teleport.RtpLimitSettings;
 import com.skyblockexp.ezrtp.config.network.NetworkConfiguration;
 import com.skyblockexp.ezrtp.network.NetworkService;
+import com.skyblockexp.ezrtp.platform.PlatformRuntimeRegistry;
 import com.skyblockexp.ezrtp.storage.RtpUsageStorage;
 import com.skyblockexp.ezrtp.teleport.RandomTeleportService;
 import com.skyblockexp.ezrtp.teleport.TeleportReason;
@@ -292,7 +293,7 @@ public final class RandomTeleportGuiManager implements Listener {
                     usageStorage.incrementUsage(player.getUniqueId(), worldName, "daily");
                     usageStorage.incrementUsage(player.getUniqueId(), worldName, "weekly");
                     // Save asynchronously to avoid blocking main thread
-                    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> usageStorage.save());
+                    PlatformRuntimeRegistry.get().scheduler().executeAsync(() -> usageStorage.save());
                 }
             });
             return;
