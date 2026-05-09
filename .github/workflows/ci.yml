@@ -133,8 +133,8 @@ jobs:
 
       - name: Copy plugin JARs
         run: |
-          cp ezrtp-bukkit/target/ezrtp-bukkit-*.jar smoke-server/plugins/EzRTP.jar
-          cp ezrtp-paper/target/ezrtp-paper-*.jar   smoke-server/plugins/EzRTPPaperModule.jar
+          cp ezrtp-bukkit/target/EzRTP-*.jar    smoke-server/plugins/EzRTP.jar
+          cp ezrtp-paper/target/ezrtp-paper-*.jar smoke-server/plugins/EzRTPPaperModule.jar
 
       - name: Configure server
         run: |
