@@ -17,7 +17,7 @@ biome filtering and countdown timers.
 These settings define where a teleport destination can be.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `world` | `world` | The world players are teleported into. Use the exact world folder name (e.g. `world_nether`). Set to `auto` to always teleport within the player's current world — handy on multi-world servers. |
 | `center.x` / `center.z` | `0` / `0` | The X/Z coordinate used as the centre of the search circle. Defaults to 0,0 (world spawn area). |
 | `radius.min` | `500` | Closest a destination can be from the centre, in blocks. |
@@ -42,7 +42,7 @@ max-y: 320
 ## Search settings
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `search-pattern` | `random` | The shape used when picking candidate coordinates. See [Search Patterns](search-patterns) for all options. |
 | `max-attempts` | `16` | How many candidate locations EzRTP tries before giving up and sending a failure message. Higher values reduce failed teleports but cost slightly more CPU per attempt. |
 
@@ -66,7 +66,7 @@ take damage during the countdown can have their teleport cancelled (configure
 that in `limits.yml`).
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `countdown-seconds` | `5` | How many seconds to count down. `0` disables the countdown entirely. |
 | `countdown.bossbar.enabled` | `true` | Shows a bossbar with the countdown. |
 | `countdown.bossbar.title` | *(see below)* | MiniMessage text shown in the bossbar. `<seconds>` is replaced with the remaining time. |
@@ -114,7 +114,7 @@ When the chosen location is mid-air or underground, EzRTP scans up or down to
 find solid footing before confirming the destination.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `safety.recovery.enabled` | `true` | Enables vertical scanning to find a safe Y level. |
 | `safety.recovery.max-vertical-adjust` | `6` | Maximum blocks to move up or down during surface recovery. |
 | `safety.recovery.max-surface-scan-depth` | `20` | How far below the candidate to scan for a footing block in normal worlds. Keep this small for performance. |
@@ -141,7 +141,7 @@ Controls how EzRTP loads chunks while searching for destinations. On Paper 1.21+
 the async API is used automatically for the best performance.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `chunk-loading.use-paper-async-api` | `auto-detect` | `auto-detect` uses Paper's async chunk API when available. `always` forces it. `never` falls back to the legacy throttle on all platforms. |
 | `legacy-throttle.enabled` | `true` | Enables the tick-based throttle used on Spigot/Bukkit or older Paper. |
 | `legacy-throttle.interval-ticks` | `10` | Ticks between chunk load batches. |
@@ -155,7 +155,7 @@ Biome filtering lets you restrict (or require) specific biomes for RTP destinati
 The full feature set includes pre-caching and rare-biome optimisation.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `biomes.enabled` | `true` | Master switch. Set to `false` to disable all biome features. |
 | `biomes.include` | `[]` | If non-empty, only destinations in one of these biomes are accepted. Use Bukkit biome names, e.g. `FOREST`, `PLAINS`. |
 | `biomes.exclude` | `[]` | Destinations in any listed biome are rejected. |
@@ -199,7 +199,7 @@ biomes:
 These caps prevent a single biome search from blocking the server too long.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `biome-filtering.performance-budget.max-total-time-ms` | `0` | Maximum wall-clock search time for normal searches (ms). `0` = auto (100 ms when filters active). |
 | `max-total-time-ms-rare` | `8000` | Maximum search time for rare biomes. |
 | `max-biome-rejections` | `0` | Maximum number of biome mismatches before giving up. `0` = auto. |
@@ -245,7 +245,7 @@ particles:
 Automatically teleport new (or returning) players when they join the server.
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `on-join.enabled` | `false` | Enables automatic RTP on join. |
 | `on-join.only-first-join` | `false` | When `true`, only teleports players who have never joined before. |
 | `on-join.bypass-permission` | `""` | Players with this permission are **not** teleported on join (e.g. for staff). |

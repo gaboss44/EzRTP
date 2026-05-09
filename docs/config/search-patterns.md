@@ -117,7 +117,7 @@ search-pattern: triangle
 ## Comparison summary
 
 | Pattern | Shape | Coverage type | Radius sampling |
-|:--------|:------|:-------------|:----------------|
+| :--- | :--- | :--- | :--- |
 | `random` | Circle perimeter | Perimeter only | Integer |
 | `circle` | Circle perimeter | Perimeter only | Floating-point |
 | `square` | Square perimeter | Perimeter only | Integer |

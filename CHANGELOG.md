@@ -23,6 +23,7 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 ## [3.1.0] - 2026-05-09
 
 ### Added
+
 - **Message suppression via config** (`config.yml`):
   - `messages.suppress-player`: when `true`, silences all teleport-related messages to players globally (searching, countdown, queue position, success, failure, cost).
   - `messages.suppress-console`: when `true`, silences the executor notification that `/forcertp` sends to the command sender globally.
@@ -33,6 +34,7 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 ## [3.0.2] - 2026-05-09
 
 ### Added
+
 - Initial changelog entry. See repository history for prior changes.
 
 ---

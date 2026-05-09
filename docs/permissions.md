@@ -8,7 +8,7 @@ nav_order: 4
 ## Declared permissions
 
 | Permission | Default | Description |
-|:-----------|:--------|:------------|
+| :--- | :--- | :--- |
 | `ezrtp.use` | `true` | Use `/rtp` |
 | `ezrtp.reload` | `op` | Reload configuration with `/rtp reload` |
 | `ezrtp.stats` | `op` | View RTP statistics with `/rtp stats` |

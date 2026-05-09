@@ -25,7 +25,7 @@ cross-platform compatibility, and configuration-driven control for server owners
 ## For Server Owners & Admins
 
 | | |
-|:---|:---|
+| :--- | :--- |
 | [Getting Started](overview-installation) | Install EzRTP, choose a platform module, verify your setup |
 | [Commands](commands) | Player and admin command reference |
 | [Permissions](permissions) | Permission nodes and recommended role assignments |
@@ -35,7 +35,7 @@ cross-platform compatibility, and configuration-driven control for server owners
 ## Configuration Reference
 
 | | |
-|:---|:---|
+| :--- | :--- |
 | [config.yml](config/config) | Global plugin settings and language |
 | [rtp.yml](config/rtp) | RTP bounds, safety, biomes, chunky, and countdown |
 | [limits.yml](config/limits) | Cooldowns, usage limits, cost overrides, and storage backend |
@@ -48,7 +48,7 @@ cross-platform compatibility, and configuration-driven control for server owners
 ## Platform Modules
 
 | | |
-|:---|:---|
+| :--- | :--- |
 | [Bukkit / CraftBukkit](modules/installation-bukkit) | Base plugin only |
 | [Spigot](modules/installation-spigot) | Base plugin only |
 | [Paper](modules/installation-paper) | Base + `ezrtp-paper` module |
@@ -57,7 +57,7 @@ cross-platform compatibility, and configuration-driven control for server owners
 ## Integrations
 
 | | |
-|:---|:---|
+| :--- | :--- |
 | [Vault / Economy](integrations/vault-economy) | Charge players for RTP |
 | [PlaceholderAPI](integrations/placeholderapi) | Dynamic placeholders in GUI |
 | [Chunky](integrations/chunky) | World pre-generation |
@@ -67,6 +67,6 @@ cross-platform compatibility, and configuration-driven control for server owners
 ## For Developers
 
 | | |
-|:---|:---|
+| :--- | :--- |
 | [Developer API](api/plugin-api) | Trigger RTP programmatically from other plugins |
 | [Developer Guide](development-collaboration) | Architecture, build workflow, contributor conventions |

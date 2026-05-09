@@ -16,7 +16,7 @@ multiple players teleport simultaneously.
 ## Settings
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `enabled` | `false` | Set to `true` to turn on the queue. |
 | `max-size` | `0` | Maximum number of players allowed to wait in line. `0` = no cap. When the queue is full, additional requests are rejected until a slot opens. |
 | `bypass-permission` | `ezrtp.queue.bypass` | Players with this permission skip the queue and teleport immediately. Useful for VIP or staff. |

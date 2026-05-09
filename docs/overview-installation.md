@@ -44,7 +44,7 @@ matches your server software.
 ### Choose the correct module(s)
 
 | Server software | Required jar(s) in `plugins/` | Notes |
-|---|---|---|
+| --- | --- | --- |
 | Bukkit / CraftBukkit | `EzRTP-<version>.jar` | Base runtime already includes Bukkit-compatible adapters. |
 | Spigot | `EzRTP-<version>.jar` | Spigot runs on the Bukkit-compatible base runtime. |
 | Paper | `EzRTP-<version>.jar` + `ezrtp-paper-<version>.jar` | Paper module registers Paper-specific runtime adapters. |

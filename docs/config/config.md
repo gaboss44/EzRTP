@@ -13,7 +13,7 @@ their own dedicated files.
 ## Settings
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `message-prefix` | `"&7[&bEzRTP&7] &r"` | Text prepended to every chat message the plugin sends. Supports `&` color codes and MiniMessage. |
 | `language` | `en` | Selects which file under `messages/` is used for player-facing text. Example: `en` loads `messages/en.yml`. |
 | `messages.force-legacy-colors` | `false` | Set to `true` on servers running very old clients that do not understand MiniMessage formatting. Converts all output to legacy `§` color codes. |

@@ -18,7 +18,7 @@ Leave it disabled on game servers unless they also show the selection GUI.
 ## Top-level settings
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `enabled` | `false` | Set to `true` to enable network entries in the GUI. |
 | `lobby` | `false` | Set to `true` on the server that hosts the GUI (typically the lobby). |
 | `ping-interval-ticks` | `200` | How often EzRTP pings each configured server to check if it’s online, in ticks (200 = 10 seconds). |
@@ -55,7 +55,7 @@ servers:
 ### Server entry fields
 
 | Field | Description |
-|:------|:------------|
+| :--- | :--- |
 | `bungee-server` | Server name as defined in your proxy’s `config.yml` (`servers` section). |
 | `host` / `port` | Address used to ping the server and check if it’s online. |
 | `slot` | GUI slot (0–53). |

@@ -15,7 +15,7 @@ choose which normal restrictions are bypassed when the command is used.
 ## Settings
 
 | Key | Default | Description |
-|:----|:--------|:------------|
+| :--- | :--- | :--- |
 | `default-world` | `world` | World used when the command is run without specifying a world. Set to `auto` to send the target player to a random location in their current world. |
 | `bypass.cooldown` | `true` | When `true`, `/forcertp` ignores the target player’s cooldown. Recommended — admins should never be blocked by a cooldown on a moderation tool. |
 | `bypass.permission` | `true` | When `true`, `/forcertp` ignores any per-destination permission checks on the target player. |
