@@ -154,10 +154,8 @@ jobs:
             ezrtp-paper/target/ezrtp-paper-${{ steps.version.outputs.nightly }}.jar
             ezrtp-spigot/target/ezrtp-spigot-${{ steps.version.outputs.nightly }}.jar
             ezrtp-purpur/target/ezrtp-purpur-${{ steps.version.outputs.nightly }}.jar
-          game-versions: |
-            26.1
-            26.1.1
-            26.1.2
+          game-versions: ">=26.1"
+          game-versions-filter: release
           loaders: |
             bukkit
             spigot
@@ -165,6 +163,10 @@ jobs:
             purpur
             folia
           changelog-file: changelog.md
+          dependencies: |
+            placeholderapi | optional
+            chunky | optional
+            worldguard | optional
 
       - name: Create and push nightly tag
         if: steps.changes.outputs.has_changes == 'true'

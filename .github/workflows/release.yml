@@ -1,0 +1,174 @@
+name: Stable Release
+
+# Fires when a vX.Y.Z tag is pushed, or can be triggered manually with a tag.
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v3.0.2)'
+        required: true
+
+jobs:
+  release:
+    name: Stable Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required for creating the GitHub Release
+
+    steps:
+      # ──────────────────────────────────────────────────────────────────────
+      #  1. CHECKOUT
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # For workflow_dispatch: check out the provided tag.
+          # For push:tags: github.ref points to the tag directly.
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      # ──────────────────────────────────────────────────────────────────────
+      #  2. RESOLVE VERSION
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Resolve version from tag
+        id: meta
+        run: |
+          REF="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION="${REF#v}"
+          echo "ref=${REF}"         >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Releasing version: ${VERSION}"
+
+      # ──────────────────────────────────────────────────────────────────────
+      #  3. BUILD
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Set release version in all POMs
+        run: |
+          mvn -B -ntp versions:set \
+            -DnewVersion="${{ steps.meta.outputs.version }}" \
+            -DprocessAllModules \
+            -DgenerateBackupPoms=false
+
+      - name: Build
+        run: mvn -B -ntp -DskipTests -Dspotless.check.skip=true package
+
+      # ──────────────────────────────────────────────────────────────────────
+      #  4. EXTRACT CHANGELOG
+      #
+      #  Reads the section for this version from CHANGELOG.md.
+      #  Falls back to a link to the file when the section is missing.
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="${{ steps.meta.outputs.version }}"
+          HEADER="## [${VERSION}]"
+
+          # Fixed-string match via index() avoids regex issues with dots in versions.
+          NOTES=$(awk \
+            -v hdr="$HEADER" \
+            '/^## \[/ && p { exit }
+             index($0, hdr) == 1 { p=1; next }
+             p { print }' \
+            CHANGELOG.md | sed '/^[[:space:]]*$/d')
+
+          if [[ -z "$NOTES" ]]; then
+            NOTES="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/${{ steps.meta.outputs.ref }}/CHANGELOG.md) for details."
+          fi
+
+          printf '%s\n' "$NOTES" > release-notes.md
+          echo "=== Release notes preview ===" && cat release-notes.md
+
+      # ──────────────────────────────────────────────────────────────────────
+      #  5. GITHUB RELEASE
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.meta.outputs.ref }}" \
+            --title "EzRTP ${{ steps.meta.outputs.version }}" \
+            --notes-file release-notes.md \
+            "ezrtp-bukkit/target/EzRTP-${{ steps.meta.outputs.version }}.jar" \
+            "ezrtp-paper/target/ezrtp-paper-${{ steps.meta.outputs.version }}.jar" \
+            "ezrtp-spigot/target/ezrtp-spigot-${{ steps.meta.outputs.version }}.jar" \
+            "ezrtp-purpur/target/ezrtp-purpur-${{ steps.meta.outputs.version }}.jar"
+
+      # ──────────────────────────────────────────────────────────────────────
+      #  6. MODRINTH RELEASE
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Release to Modrinth (stable)
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: ezplugins-ezrtp
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: true
+          name: "EzRTP ${{ steps.meta.outputs.version }}"
+          version: "${{ steps.meta.outputs.version }}"
+          version-type: release
+          files: |
+            ezrtp-bukkit/target/EzRTP-${{ steps.meta.outputs.version }}.jar
+            ezrtp-paper/target/ezrtp-paper-${{ steps.meta.outputs.version }}.jar
+            ezrtp-spigot/target/ezrtp-spigot-${{ steps.meta.outputs.version }}.jar
+            ezrtp-purpur/target/ezrtp-purpur-${{ steps.meta.outputs.version }}.jar
+          game-versions: ">=26.1"
+          game-versions-filter: release
+          loaders: |
+            bukkit
+            spigot
+            paper
+            purpur
+            folia
+          changelog-file: release-notes.md
+          dependencies: |
+            placeholderapi | optional
+            chunky | optional
+            worldguard | optional
+
+      # ──────────────────────────────────────────────────────────────────────
+      #  7. DISCORD NOTIFICATION
+      # ──────────────────────────────────────────────────────────────────────
+      - name: Post Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.EZRTP_RELEASE_DISCORD_WEBHOOK }}
+        run: |
+          REPO="${{ github.repository }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+          GH_URL="https://github.com/${REPO}/releases/tag/${{ steps.meta.outputs.ref }}"
+          MODRINTH_URL="https://modrinth.com/plugin/ezplugins-ezrtp/version/${VERSION}"
+
+          # Truncate changelog to fit Discord's 4096-char embed description limit.
+          CHANGELOG=$(head -c 3800 release-notes.md || true)
+
+          PAYLOAD=$(jq -n \
+            --arg version "$VERSION" \
+            --arg gh_url "$GH_URL" \
+            --arg modrinth_url "$MODRINTH_URL" \
+            --arg changelog "$CHANGELOG" \
+            '{
+              embeds: [{
+                title: ("🚀 EzRTP " + $version + " — Stable Release"),
+                url: $gh_url,
+                color: 3447003,
+                description: $changelog,
+                fields: [
+                  { name: "GitHub Release", value: ("[View on GitHub](" + $gh_url + ")"),              inline: true },
+                  { name: "Modrinth",       value: ("[Download on Modrinth](" + $modrinth_url + ")"), inline: true }
+                ],
+                footer: { text: "Stable release" }
+              }]
+            }')
+
+          curl --fail -s -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
