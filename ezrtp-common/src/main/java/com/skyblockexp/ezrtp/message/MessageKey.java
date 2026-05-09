@@ -24,6 +24,8 @@ public enum MessageKey {
     // Countdown messages
     COUNTDOWN_START("countdown-start"),
     COUNTDOWN_TICK("countdown-tick"),
+    COUNTDOWN_MOVE_WARN("countdown-move-warn"),
+    COUNTDOWN_MOVE_CANCEL("countdown-move-cancel"),
     
     // Cooldown and usage limit messages
     COOLDOWN("cooldown"),

@@ -237,6 +237,8 @@ public class MessageProvider {
             case QUEUE_FULL -> "<red>The random teleport queue is currently full. Please try again soon.</red>";
             case COUNTDOWN_START -> "<yellow>Teleporting in <white><seconds></white> seconds...</yellow>";
             case COUNTDOWN_TICK -> "<gray><seconds>...</gray>";
+            case COUNTDOWN_MOVE_WARN -> "<yellow>Stop moving or your teleport will be cancelled!</yellow>";
+            case COUNTDOWN_MOVE_CANCEL -> "<red>Teleport cancelled because you moved.</red>";
             case COOLDOWN -> "<red>You must wait <white><seconds></white> seconds before using /rtp again.</red>";
             case LIMIT_DAILY -> "<red>You have reached your daily /rtp limit for this world.</red>";
             case LIMIT_WEEKLY -> "<red>You have reached your weekly /rtp limit for this world.</red>";
