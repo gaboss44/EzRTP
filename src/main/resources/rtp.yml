@@ -187,6 +187,7 @@ protection:
   providers:
     - worldguard
     - griefprevention
+    - teamsapi
 
 # Optional WorldGuard region command support.
 # Kept here for full RTP semantics; config.yml still includes the same keys for command compatibility fallback.

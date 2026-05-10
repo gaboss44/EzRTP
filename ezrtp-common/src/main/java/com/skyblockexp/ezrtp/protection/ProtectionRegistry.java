@@ -25,6 +25,7 @@ public final class ProtectionRegistry {
         this.logger = logger != null ? logger : java.util.logging.Logger.getAnonymousLogger();
         registerProvider(new WorldGuardProtectionProvider(pluginManager, this.logger));
         registerProvider(new GriefPreventionProtectionProvider(pluginManager, this.logger));
+        registerProvider(new TeamsApiProtectionProvider(pluginManager, this.logger));
     }
 
     public Optional<String> findProtectionProvider(Location location, ProtectionSettings settings) {

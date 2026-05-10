@@ -155,6 +155,7 @@ jobs:
             placeholderapi | optional
             chunky | optional
             worldguard | optional
+            teams-api | optional
             ezcountdown | optional
             ezeconomy | optional
 

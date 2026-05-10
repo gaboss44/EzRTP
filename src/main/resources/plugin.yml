@@ -11,6 +11,7 @@ softdepend:
   - GriefPrevention
   - PlaceholderAPI
   - Chunky
+  - TeamsAPI
 commands:
   rtp:
     description: Teleport to a random safe location in the configured world.

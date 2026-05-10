@@ -20,6 +20,19 @@ Release tags use the `v` prefix (e.g. `v3.0.2`).
 
 ---
 
+## [3.2.0] - 2026-05-11
+
+### Added
+
+- **TeamsAPI claim avoidance**: EzRTP now integrates with [TeamsAPI](https://modrinth.com/plugin/teams-api) to skip chunk-claimed areas during RTP destination search.
+  - New protection provider id: `teamsapi`. Works alongside the existing `worldguard` and `griefprevention` providers.
+  - Enabled automatically when TeamsAPI (with a compatible claim provider) is installed. Silently skipped when absent, no errors, no configuration changes required.
+  - `teamsapi` added to the default `protection.providers` list in `rtp.yml`.
+  - `TeamsAPI` added to `softdepend` in `plugin.yml`.
+  - Claim availability is evaluated dynamically per check, so a claim plugin that loads after EzRTP is picked up without a reload.
+
+---
+
 ## [3.1.0] - 2026-05-09
 
 ### Added
