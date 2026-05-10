@@ -45,6 +45,7 @@ It is designed for **safety-first teleportation**, **cross-platform compatibilit
 - **Biome-aware and cache-assisted searching** with optional rare-biome optimization.
 - **Heatmap/statistics tooling** for operators to inspect RTP distribution and performance.
 - **WorldGuard region command mode** for region-scoped RTP entry points.
+- **TeamsAPI integration** to skip chunk-claimed areas (works with any TeamsAPI-compatible team plugin).
 - **Optional first-join/on-join teleport flow**.
 - **Optional proxy/network destination menu support** for multi-server setups.
 - **Chunky integration** for pre-generation workflows.
@@ -64,6 +65,7 @@ It is designed for **safety-first teleportation**, **cross-platform compatibilit
 - [EzEconomy](https://modrinth.com/plugin/ezeconomy)
 - [WorldGuard](https://modrinth.com/plugin/worldguard)
 - [GriefPrevention](https://modrinth.com/plugin/griefprevention)
+- [TeamsAPI](https://github.com/ez-plugins/teams-api) (chunk-claim avoidance via any compatible team plugin)
 - [PlaceholderAPI](https://modrinth.com/mod/placeholderapi)
 - [Chunky](https://modrinth.com/plugin/chunky/)
 
