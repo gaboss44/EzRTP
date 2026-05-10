@@ -73,6 +73,12 @@
       <version>2.12.2</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.github.ez-plugins</groupId>
+      <artifactId>teams-api</artifactId>
+      <version>1.4.1</version>
+      <scope>provided</scope>
+    </dependency>
     <!-- HikariCP connection pool — used by MySqlHotspotStorage for the persistent
              hotspot write path. The basic DriverManager pattern in MySqlRtpUsageStorage is
              sufficient for low-frequency usage-stat writes, but hotspot saves happen on every

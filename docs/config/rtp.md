@@ -222,9 +222,11 @@ protection:
   providers:
     - worldguard
     - griefprevention
+    - teamsapi
 ```
 
 Set `avoid-claims: true` to enable. Only providers that are installed will be used.
+Supported values: `worldguard`, `griefprevention`, `teamsapi`.
 
 ---
 

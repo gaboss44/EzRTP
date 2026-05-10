@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Locale;
 
 public final class ProtectionSettings {
-    private static final List<String> DEFAULT_PROVIDERS = List.of("worldguard", "griefprevention");
+    private static final List<String> DEFAULT_PROVIDERS = List.of("worldguard", "griefprevention", "teamsapi");
 
     private final boolean avoidClaims;
     private final List<String> providers;
