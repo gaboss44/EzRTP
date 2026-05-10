@@ -29,7 +29,7 @@ jobs:
           # distance. This is more reliable than --sort=-creatordate, which uses
           # the tagged commit's date for lightweight tags and can mis-order a
           # stable release tag applied after its commit relative to a nightly tag
-          # that points to a newer commit — causing a duplicate nightly build.
+          # that points to a newer commit, causing a duplicate nightly build.
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
           echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
           if [ -z "$LAST_TAG" ]; then
