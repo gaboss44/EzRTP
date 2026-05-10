@@ -25,8 +25,12 @@ jobs:
       - name: Check for unreleased changes since last tag
         id: changes
         run: |
-          # Matches both stable tags (3.0.1) and nightly tags (3.0.1-nightly.*)
-          LAST_TAG=$(git tag --sort=-creatordate | head -n 1)
+          # Use git describe to find the nearest ancestor tag by commit-graph
+          # distance. This is more reliable than --sort=-creatordate, which uses
+          # the tagged commit's date for lightweight tags and can mis-order a
+          # stable release tag applied after its commit relative to a nightly tag
+          # that points to a newer commit — causing a duplicate nightly build.
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD 2>/dev/null || echo "")
           echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
           if [ -z "$LAST_TAG" ]; then
             echo "No release tags found; first nightly will proceed."
